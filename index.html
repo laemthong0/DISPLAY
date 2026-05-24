@@ -248,6 +248,22 @@
       white-space: nowrap;
     }
 
+    .control-link {
+      font-size: clamp(0.75rem, 0.85vw, 1rem);
+      color: #d7f8e5;
+      text-decoration: none;
+      border: 1px solid rgba(215, 248, 229, 0.45);
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.12);
+      white-space: nowrap;
+    }
+
+    .control-link:hover {
+      background: rgba(0, 0, 0, 0.22);
+      border-color: rgba(215, 248, 229, 0.8);
+    }
+
     .tabs-container {
       background: rgba(255,255,255,0.3);
       backdrop-filter: blur(20px);
@@ -3088,6 +3104,857 @@
       padding: 0.6vw;
     }
 
+
+
+    /* staggered-dense-products */
+    .product-grid[data-density="dense"] {
+      gap: clamp(4px, 0.45vh, 8px) clamp(7px, 0.8vw, 14px) !important;
+      align-items: center !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card {
+      background: transparent !important;
+      padding: clamp(2px, 0.18vh, 5px) clamp(2px, 0.18vw, 5px) clamp(3px, 0.28vh, 7px) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(odd) {
+      transform: translateY(-1.15vh);
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(even) {
+      transform: translateY(1.15vh);
+    }
+
+    .product-grid[data-density="dense"] .product-card:hover {
+      transform: translateY(-1.15vh) scale(1.015);
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(even):hover {
+      transform: translateY(1.15vh) scale(1.015);
+    }
+
+    .product-grid[data-density="dense"] .image-box {
+      max-width: 112% !important;
+    }
+
+    .product-grid[data-density="dense"] .product-img {
+      max-width: 108% !important;
+      max-height: 108% !important;
+      transform: scale(1.1) !important;
+      filter: drop-shadow(0 13px 12px rgba(0,0,0,0.24)) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:hover .product-img {
+      transform: scale(1.12) translateY(-1px) !important;
+    }
+
+    .product-grid[data-density="dense"] .info-box {
+      margin-top: clamp(1px, 0.08vh, 3px) !important;
+    }
+
+    .product-grid[data-density="dense"] .price-val {
+      font-size: clamp(1.15rem, 1.6vw, 2.35rem) !important;
+    }
+
+    .product-grid[data-density="dense"] .name-wrap {
+      max-width: min(94%, 138px) !important;
+    }
+
+
+
+    /* final-dense-stagger-no-clip */
+    .product-grid[data-density="dense"] {
+      gap: clamp(12px, 1.9vh, 24px) clamp(8px, 0.8vw, 16px) !important;
+      padding-top: 1.6vh;
+      padding-bottom: 1.6vh;
+      overflow: visible !important;
+      align-items: center !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card {
+      overflow: visible !important;
+      background: transparent !important;
+      padding: 0.2vh 0.15vw 0.35vh !important;
+      transform-origin: center center;
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(odd) {
+      transform: translateY(-2.1vh) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(even) {
+      transform: translateY(2.1vh) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(odd):hover {
+      transform: translateY(-2.1vh) scale(1.012) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:nth-child(even):hover {
+      transform: translateY(2.1vh) scale(1.012) !important;
+    }
+
+    .product-grid[data-density="dense"] .image-box {
+      overflow: visible !important;
+      max-width: 100% !important;
+      padding: 0.2vh 0.2vw 0 !important;
+    }
+
+    .product-grid[data-density="dense"] .product-img {
+      max-width: 96% !important;
+      max-height: 92% !important;
+      transform: none !important;
+      object-fit: contain;
+      object-position: center bottom;
+      filter: drop-shadow(0 12px 11px rgba(0,0,0,0.24)) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:hover .product-img {
+      transform: scale(1.025) translateY(-1px) !important;
+    }
+
+    .product-grid[data-density="dense"] .info-box {
+      margin-top: 0.1vh !important;
+    }
+
+
+
+    /* dense-row-offset-layout */
+    .product-grid[data-density="dense"] {
+      overflow: hidden !important;
+      padding-left: 1.2vw;
+      padding-right: 1.2vw;
+    }
+
+    .product-grid[data-density="dense"] .product-card,
+    .product-grid[data-density="dense"] .product-card:nth-child(odd),
+    .product-grid[data-density="dense"] .product-card:nth-child(even),
+    .product-grid[data-density="dense"] .product-card:nth-child(odd):hover,
+    .product-grid[data-density="dense"] .product-card:nth-child(even):hover {
+      transform: none !important;
+    }
+
+    .product-grid[data-density="dense"][data-cols="4"] .product-card:nth-child(n+5):nth-child(-n+8),
+    .product-grid[data-density="dense"][data-cols="4"] .product-card:nth-child(n+13):nth-child(-n+16) {
+      transform: translateX(8%) !important;
+    }
+
+    .product-grid[data-density="dense"][data-cols="4"] .product-card:nth-child(n+5):nth-child(-n+8):hover,
+    .product-grid[data-density="dense"][data-cols="4"] .product-card:nth-child(n+13):nth-child(-n+16):hover {
+      transform: translateX(8%) scale(1.012) !important;
+    }
+
+    .product-grid[data-density="dense"][data-cols="6"] .product-card:nth-child(n+7):nth-child(-n+12),
+    .product-grid[data-density="dense"][data-cols="6"] .product-card:nth-child(n+19):nth-child(-n+24) {
+      transform: translateX(6%) !important;
+    }
+
+    .product-grid[data-density="dense"][data-cols="6"] .product-card:nth-child(n+7):nth-child(-n+12):hover,
+    .product-grid[data-density="dense"][data-cols="6"] .product-card:nth-child(n+19):nth-child(-n+24):hover {
+      transform: translateX(6%) scale(1.012) !important;
+    }
+
+    .product-grid[data-density="dense"] .product-card:hover .product-img {
+      transform: scale(1.025) translateY(-1px) !important;
+    }
+
+    /* zigzag-7-8-products-layout */
+    .product-grid[data-density="dense"][data-count="7"],
+    .product-grid[data-density="dense"][data-count="8"] {
+      grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.35vh 0.35vw !important;
+      align-items: stretch !important;
+      overflow: hidden !important;
+      padding: 0.2vh 0.8vw 0.3vh !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-card,
+    .product-grid[data-density="dense"][data-count="8"] .product-card {
+      width: auto !important;
+      height: 100% !important;
+      min-width: 0;
+      min-height: 0;
+      background: transparent !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      transform: none !important;
+      justify-self: stretch;
+      align-self: stretch;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(odd),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(odd) {
+      grid-row: 1;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(even),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(even) {
+      grid-row: 2;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(1),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(1) {
+      grid-column: 1 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(2),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(2) {
+      grid-column: 2 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(3),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(3) {
+      grid-column: 3 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(4),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(4) {
+      grid-column: 4 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(5),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(5) {
+      grid-column: 5 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(6),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(6) {
+      grid-column: 6 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="7"] .product-card:nth-child(7),
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(7) {
+      grid-column: 7 / span 2;
+    }
+    .product-grid[data-density="dense"][data-count="8"] .product-card:nth-child(8) {
+      grid-column: 8 / span 2;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .image-box,
+    .product-grid[data-density="dense"][data-count="8"] .image-box {
+      width: 100% !important;
+      height: calc(100% - 4.7vh) !important;
+      max-width: none !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 auto;
+      align-items: flex-end !important;
+      justify-content: center !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .image-box::before,
+    .product-grid[data-density="dense"][data-count="8"] .image-box::before {
+      display: none !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-img,
+    .product-grid[data-density="dense"][data-count="8"] .product-img {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      transform: scale(1.02) !important;
+      transform-origin: center bottom;
+      object-fit: contain;
+      object-position: center bottom;
+      filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.24)) !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-card:hover .product-img,
+    .product-grid[data-density="dense"][data-count="8"] .product-card:hover .product-img {
+      transform: scale(1.04) translateY(-1px) !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .info-box,
+    .product-grid[data-density="dense"][data-count="8"] .info-box {
+      position: static !important;
+      transform: none !important;
+      margin-top: 0.15vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 1px !important;
+      max-width: 100% !important;
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .info-box::before,
+    .product-grid[data-density="dense"][data-count="7"] .info-box::after,
+    .product-grid[data-density="dense"][data-count="8"] .info-box::before,
+    .product-grid[data-density="dense"][data-count="8"] .info-box::after {
+      display: none !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .name-wrap,
+    .product-grid[data-density="dense"][data-count="8"] .name-wrap {
+      max-width: min(92%, 138px) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      background: rgba(255, 255, 255, 0.92) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .product-name,
+    .product-grid[data-density="dense"][data-count="8"] .product-name {
+      font-size: clamp(0.36rem, 0.5vw, 0.68rem) !important;
+      line-height: 1.08 !important;
+      text-align: center;
+      -webkit-line-clamp: 2;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .price-wrap,
+    .product-grid[data-density="dense"][data-count="8"] .price-wrap {
+      padding: 0.08vh 0.44vw 0.26vh !important;
+      border-width: 2px !important;
+      border-radius: 4px !important;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .price-val,
+    .product-grid[data-density="dense"][data-count="8"] .price-val {
+      font-size: clamp(1.35rem, 1.95vw, 2.75rem) !important;
+      line-height: 0.9;
+    }
+
+    .product-grid[data-density="dense"][data-count="7"] .price-unit,
+    .product-grid[data-density="dense"][data-count="8"] .price-unit {
+      display: none !important;
+    }
+
+    /* bulk-layout-unified (all cases with 6+ products) */
+    .product-grid[data-bulk="yes"] {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(var(--rows), minmax(0, 1fr)) !important;
+      gap: clamp(4px, 0.45vh, 9px) clamp(4px, 0.45vw, 10px) !important;
+      padding: clamp(2px, 0.25vh, 7px) clamp(2px, 0.35vw, 10px) !important;
+      overflow: hidden !important;
+      align-items: stretch !important;
+    }
+
+    .product-grid[data-bulk="yes"] .product-card,
+    .product-grid[data-bulk="yes"] .product-card:nth-child(odd),
+    .product-grid[data-bulk="yes"] .product-card:nth-child(even),
+    .product-grid[data-bulk="yes"] .product-card:nth-child(odd):hover,
+    .product-grid[data-bulk="yes"] .product-card:nth-child(even):hover {
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0;
+      min-height: 0;
+      margin: 0 !important;
+      padding: clamp(1px, 0.16vh, 4px) clamp(1px, 0.16vw, 4px) !important;
+      border-radius: 8px !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      overflow: hidden !important;
+      transform: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+    }
+
+    .product-grid[data-bulk="yes"] .image-box {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-width: 100% !important;
+      max-height: calc(100% - 3.8vh) !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      align-items: flex-end !important;
+      justify-content: center !important;
+      background: transparent !important;
+    }
+
+    .product-grid[data-bulk="yes"] .image-box::before {
+      display: none !important;
+    }
+
+    .product-grid[data-bulk="yes"] .product-img {
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain !important;
+      object-position: center bottom !important;
+      transform: scale(1.06) !important;
+      transform-origin: center bottom !important;
+      filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.24)) !important;
+    }
+
+    .product-grid[data-bulk="yes"] .product-card:hover .product-img {
+      transform: scale(1.08) !important;
+    }
+
+    .product-grid[data-bulk="yes"] .info-box,
+    .product-grid[data-bulk="yes"] .info-box::before,
+    .product-grid[data-bulk="yes"] .info-box::after {
+      position: static !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      transform: none !important;
+    }
+
+    .product-grid[data-bulk="yes"] .info-box {
+      flex: 0 0 auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 1px !important;
+      margin-top: clamp(1px, 0.12vh, 4px) !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      background: transparent !important;
+      z-index: 2;
+    }
+
+    .product-grid[data-bulk="yes"] .info-box::before,
+    .product-grid[data-bulk="yes"] .info-box::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .product-grid[data-bulk="yes"] .name-wrap {
+      display: flex !important;
+      max-width: min(96%, 150px) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      background: rgba(255, 255, 255, 0.92) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+      opacity: 1 !important;
+    }
+
+    .product-grid[data-bulk="yes"] .product-name {
+      font-size: clamp(0.34rem, 0.5vw, 0.76rem) !important;
+      line-height: 1.08 !important;
+      text-align: center !important;
+      -webkit-line-clamp: 2;
+      word-break: break-word;
+    }
+
+    .product-grid[data-bulk="yes"] .price-wrap {
+      padding: clamp(1px, 0.08vh, 3px) clamp(3px, 0.38vw, 9px) clamp(1px, 0.16vh, 4px) !important;
+      border-width: 2px !important;
+      border-radius: 5px !important;
+      box-shadow: 0 2px 0 rgba(45, 10, 0, 0.55), 0 5px 7px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+    }
+
+    .product-grid[data-bulk="yes"] .price-val {
+      font-size: clamp(1.2rem, 1.9vw, 3rem) !important;
+      line-height: 0.9 !important;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .product-grid[data-bulk="yes"] .price-unit {
+      display: none !important;
+    }
+
+    /* Count-based scaling: enlarge as much as possible without overflow */
+    .product-grid[data-bulk="yes"][data-count="6"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="7"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="8"] .product-img {
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="9"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="10"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="11"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="12"] .product-img {
+      max-width: 98% !important;
+      max-height: 98% !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-img {
+      max-width: 95% !important;
+      max-height: 95% !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="17"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="18"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="19"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="20"] .product-img {
+      max-width: 92% !important;
+      max-height: 92% !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="21"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="22"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="23"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="24"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="25"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="26"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="27"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="28"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="29"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="30"] .product-img {
+      max-width: 90% !important;
+      max-height: 90% !important;
+    }
+
+    .product-grid[data-bulk="yes"] .price-val {
+      font-size: clamp(1rem, 1.6vw, 2.5rem) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="6"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="7"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="8"] .price-val {
+      font-size: clamp(1.5rem, 2.5vw, 3.3rem) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="9"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="10"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="11"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="12"] .price-val {
+      font-size: clamp(1.35rem, 2.2vw, 2.9rem) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="14"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="15"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="16"] .price-val {
+      font-size: clamp(1.2rem, 1.9vw, 2.5rem) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="17"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="18"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="19"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="20"] .price-val {
+      font-size: clamp(1.05rem, 1.6vw, 2.1rem) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="21"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="22"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="23"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="24"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="25"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="26"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="27"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="28"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="29"] .price-val,
+    .product-grid[data-bulk="yes"][data-count="30"] .price-val {
+      font-size: clamp(0.95rem, 1.45vw, 1.85rem) !important;
+    }
+
+    /* bulk-zigzag-layout: offset every even row to the right */
+    .product-grid[data-bulk="yes"] {
+      overflow: visible !important;
+      padding-left: clamp(6px, 0.8vw, 18px) !important;
+      padding-right: clamp(6px, 0.8vw, 18px) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+4),
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+5),
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+6) {
+      transform: translateX(7%) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+5),
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+6),
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+7),
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+8) {
+      transform: translateX(7%) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+6),
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+7),
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+8),
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+9),
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+10) {
+      transform: translateX(6%) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+7),
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+8),
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+9),
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+10),
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+11),
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+12) {
+      transform: translateX(5.2%) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+8),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+9),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+10),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+11),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+12),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+13),
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+14) {
+      transform: translateX(4.5%) !important;
+    }
+
+    .product-grid[data-bulk="yes"] .product-card:hover {
+      transform: translateX(0) scale(1.01) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+4):hover,
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+5):hover,
+    .product-grid[data-bulk="yes"][data-cols="3"] .product-card:nth-child(6n+6):hover {
+      transform: translateX(7%) scale(1.01) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+5):hover,
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+6):hover,
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+7):hover,
+    .product-grid[data-bulk="yes"][data-cols="4"] .product-card:nth-child(8n+8):hover {
+      transform: translateX(7%) scale(1.01) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+6):hover,
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+7):hover,
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+8):hover,
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+9):hover,
+    .product-grid[data-bulk="yes"][data-cols="5"] .product-card:nth-child(10n+10):hover {
+      transform: translateX(6%) scale(1.01) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+7):hover,
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+8):hover,
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+9):hover,
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+10):hover,
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+11):hover,
+    .product-grid[data-bulk="yes"][data-cols="6"] .product-card:nth-child(12n+12):hover {
+      transform: translateX(5.2%) scale(1.01) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+8):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+9):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+10):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+11):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+12):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+13):hover,
+    .product-grid[data-bulk="yes"][data-cols="7"] .product-card:nth-child(14n+14):hover {
+      transform: translateX(4.5%) scale(1.01) !important;
+    }
+
+    /* zigzag-reference-layout (for 6-10 products) */
+    .product-grid[data-density="zigzag"] {
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: clamp(4px, 0.45vh, 10px) clamp(3px, 0.35vw, 8px) !important;
+      padding: 0.2vh 0.6vw 0.35vh !important;
+      overflow: hidden !important;
+      align-items: stretch !important;
+    }
+
+    .product-grid[data-density="zigzag"] .product-card {
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0;
+      min-height: 0;
+      margin: 0 !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      overflow: visible !important;
+      transform: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+    }
+
+    .product-grid[data-density="zigzag"] .image-box {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      min-height: 0 !important;
+      max-width: 100% !important;
+      max-height: calc(100% - 4.2vh) !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      align-items: flex-end !important;
+      justify-content: center !important;
+      background: transparent !important;
+    }
+
+    .product-grid[data-density="zigzag"] .image-box::before {
+      display: none !important;
+    }
+
+    .product-grid[data-density="zigzag"] .product-img {
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain !important;
+      object-position: center bottom !important;
+      transform: scale(1.08) !important;
+      transform-origin: center bottom !important;
+      filter: drop-shadow(0 10px 11px rgba(0, 0, 0, 0.24)) !important;
+    }
+
+    .product-grid[data-density="zigzag"] .product-card:hover .product-img {
+      transform: scale(1.1) translateY(-1px) !important;
+    }
+
+    .product-grid[data-density="zigzag"] .info-box,
+    .product-grid[data-density="zigzag"] .info-box::before,
+    .product-grid[data-density="zigzag"] .info-box::after {
+      position: static !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      transform: none !important;
+      content: none !important;
+    }
+
+    .product-grid[data-density="zigzag"] .info-box {
+      flex: 0 0 auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 1px !important;
+      margin-top: 0.12vh !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      background: transparent !important;
+      z-index: 2;
+    }
+
+    .product-grid[data-density="zigzag"] .name-wrap {
+      display: flex !important;
+      max-width: min(92%, 140px) !important;
+      padding: 1px 6px !important;
+      border-radius: 4px !important;
+      background: rgba(255, 255, 255, 0.92) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+    }
+
+    .product-grid[data-density="zigzag"] .product-name {
+      font-size: clamp(0.36rem, 0.5vw, 0.7rem) !important;
+      line-height: 1.08 !important;
+      text-align: center !important;
+      -webkit-line-clamp: 2;
+    }
+
+    .product-grid[data-density="zigzag"] .price-wrap {
+      padding: 0.08vh 0.44vw 0.26vh !important;
+      border-width: 2px !important;
+      border-radius: 4px !important;
+      box-shadow: 0 2px 0 rgba(45, 10, 0, 0.55), 0 5px 7px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+    }
+
+    .product-grid[data-density="zigzag"] .price-val {
+      font-size: clamp(1.4rem, 2.1vw, 2.95rem) !important;
+      line-height: 0.9 !important;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .product-grid[data-density="zigzag"] .price-unit {
+      display: none !important;
+    }
+
+    /* Unified staggered layout: 6+ products must render in true zigzag slots */
+    .product-grid[data-density="zigzag"] {
+      grid-template-columns: repeat(var(--zig-cols), minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(var(--rows), minmax(0, 1fr)) !important;
+      overflow: hidden !important;
+    }
+
+    .product-grid[data-density="zigzag"] .product-card:nth-child(n),
+    .product-grid[data-density="zigzag"] .product-card:nth-child(n):hover {
+      transform: none !important;
+    }
+
+    /* Put name + price overlay directly on product image */
+    .product-grid[data-density="zigzag"] .image-box,
+    .product-grid[data-bulk="yes"] .image-box {
+      position: relative !important;
+      max-height: 100% !important;
+      padding-bottom: 0 !important;
+    }
+
+    .product-grid[data-density="zigzag"] .image-box > .info-box,
+    .product-grid[data-bulk="yes"] .image-box > .info-box {
+      position: absolute !important;
+      left: 50% !important;
+      bottom: clamp(4px, 0.9vh, 12px) !important;
+      transform: translateX(-50%) !important;
+      margin-top: 0 !important;
+      z-index: 6 !important;
+      pointer-events: none !important;
+    }
+
+    /* 13-16 items: fixed layout 8 x 2 (no zigzag) */
+    .product-grid[data-bulk="yes"][data-count="13"],
+    .product-grid[data-bulk="yes"][data-count="14"],
+    .product-grid[data-bulk="yes"][data-count="15"],
+    .product-grid[data-bulk="yes"][data-count="16"] {
+      grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: clamp(2px, 0.24vh, 6px) clamp(2px, 0.2vw, 5px) !important;
+      padding: clamp(1px, 0.12vh, 4px) clamp(1px, 0.12vw, 4px) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-card {
+      justify-content: stretch !important;
+      padding: 0 !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .image-box,
+    .product-grid[data-bulk="yes"][data-count="14"] .image-box,
+    .product-grid[data-bulk="yes"][data-count="15"] .image-box,
+    .product-grid[data-bulk="yes"][data-count="16"] .image-box {
+      height: 100% !important;
+      max-height: 100% !important;
+      flex: 1 1 auto !important;
+      width: 106% !important;
+      max-width: 106% !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-img,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-img {
+      max-width: 112% !important;
+      max-height: 112% !important;
+      transform: scale(1.12) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-card:hover .product-img {
+      transform: scale(1.14) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-card,
+    .product-grid[data-bulk="yes"][data-count="13"] .product-card:hover,
+    .product-grid[data-bulk="yes"][data-count="14"] .product-card:hover,
+    .product-grid[data-bulk="yes"][data-count="15"] .product-card:hover,
+    .product-grid[data-bulk="yes"][data-count="16"] .product-card:hover {
+      transform: none !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="13"] .image-box > .info-box,
+    .product-grid[data-bulk="yes"][data-count="14"] .image-box > .info-box,
+    .product-grid[data-bulk="yes"][data-count="15"] .image-box > .info-box,
+    .product-grid[data-bulk="yes"][data-count="16"] .image-box > .info-box {
+      bottom: clamp(4px, 0.8vh, 10px) !important;
+    }
+
+    /* Auto hover preview: move focus card like mouse-over */
+    .product-card.auto-hover .product-img {
+      transform: scale(1.14) translateY(-3px) !important;
+      filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.3)) !important;
+    }
+
+    .product-card.auto-hover .price-wrap {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 3px 0 rgba(45, 10, 0, 0.6), 0 7px 10px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .product-card.auto-hover .name-wrap {
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
+    }
+
   </style>
 </head>
 
@@ -3119,6 +3986,7 @@
 
       <div class="header-right">
         <div class="live-badge">LIVE</div>
+        <a class="control-link" href="control.html" target="_blank" rel="noopener">Control</a>
         <div class="clock" id="dateText">--:--</div>
         <div class="clock" id="pageCounter" style="font-size: 1rem; opacity: 0.8; font-weight: 500;">1 / 7</div>
       </div>
@@ -3133,7 +4001,7 @@
         <div class="image-empty">กำลังเชื่อมต่อข้อมูล...</div>
       </div>
 
-      <p class="status-line" id="sheetStatus">กด * ตั้งค่า | กด + หรือ - เปลี่ยนหน้า | กด 1-9 เลือกหน้า</p>
+      <p class="status-line" id="sheetStatus">ใช้แท็บ/สไลด์หน้าจอ หรือหน้าเว็บควบคุมแยก (control.html)</p>
     </section>
 
     <div class="progress">
@@ -3226,12 +4094,18 @@
     ];
 
     const MOTHER_SHEET_NAME = "แม่ปุ๋ย";
+    const RUBBER_SHEET_NAME = "ปุ๋ยยาง";
 
     const MOTHER_SUBCATEGORIES = [
       "46-0-0 และ 18-46-0",
       "0-0-60",
       "21-0-0เม็ด",
       "21-0-0เกร็ด/ผง"
+    ];
+
+    const RUBBER_SUBCATEGORIES = [
+      "ปุ๋ยยางกรีด",
+      "ปุ๋ยยางเล็ก"
     ];
 
     let currentMotherSubIndex = 0;
@@ -3245,18 +4119,13 @@
       refreshSeconds: 60,
       pageSeconds: 30,
       logoUrl: "https://drive.google.com/thumbnail?id=1dbUjoftKIiS3oINGK3pSEgICMnMwAh9h&sz=w400",
-      products: [
-        {
-          name: "ปุ๋ยตัวอย่าง",
-          detail: "กดปุ่ม E เพื่อตั้งค่า Sheet ID",
-          price: "0",
-          unit: "บ.",
-          image: ""
-        }
-      ]
+      products: []
     };
 
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
+    const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
+    const CONTROL_META_KEY = "tv-display-control-meta-v1";
+    const ENABLE_KEYPAD_SHORTCUTS = false;
     const $ = (id) => document.getElementById(id);
 
     let data = loadData();
@@ -3265,6 +4134,10 @@
     let productsCache = {};
     let sheetTimer = null;
     let pageTimer = null;
+    let autoHoverTimer = null;
+    let lastRemoteCommandId = null;
+    let pendingNumericMainIndex = null;
+    let pendingNumericTimer = null;
 
     function clean(value) {
       return String(value ?? "").trim();
@@ -3306,23 +4179,55 @@
       return data.sheetPages[currentPageIndex] || "สินค้า";
     }
 
-                        function getGridShape(count) {
+function getGridShape(count) {
       if (count <= 4) return { cols: Math.max(1, count), rows: 1, density: "few" };
       if (count === 5) return { cols: 5, rows: 1, density: "five" };
-      if (count === 6) return { cols: 3, rows: 2, density: "many" };
+      if (count <= 10) return { cols: Math.ceil(count / 2), rows: 2, density: "zigzag" };
+      if (count <= 12) return { cols: 4, rows: 3, density: "bulk" };
+      if (count <= 16) return { cols: 4, rows: 4, density: "bulk" };
+      if (count <= 20) return { cols: 5, rows: 4, density: "bulk" };
+      if (count <= 25) return { cols: 5, rows: 5, density: "bulk" };
+      if (count <= 30) return { cols: 6, rows: 5, density: "bulk" };
+      if (count <= 36) return { cols: 6, rows: 6, density: "bulk" };
 
-      const cols = count <= 8 ? 4 : count <= 12 ? 4 : count <= 18 ? 6 : 6;
+      const cols = 7;
       const rows = Math.ceil(count / cols);
+      return { cols, rows, density: "bulk" };
+    }
 
-      return { cols, rows, density: "dense" };
+    function getItemsPerPage(count) {
+      const total = Number(count) || 0;
+      if (total <= 0) return 1;
+      return total > 16 ? 16 : total;
+    }
+
+    function publishControlMeta(viewCount = 0, totalSubPages = 1) {
+      const payload = {
+        updatedAt: Date.now(),
+        currentPageIndex,
+        currentMotherSubIndex,
+        currentSubPageIndex,
+        viewCount,
+        totalSubPages,
+        pages: data.sheetPages.map((name, idx) => ({
+          index: idx,
+          name,
+          subCategories: getSubCategoriesForSheet(name).map((subName, subIdx) => ({
+            index: subIdx,
+            name: subName
+          }))
+        }))
+      };
+
+      localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
     }
 
 function render() {
       const sheetName = getSheetName();
-      const allProducts = productsCache[sheetName] || data.products || [];
+      const allProducts = productsCache[sheetName] || [];
       const viewProducts = getVisibleProducts(sheetName, allProducts);
 
-      const itemsPerPage = viewProducts.length || 1;
+      const itemsPerPage = getItemsPerPage(viewProducts.length);
       const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
 
       if (currentSubPageIndex >= totalSubPages) currentSubPageIndex = 0;
@@ -3335,18 +4240,24 @@ function render() {
       document.documentElement.style.setProperty("--rows", String(shape.rows));
 
       $("productGrid").dataset.density = shape.density;
+      $("productGrid").dataset.cols = String(shape.cols);
+      $("productGrid").dataset.rows = String(shape.rows);
+      $("productGrid").dataset.count = String(displayProducts.length);
+      $("productGrid").dataset.bulk = shape.density === "bulk" ? "yes" : "no";
+      $("productGrid").style.setProperty("--zig-cols", String((shape.cols * 2) + 1));
 
       $("shopName").textContent = data.shopName;
 
-      $("heroTitle").textContent = sheetName === MOTHER_SHEET_NAME
-        ? `${sheetName} • ${getMotherSubName()}`
+      $("heroTitle").textContent = getSubCategoriesForSheet(sheetName).length
+        ? `${sheetName} • ${getSubCategoryName(sheetName)}`
         : sheetName;
 
       $("heroDesc").textContent = `${viewProducts.length} รายการ`;
 
       const pageText = `หมวด ${currentPageIndex + 1}/${data.sheetPages.length}`;
       const subPageText = totalSubPages > 1 ? ` (หน้า ${currentSubPageIndex + 1}/${totalSubPages})` : "";
-      const motherText = sheetName === MOTHER_SHEET_NAME ? ` • กลุ่ม ${currentMotherSubIndex + 1}/${MOTHER_SUBCATEGORIES.length}` : "";
+      const currentSubCategories = getSubCategoriesForSheet(sheetName);
+      const motherText = currentSubCategories.length ? ` • กลุ่ม ${currentMotherSubIndex + 1}/${currentSubCategories.length}` : "";
 
       $("pageCounter").textContent = pageText + motherText + subPageText;
       $("tickerText").textContent = data.tickerText || DEFAULT_DATA.tickerText;
@@ -3358,7 +4269,8 @@ function render() {
 
       renderTabs();
       renderSubTabs(sheetName);
-      renderGrid(displayProducts);
+      renderGrid(displayProducts, shape);
+      publishControlMeta(viewProducts.length, totalSubPages);
       resetProgressAnim();
     }
 
@@ -3375,33 +4287,44 @@ function render() {
 
       if (!subTabs) return;
 
-      if (sheetName !== MOTHER_SHEET_NAME) {
+      const categories = getSubCategoriesForSheet(sheetName);
+
+      if (!categories.length) {
         subTabs.innerHTML = "";
         subTabs.classList.remove("active");
         return;
       }
 
+      if (currentMotherSubIndex >= categories.length) currentMotherSubIndex = 0;
+
       subTabs.classList.add("active");
 
-      subTabs.innerHTML = MOTHER_SUBCATEGORIES.map((name, idx) => `
+      subTabs.innerHTML = categories.map((name, idx) => `
         <button class="subtab ${idx === currentMotherSubIndex ? "active" : ""}" data-sub-idx="${idx}">
           ${idx + 1}. ${escapeHtml(name)}
         </button>
       `).join("");
     }
 
-    function renderGrid(products) {
+    function renderGrid(products, shape = null) {
       const grid = $("productGrid");
 
       grid.innerHTML = "";
       void grid.offsetWidth;
+
+      if (autoHoverTimer) {
+        clearInterval(autoHoverTimer);
+        autoHoverTimer = null;
+      }
 
       if (!products.length) {
         grid.innerHTML = `<div class="image-empty">ไม่มีสินค้าในหมวดหมู่นี้</div>`;
         return;
       }
 
-      grid.innerHTML = products.map((item) => {
+      const isZigzag = shape && shape.density === "zigzag";
+
+      grid.innerHTML = products.map((item, idx) => {
         const imgUrl = resolveImg(item.image);
 
         const imgHtml = imgUrl
@@ -3411,24 +4334,51 @@ function render() {
         const price = clean(item.price);
         const unit = clean(item.unit) || "บ.";
 
+        let layoutStyle = "";
+        if (isZigzag) {
+          const cols = Math.max(1, Number(shape?.cols || 1));
+          const row = Math.floor(idx / cols) + 1;
+          const colInRow = idx % cols;
+          const startCol = (row % 2 === 1) ? (1 + (colInRow * 2)) : (2 + (colInRow * 2));
+          layoutStyle = ` style="grid-column:${startCol} / span 2; grid-row:${row};"`;
+        }
+
         return `
-          <article class="product-card">
-            <div class="image-box">${imgHtml}</div>
+          <article class="product-card"${layoutStyle}>
+            <div class="image-box">
+              ${imgHtml}
+              <div class="info-box">
+                <div class="name-wrap">
+                  <div class="product-name">${escapeHtml(item.name)}</div>
+                  ${item.detail ? `<div class="product-detail">${escapeHtml(item.detail)}</div>` : ""}
+                </div>
 
-            <div class="info-box">
-              <div class="name-wrap">
-                <div class="product-name">${escapeHtml(item.name)}</div>
-                ${item.detail ? `<div class="product-detail">${escapeHtml(item.detail)}</div>` : ""}
-              </div>
-
-              <div class="price-wrap">
-                <div class="price-val">${escapeHtml(price || "-")}</div>
-                ${price ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
+                <div class="price-wrap">
+                  <div class="price-val">${escapeHtml(price || "-")}</div>
+                  ${price ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
+                </div>
               </div>
             </div>
           </article>
         `;
       }).join("");
+
+      startAutoHoverPreview();
+    }
+
+    function startAutoHoverPreview() {
+      const cards = [...$("productGrid").querySelectorAll(".product-card")];
+      if (cards.length <= 1) return;
+
+      let idx = -1;
+      const step = () => {
+        cards.forEach((card) => card.classList.remove("auto-hover"));
+        idx = (idx + 1) % cards.length;
+        cards[idx].classList.add("auto-hover");
+      };
+
+      step();
+      autoHoverTimer = setInterval(step, 900);
     }
 
     function updateClock() {
@@ -3563,7 +4513,7 @@ function render() {
         if (found) return found;
       }
 
-      const text = normalizeText(`${item.name} ${item.detail} ${item.subCategory}`);
+      const text = normalizeText(String(item.name) + " " + String(item.detail) + " " + String(item.subCategory));
 
       if (text.includes("46-0-0") || text.includes("18-46-0")) {
         return "46-0-0 และ 18-46-0";
@@ -3587,27 +4537,71 @@ function render() {
       return "";
     }
 
+    function detectRubberSubCategory(item) {
+      const manual = clean(item.subCategory);
+
+      if (manual) {
+        const found = RUBBER_SUBCATEGORIES.find((cat) => {
+          return normalizeText(cat) === normalizeText(manual);
+        });
+
+        if (found) return found;
+      }
+
+      const text = normalizeText(String(item.name) + " " + String(item.detail) + " " + String(item.subCategory));
+
+      if (text.includes("เล็ก") || text.includes("ยางเล็ก") || text.includes("ต้นเล็ก") || text.includes("ต้นยางเล็ก")) {
+        return "ปุ๋ยยางเล็ก";
+      }
+
+      if (text.includes("กรีด") || text.includes("ยางกรีด") || text.includes("เปิดกรีด") || text.includes("หลังเปิดกรีด")) {
+        return "ปุ๋ยยางกรีด";
+      }
+
+      return "ปุ๋ยยางกรีด";
+    }
+
+    function getSubCategoriesForSheet(sheetName) {
+      const key = normalizeText(sheetName);
+      if (key === normalizeText(MOTHER_SHEET_NAME)) return MOTHER_SUBCATEGORIES;
+      if (key === normalizeText(RUBBER_SHEET_NAME)) return RUBBER_SUBCATEGORIES;
+      return [];
+    }
+
+    function getSubCategoryName(sheetName, subIndex = currentMotherSubIndex) {
+      const categories = getSubCategoriesForSheet(sheetName);
+      return categories[subIndex] || categories[0] || "";
+    }
+
     function getMotherSubName() {
-      return MOTHER_SUBCATEGORIES[currentMotherSubIndex] || MOTHER_SUBCATEGORIES[0];
+      return getSubCategoryName(MOTHER_SHEET_NAME);
+    }
+
+    function detectSubCategoryForSheet(sheetName, item) {
+      if (sheetName === MOTHER_SHEET_NAME) return detectMotherSubCategory(item);
+      if (sheetName === RUBBER_SHEET_NAME) return detectRubberSubCategory(item);
+      return "";
     }
 
     function getVisibleProducts(sheetName, products) {
-      if (sheetName !== MOTHER_SHEET_NAME) return products;
+      const categories = getSubCategoriesForSheet(sheetName);
+      if (!categories.length) return products;
 
-      const subName = getMotherSubName();
+      const subName = getSubCategoryName(sheetName);
 
       return products.filter((item) => {
-        return detectMotherSubCategory(item) === subName;
+        return detectSubCategoryForSheet(sheetName, item) === subName;
       });
     }
 
     function getVisibleProductsForState(sheetName, products, motherSubIndex = currentMotherSubIndex) {
-      if (sheetName !== MOTHER_SHEET_NAME) return products;
+      const categories = getSubCategoriesForSheet(sheetName);
+      if (!categories.length) return products;
 
-      const subName = MOTHER_SUBCATEGORIES[motherSubIndex] || MOTHER_SUBCATEGORIES[0];
+      const subName = getSubCategoryName(sheetName, motherSubIndex);
 
       return products.filter((item) => {
-        return detectMotherSubCategory(item) === subName;
+        return detectSubCategoryForSheet(sheetName, item) === subName;
       });
     }
 
@@ -3621,11 +4615,13 @@ function render() {
 
     function getNavigationStates() {
       return data.sheetPages.flatMap((sheetName, pageIndex) => {
-        if (sheetName !== MOTHER_SHEET_NAME) {
+        const categories = getSubCategoriesForSheet(sheetName);
+
+        if (!categories.length) {
           return [{ pageIndex, motherSubIndex: 0 }];
         }
 
-        return MOTHER_SUBCATEGORIES.map((_, motherSubIndex) => ({
+        return categories.map((_, motherSubIndex) => ({
           pageIndex,
           motherSubIndex
         }));
@@ -3667,13 +4663,10 @@ function render() {
 
       currentPageIndex = state.pageIndex;
       currentMotherSubIndex = state.motherSubIndex;
-
-      const sheetName = getSheetName();
-      const products = getProductsForSheetState(sheetName) || [];
-      const visibleProducts = getVisibleProductsForState(sheetName, products, currentMotherSubIndex);
-      const totalSubPages = Math.max(1, 1);
-
-      currentSubPageIndex = direction < 0 ? totalSubPages - 1 : 0;
+      const count = getStateProductCount(state);
+      const itemsPerPage = getItemsPerPage(count || 0);
+      const totalSubPages = Math.max(1, Math.ceil((count || 0) / itemsPerPage));
+      currentSubPageIndex = direction < 0 ? Math.max(0, totalSubPages - 1) : 0;
 
       render();
       loadSheetData(currentPageIndex);
@@ -3722,7 +4715,79 @@ function render() {
       return str;
     }
 
+    function clearPendingNumericMain() {
+      pendingNumericMainIndex = null;
+
+      if (pendingNumericTimer) {
+        clearTimeout(pendingNumericTimer);
+        pendingNumericTimer = null;
+      }
+    }
+
+    function setPendingNumericMain(idx) {
+      clearPendingNumericMain();
+      pendingNumericMainIndex = idx;
+
+      pendingNumericTimer = setTimeout(() => {
+        clearPendingNumericMain();
+      }, 8000);
+    }
+
+    function armSubCategoryMode() {
+      const sheetName = getSheetName();
+      const categories = getSubCategoriesForSheet(sheetName);
+
+      if (!categories.length) {
+        clearPendingNumericMain();
+        $("sheetStatus").textContent = "หมวดนี้ไม่มีหมวดย่อย";
+        $("sheetStatus").classList.add("error");
+        return;
+      }
+
+      setPendingNumericMain(currentPageIndex);
+      $("sheetStatus").textContent = "โหมดหมวดย่อย: กด 1-" + categories.length + " สำหรับ " + sheetName;
+      $("sheetStatus").classList.remove("error");
+    }
+
+    function handleNumericPageKey(num) {
+      const idx = num - 1;
+
+      if (pendingNumericMainIndex !== null) {
+        const sheetName = data.sheetPages[pendingNumericMainIndex];
+        const categories = getSubCategoriesForSheet(sheetName);
+
+        if (idx >= 0 && idx < categories.length) {
+          clearPendingNumericMain();
+          currentPageIndex = pendingNumericMainIndex;
+          currentMotherSubIndex = idx;
+          currentSubPageIndex = 0;
+          render();
+          loadSheetData(currentPageIndex);
+          restartPageTimer();
+          $("sheetStatus").textContent = "เลือกแล้ว: " + sheetName + " / " + categories[idx];
+          $("sheetStatus").classList.remove("error");
+          return;
+        }
+
+        clearPendingNumericMain();
+      }
+
+      if (idx < 0 || idx >= data.sheetPages.length) return;
+
+      const sheetName = data.sheetPages[idx];
+      currentPageIndex = idx;
+      currentSubPageIndex = 0;
+      currentMotherSubIndex = 0;
+
+      render();
+      loadSheetData(currentPageIndex);
+      restartPageTimer();
+      $("sheetStatus").textContent = "เลือกหมวดหลัก: " + sheetName + " | ถ้าต้องการหมวดย่อยให้กด 0 แล้ว 1-9";
+      $("sheetStatus").classList.remove("error");
+    }
+
     function goPage(idx) {
+      clearPendingNumericMain();
       if (idx < 0 || idx >= data.sheetPages.length) return;
 
       currentPageIndex = idx;
@@ -3736,9 +4801,10 @@ function render() {
 
     function next() {
       const sheetName = getSheetName();
-      const allProducts = getProductsForSheetState(sheetName) || data.products || [];
+      const allProducts = getProductsForSheetState(sheetName) || [];
       const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
-      const totalSubPages = Math.max(1, 1);
+      const itemsPerPage = getItemsPerPage(viewProducts.length);
+      const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
 
       if (viewProducts.length > 0 && currentSubPageIndex < totalSubPages - 1) {
         currentSubPageIndex++;
@@ -3755,8 +4821,10 @@ function render() {
 
     function prev() {
       const sheetName = getSheetName();
-      const allProducts = getProductsForSheetState(sheetName) || data.products || [];
+      const allProducts = getProductsForSheetState(sheetName) || [];
       const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
+      const itemsPerPage = getItemsPerPage(viewProducts.length);
+      const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
 
       if (viewProducts.length > 0 && currentSubPageIndex > 0) {
         currentSubPageIndex--;
@@ -3769,6 +4837,76 @@ function render() {
 
       render();
       restartPageTimer();
+    }
+
+    function goToMainAndSub(pageIndex, motherSubIndex = 0, subPageIndex = 0) {
+      if (pageIndex < 0 || pageIndex >= data.sheetPages.length) return false;
+
+      const sheetName = data.sheetPages[pageIndex];
+      const categories = getSubCategoriesForSheet(sheetName);
+      const safeMotherSub = categories.length
+        ? Math.min(categories.length - 1, Math.max(0, motherSubIndex))
+        : 0;
+
+      const allProducts = getProductsForSheetState(sheetName) || [];
+      const viewProducts = getVisibleProductsForState(sheetName, allProducts, safeMotherSub);
+      const itemsPerPage = getItemsPerPage(viewProducts.length);
+      const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
+      const safeSubPage = Math.min(totalSubPages - 1, Math.max(0, subPageIndex));
+
+      clearPendingNumericMain();
+      currentPageIndex = pageIndex;
+      currentMotherSubIndex = safeMotherSub;
+      currentSubPageIndex = safeSubPage;
+      render();
+      loadSheetData(currentPageIndex);
+      restartPageTimer();
+      return true;
+    }
+
+    function handleRemoteCommand(command) {
+      if (!command || !command.action) return;
+
+      switch (command.action) {
+        case "next":
+          next();
+          return;
+        case "prev":
+          prev();
+          return;
+        case "goMain":
+          goToMainAndSub(Number(command.pageIndex) || 0, 0, 0);
+          return;
+        case "goSub":
+          goToMainAndSub(Number(command.pageIndex) || 0, Number(command.subIndex) || 0, 0);
+          return;
+        case "goSubPage":
+          goToMainAndSub(Number(command.pageIndex) || 0, Number(command.subIndex) || 0, Number(command.subPageIndex) || 0);
+          return;
+        case "refresh":
+          render();
+          restartPageTimer();
+          return;
+        default:
+          return;
+      }
+    }
+
+    function bindRemoteControlChannel() {
+      window.addEventListener("storage", (event) => {
+        if (event.key !== CONTROL_COMMAND_KEY || !event.newValue) return;
+
+        try {
+          const command = JSON.parse(event.newValue);
+          if (!command || !command.id) return;
+          if (command.id === lastRemoteCommandId) return;
+
+          lastRemoteCommandId = command.id;
+          handleRemoteCommand(command);
+        } catch (err) {
+          // ignore malformed command payload
+        }
+      });
     }
 
     function startLoops() {
@@ -3900,7 +5038,7 @@ function render() {
 
       if (isInput) return;
 
-      if (e.key === "*" || e.code === "NumpadMultiply" || e.key.toLowerCase() === "e") {
+      if (ENABLE_KEYPAD_SHORTCUTS && (e.key === "*" || e.code === "NumpadMultiply" || e.key.toLowerCase() === "e")) {
         e.preventDefault();
 
         if (isEditorOpen) {
@@ -3910,7 +5048,7 @@ function render() {
         }
       }
 
-      if (e.key === "Escape" || e.key === "/" || e.code === "NumpadDivide" || e.key === "." || e.code === "NumpadDecimal") {
+      if (e.key === "Escape" || e.key === "Clear" || e.key === "/" || e.code === "NumpadDivide" || e.key === "." || e.code === "NumpadDecimal") {
         if (isAlertOpen) {
           $("alertModalOverlay").classList.remove("open");
           return;
@@ -3922,11 +5060,31 @@ function render() {
         }
       }
 
-      if (!isEditorOpen && !isAlertOpen) {
-        if (/^[1-9]$/.test(e.key)) goPage(Number(e.key) - 1);
+      if (!isEditorOpen && !isAlertOpen && ENABLE_KEYPAD_SHORTCUTS) {
+        if (e.key === "Escape" || e.key === "Clear") {
+          clearPendingNumericMain();
+        }
+
+        if (
+          e.key === "0" ||
+          e.key === "00" ||
+          e.code === "Numpad0" ||
+          e.code === "Numpad00"
+        ) {
+          armSubCategoryMode();
+          return;
+        }
+
+        let numericKey = null;
 
         if (e.code && /^Numpad[1-9]$/.test(e.code)) {
-          goPage(Number(e.code.replace("Numpad", "")) - 1);
+          numericKey = Number(e.code.replace("Numpad", ""));
+        } else if (/^[1-9]$/.test(e.key)) {
+          numericKey = Number(e.key);
+        }
+
+        if (numericKey !== null) {
+          handleNumericPageKey(numericKey);
         }
 
         if (e.key === "+" || e.code === "NumpadAdd" || e.key === "ArrowRight") {
@@ -3948,6 +5106,7 @@ function render() {
       const btn = e.target.closest(".subtab");
       if (!btn) return;
 
+      clearPendingNumericMain();
       currentMotherSubIndex = Number(btn.dataset.subIdx) || 0;
       currentSubPageIndex = 0;
 
@@ -3969,6 +5128,7 @@ function render() {
       if (touchEndX > touchStartX + 50) prev();
     }, { passive: true });
 
+    bindRemoteControlChannel();
     updateClock();
     setInterval(updateClock, 1000);
 
