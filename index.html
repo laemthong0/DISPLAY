@@ -4060,6 +4060,11 @@
         </div>
 
         <div class="form-group full">
+          <label>Google Apps Script Web App URL (ควบคุมข้ามอุปกรณ์)</label>
+          <input type="text" id="editControlWebAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+
+        <div class="form-group full">
           <label>รายชื่อชีต / หมวดสินค้า (บรรทัดละ 1 ชื่อ)</label>
           <textarea id="editSheetPages"></textarea>
         </div>
@@ -4119,6 +4124,7 @@
       refreshSeconds: 60,
       pageSeconds: 30,
       logoUrl: "https://drive.google.com/thumbnail?id=1dbUjoftKIiS3oINGK3pSEgICMnMwAh9h&sz=w400",
+      controlWebAppUrl: "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec",
       products: []
     };
 
@@ -4126,6 +4132,7 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const ENABLE_KEYPAD_SHORTCUTS = false;
+    const REMOTE_CONTROL_POLL_MS = 1200;
     const $ = (id) => document.getElementById(id);
 
     let data = loadData();
@@ -4135,6 +4142,7 @@
     let sheetTimer = null;
     let pageTimer = null;
     let autoHoverTimer = null;
+    let remoteControlPollTimer = null;
     let lastRemoteCommandId = null;
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
@@ -4201,6 +4209,67 @@ function getGridShape(count) {
       return total > 16 ? 16 : total;
     }
 
+    function getControlWebAppUrl() {
+      const url = clean(data.controlWebAppUrl || "");
+      return /^https:\/\/script\.google\.com\//i.test(url) ? url : "";
+    }
+
+    function runJsonp(url, params = {}, timeoutMs = 5000) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `tvJsonp_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+        const script = document.createElement("script");
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("jsonp timeout"));
+        }, timeoutMs);
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          if (window[callbackName]) delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const u = new URL(url);
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) u.searchParams.set(k, String(v));
+        });
+        u.searchParams.set("callback", callbackName);
+        u.searchParams.set("_ts", String(Date.now()));
+
+        window[callbackName] = (payload) => {
+          cleanup();
+          resolve(payload);
+        };
+
+        script.src = u.toString();
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("jsonp failed"));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function pushRemoteMeta(metaPayload) {
+      const endpoint = getControlWebAppUrl();
+      if (!endpoint) return;
+
+      try {
+        fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            mode: "push_meta",
+            source: "display",
+            meta: metaPayload
+          })
+        }).catch(() => {});
+      } catch (err) {
+        // ignore
+      }
+    }
+
     function publishControlMeta(viewCount = 0, totalSubPages = 1) {
       const payload = {
         updatedAt: Date.now(),
@@ -4220,6 +4289,7 @@ function getGridShape(count) {
       };
 
       localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
+      pushRemoteMeta(payload);
     }
 
 function render() {
@@ -4909,6 +4979,31 @@ function render() {
       });
     }
 
+    function pullRemoteCommand() {
+      const endpoint = getControlWebAppUrl();
+      if (!endpoint) return;
+
+      runJsonp(endpoint, {
+        mode: "pull_command",
+        screen: "display",
+        lastId: lastRemoteCommandId || ""
+      }, 4500).then((res) => {
+        if (!res || !res.ok || !res.command) return;
+        if (!res.command.id || res.command.id === lastRemoteCommandId) return;
+
+        lastRemoteCommandId = res.command.id;
+        handleRemoteCommand(res.command);
+      }).catch(() => {});
+    }
+
+    function restartRemoteControlPolling() {
+      if (remoteControlPollTimer) clearInterval(remoteControlPollTimer);
+
+      if (!getControlWebAppUrl()) return;
+      pullRemoteCommand();
+      remoteControlPollTimer = setInterval(pullRemoteCommand, REMOTE_CONTROL_POLL_MS);
+    }
+
     function startLoops() {
       if (sheetTimer) clearInterval(sheetTimer);
 
@@ -4927,6 +5022,7 @@ function render() {
       }, data.refreshSeconds * 1000);
 
       restartPageTimer();
+      restartRemoteControlPolling();
     }
 
     function restartPageTimer() {
@@ -4966,6 +5062,7 @@ function render() {
       $("editSheetPages").value = data.sheetPages.join("\n");
       $("editLogoUrl").value = data.logoUrl || "";
       $("editTickerText").value = data.tickerText || "";
+      $("editControlWebAppUrl").value = data.controlWebAppUrl || "";
 
       $("editorModalOverlay").classList.add("open");
     }
@@ -4981,6 +5078,7 @@ function render() {
 
       data.logoUrl = $("editLogoUrl").value.trim();
       data.tickerText = $("editTickerText").value.trim();
+      data.controlWebAppUrl = $("editControlWebAppUrl").value.trim();
 
       saveData();
 
