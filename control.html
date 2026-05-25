@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>Control Panel - Display</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f7;
+      --card: #ffffff;
+      --line: #d7dee6;
+      --text: #17212b;
+      --muted: #5a6b7c;
+      --brand: #1f6f43;
+      --brand-2: #2e8455;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 14px;
+      padding-left: max(14px, env(safe-area-inset-left));
+      padding-right: max(14px, env(safe-area-inset-right));
+      padding-top: max(14px, env(safe-area-inset-top));
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .wrap {
+      max-width: 1060px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.38rem;
+      color: var(--brand);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .btn {
+      border: 1px solid #c7d0da;
+      background: #fff;
+      color: #1d2a36;
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.1rem;
+      line-height: 1;
+      min-height: 48px;
+      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04);
+      transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+      touch-action: manipulation;
+    }
+    .btn:hover {
+      background: #f2f6fa;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(16, 24, 40, 0.09);
+    }
+    .btn.primary {
+      border-color: #1f6f43;
+      background: var(--brand);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--brand-2); }
+    .btn.active {
+      border-color: #1f6f43;
+      box-shadow: inset 0 0 0 1px #1f6f43, 0 2px 8px rgba(31, 111, 67, 0.16);
+      background: #ecf7f0;
+    }
+
+    #btnPrev, #btnNext {
+      min-width: 120px;
+      min-height: 52px;
+      font-size: 1.18rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 10px;
+    }
+
+    .grid .btn {
+      min-height: 0;
+      aspect-ratio: 1 / 1;
+      height: auto;
+      font-size: 1.3rem;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: normal;
+      line-height: 1.14;
+      padding: 8px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .state {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 1.16rem;
+    }
+    .state b { color: #0f5132; }
+
+    .gas-config {
+      display: none !important;
+    }
+
+    @media (max-width: 1024px) {
+      .wrap {
+        max-width: 100%;
+        gap: 10px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 9px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 1.2rem;
+      }
+
+      .row {
+        gap: 6px;
+      }
+
+      .btn {
+        min-height: 50px;
+        font-size: 1.08rem;
+        border-radius: 11px;
+        padding: 10px 12px;
+      }
+
+      #btnPrev, #btnNext {
+        min-width: 0;
+        flex: 1 1 calc(50% - 6px);
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .grid .btn {
+        font-size: 1.12rem;
+        line-height: 1.12;
+        padding: 7px;
+      }
+
+      .state {
+        font-size: 1rem;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .card {
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      .btn {
+        font-size: 1rem;
+        min-height: 48px;
+      }
+
+      .grid .btn {
+        font-size: 1.02rem;
+        padding: 6px;
+      }
+
+      .state {
+        font-size: 0.92rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <h1>หน้าเว็บควบคุมจอแสดงสินค้า</h1>
+        <div class="row">
+          <button class="btn" id="btnReloadMeta">รีโหลดข้อมูล</button>
+          <button class="btn primary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
+        </div>
+      </div>
+      <div class="row gas-config" style="margin-top:8px;">
+        <input id="gasUrlInput" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)" style="flex:1;min-width:320px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
+        <button class="btn" id="btnSaveGasUrl">บันทึก URL</button>
+      </div>
+      <div class="muted" id="connHint" style="margin-top:6px;">
+        ใช้ควบคุมข้ามอุปกรณ์ผ่าน Google Apps Script Web App
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn" id="btnPrev">ก่อนหน้า</button>
+        <button class="btn" id="btnNext">ถัดไป</button>
+      </div>
+      <div class="state" id="stateLine" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:8px;">
+        <b>หมวดหลัก</b>
+      </div>
+      <div class="grid" id="mainGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:8px;">
+        <b>หมวดย่อยของหมวดที่เลือก</b>
+      </div>
+      <div class="grid" id="subGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:8px;">
+        <b>หน้าย่อย (กรณีเกิน 16 รายการ)</b>
+      </div>
+      <div class="grid" id="subPageGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "tv-price-display-modern-premium-v9";
+    const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
+    const CONTROL_META_KEY = "tv-display-control-meta-v1";
+    const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
+    const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
+    const REMOTE_META_POLL_MS = 1500;
+
+    const $ = (id) => document.getElementById(id);
+
+    let meta = null;
+    let remoteMetaTimer = null;
+
+    function escapeHtml(str) {
+      return String(str ?? "").replace(/[&<>\"']/g, (m) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      }[m]));
+    }
+
+    function clean(val) {
+      return String(val ?? "").trim();
+    }
+
+    function validWebAppUrl(url) {
+      return /^https:\/\/script\.google\.com\//i.test(clean(url));
+    }
+
+    function getWebAppUrl() {
+      const fromInput = clean($("gasUrlInput").value);
+      if (validWebAppUrl(fromInput)) return fromInput;
+
+      const fromLocal = clean(localStorage.getItem(CONTROL_WEBAPP_KEY) || "");
+      if (validWebAppUrl(fromLocal)) return fromLocal;
+
+      try {
+        const rawMain = localStorage.getItem(STORAGE_KEY);
+        const parsed = rawMain ? JSON.parse(rawMain) : null;
+        const fromMain = clean(parsed?.controlWebAppUrl || "");
+        if (validWebAppUrl(fromMain)) return fromMain;
+      } catch {}
+
+      if (validWebAppUrl(DEFAULT_WEBAPP_URL)) return DEFAULT_WEBAPP_URL;
+
+      return "";
+    }
+
+    function setHint(text) {
+      $("connHint").textContent = text;
+    }
+
+    function runJsonp(url, params = {}, timeoutMs = 5000) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `ctrlJsonp_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+        const script = document.createElement("script");
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("timeout"));
+        }, timeoutMs);
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          if (window[callbackName]) delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        };
+
+        const u = new URL(url);
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) u.searchParams.set(k, String(v));
+        });
+        u.searchParams.set("callback", callbackName);
+        u.searchParams.set("_ts", String(Date.now()));
+
+        window[callbackName] = (payload) => {
+          cleanup();
+          resolve(payload);
+        };
+
+        script.src = u.toString();
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("failed"));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    function sendCommand(action, extra = {}) {
+      const cmd = {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        action,
+        ...extra
+      };
+
+      localStorage.setItem(CONTROL_COMMAND_KEY, JSON.stringify(cmd));
+
+      const endpoint = getWebAppUrl();
+      if (!endpoint) return;
+
+      try {
+        fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            mode: "push_command",
+            source: "control",
+            command: cmd
+          })
+        }).catch(() => {});
+      } catch {}
+    }
+
+    function readMetaLocal() {
+      try {
+        const raw = localStorage.getItem(CONTROL_META_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function readMetaRemote() {
+      const endpoint = getWebAppUrl();
+      if (!endpoint) return Promise.resolve(null);
+
+      return runJsonp(endpoint, { mode: "pull_meta" }, 5000)
+        .then((res) => {
+          if (res && res.ok && res.meta) return res.meta;
+          return null;
+        })
+        .catch(() => null);
+    }
+
+    function getMainPage() {
+      if (!meta || !Array.isArray(meta.pages) || !meta.pages.length) return null;
+      return meta.pages[meta.currentPageIndex] || meta.pages[0];
+    }
+
+    function renderState() {
+      const el = $("stateLine");
+      if (!meta) {
+        el.innerHTML = `<span class="muted">ยังไม่มีข้อมูลจากหน้าจอหลัก กรุณาเปิด index.html ไว้ก่อน</span>`;
+        return;
+      }
+      const page = getMainPage();
+      const pageName = page ? page.name : "-";
+      const subName = (page && page.subCategories && page.subCategories[meta.currentMotherSubIndex])
+        ? page.subCategories[meta.currentMotherSubIndex].name
+        : "-";
+      const subPageText = `${(meta.currentSubPageIndex || 0) + 1}/${Math.max(1, meta.totalSubPages || 1)}`;
+      el.innerHTML = `
+        <span>หมวด: <b>${escapeHtml(pageName)}</b></span>
+        <span>หมวดย่อย: <b>${escapeHtml(subName)}</b></span>
+        <span>หน้าย่อย: <b>${escapeHtml(subPageText)}</b></span>
+        <span>จำนวนสินค้า: <b>${Number(meta.viewCount || 0)}</b></span>
+      `;
+    }
+
+    function renderMainButtons() {
+      const grid = $("mainGrid");
+      grid.innerHTML = "";
+      if (!meta || !Array.isArray(meta.pages)) return;
+
+      meta.pages.forEach((p) => {
+        const btn = document.createElement("button");
+        btn.className = "btn" + (p.index === meta.currentPageIndex ? " active" : "");
+        btn.textContent = `${p.index + 1}. ${p.name}`;
+        btn.onclick = () => sendCommand("goMain", { pageIndex: p.index });
+        grid.appendChild(btn);
+      });
+    }
+
+    function renderSubButtons() {
+      const grid = $("subGrid");
+      grid.innerHTML = "";
+      const page = getMainPage();
+      if (!page) return;
+
+      const subCategories = Array.isArray(page.subCategories) ? page.subCategories : [];
+      if (!subCategories.length) {
+        const d = document.createElement("div");
+        d.className = "muted";
+        d.textContent = "หมวดนี้ไม่มีหมวดย่อย";
+        grid.appendChild(d);
+        return;
+      }
+
+      subCategories.forEach((s) => {
+        const btn = document.createElement("button");
+        btn.className = "btn" + (s.index === meta.currentMotherSubIndex ? " active" : "");
+        btn.textContent = `${s.index + 1}. ${s.name}`;
+        btn.onclick = () => sendCommand("goSub", { pageIndex: page.index, subIndex: s.index });
+        grid.appendChild(btn);
+      });
+    }
+
+    function renderSubPageButtons() {
+      const grid = $("subPageGrid");
+      grid.innerHTML = "";
+      if (!meta) return;
+      const total = Math.max(1, Number(meta.totalSubPages || 1));
+      const page = getMainPage();
+      const pageIndex = page ? page.index : 0;
+      const subIndex = Number(meta.currentMotherSubIndex || 0);
+
+      for (let i = 0; i < total; i++) {
+        const btn = document.createElement("button");
+        btn.className = "btn" + (i === Number(meta.currentSubPageIndex || 0) ? " active" : "");
+        btn.textContent = `หน้า ${i + 1}`;
+        btn.onclick = () => sendCommand("goSubPage", {
+          pageIndex,
+          subIndex,
+          subPageIndex: i
+        });
+        grid.appendChild(btn);
+      }
+    }
+
+    function render() {
+      renderState();
+      renderMainButtons();
+      renderSubButtons();
+      renderSubPageButtons();
+    }
+
+    function restartRemoteMetaPolling() {
+      if (remoteMetaTimer) clearInterval(remoteMetaTimer);
+      const endpoint = getWebAppUrl();
+      if (!endpoint) return;
+
+      const tick = () => {
+        readMetaRemote().then((remoteMeta) => {
+          if (remoteMeta) {
+            meta = remoteMeta;
+            render();
+            setHint("เชื่อมต่อ GAS แล้ว");
+          }
+        });
+      };
+      tick();
+      remoteMetaTimer = setInterval(tick, REMOTE_META_POLL_MS);
+    }
+
+    function reloadMeta() {
+      const localMeta = readMetaLocal();
+      if (localMeta) {
+        meta = localMeta;
+        render();
+      }
+
+      readMetaRemote().then((remoteMeta) => {
+        if (remoteMeta) {
+          meta = remoteMeta;
+          render();
+          setHint("เชื่อมต่อ GAS แล้ว");
+        } else {
+          if (!getWebAppUrl()) {
+            setHint("ยังไม่ตั้งค่า GAS URL");
+          } else {
+            setHint("ยังดึงข้อมูลจาก GAS ไม่ได้ (ตรวจ URL/สิทธิ์ Deploy)");
+          }
+        }
+      });
+    }
+
+    $("btnPrev").onclick = () => sendCommand("prev");
+    $("btnNext").onclick = () => sendCommand("next");
+    $("btnRefresh").onclick = () => sendCommand("refresh");
+    $("btnReloadMeta").onclick = reloadMeta;
+
+    $("btnSaveGasUrl").onclick = () => {
+      const url = clean($("gasUrlInput").value);
+      if (!validWebAppUrl(url)) {
+        setHint("URL ไม่ถูกต้อง (ต้องขึ้นต้นด้วย https://script.google.com/)");
+        return;
+      }
+      localStorage.setItem(CONTROL_WEBAPP_KEY, url);
+      setHint("บันทึก GAS URL แล้ว");
+      restartRemoteMetaPolling();
+      reloadMeta();
+    };
+
+    window.addEventListener("storage", (event) => {
+      if (event.key === CONTROL_META_KEY) reloadMeta();
+    });
+
+    (function init() {
+      const saved = getWebAppUrl();
+      if (saved) $("gasUrlInput").value = saved;
+      restartRemoteMetaPolling();
+      reloadMeta();
+    })();
+  </script>
+</body>
+</html>
