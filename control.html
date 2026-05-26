@@ -257,7 +257,7 @@
 
     <div class="card">
       <div class="row" style="margin-bottom:8px;">
-        <b>หน้าย่อย (กรณีเกิน 16 รายการ)</b>
+        <b>หน้าย่อย (กรณีเกิน 21 รายการ)</b>
       </div>
       <div class="grid" id="subPageGrid"></div>
     </div>
@@ -364,19 +364,25 @@
 
       const endpoint = getWebAppUrl();
       if (!endpoint) return;
+      const sendOnce = () => {
+        try {
+          fetch(endpoint, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              mode: "push_command",
+              source: "control",
+              command: cmd
+            })
+          }).catch(() => {});
+        } catch {}
+      };
 
-      try {
-        fetch(endpoint, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            mode: "push_command",
-            source: "control",
-            command: cmd
-          })
-        }).catch(() => {});
-      } catch {}
+      // Retry short bursts to reduce dropped commands over remote network.
+      sendOnce();
+      setTimeout(sendOnce, 220);
+      setTimeout(sendOnce, 520);
     }
 
     function readMetaLocal() {
