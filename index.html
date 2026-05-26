@@ -3877,67 +3877,69 @@
       pointer-events: none !important;
     }
 
-    /* 13-16 items: fixed layout 8 x 2 (no zigzag) */
-    .product-grid[data-bulk="yes"][data-count="13"],
-    .product-grid[data-bulk="yes"][data-count="14"],
-    .product-grid[data-bulk="yes"][data-count="15"],
-    .product-grid[data-bulk="yes"][data-count="16"] {
-      grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    /* 9-12 items: fixed layout 7 x 2 */
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] {
+      grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
       grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
-      gap: clamp(2px, 0.24vh, 6px) clamp(2px, 0.2vw, 5px) !important;
-      padding: clamp(1px, 0.12vh, 4px) clamp(1px, 0.12vw, 4px) !important;
+      gap: clamp(2px, 0.3vh, 7px) clamp(2px, 0.24vw, 6px) !important;
+      padding: clamp(1px, 0.16vh, 5px) clamp(1px, 0.14vw, 5px) clamp(46px, 5vh, 64px) !important;
     }
 
-    .product-grid[data-bulk="yes"][data-count="13"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="14"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="15"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="16"] .product-card {
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-card {
       justify-content: stretch !important;
       padding: 0 !important;
     }
 
-    .product-grid[data-bulk="yes"][data-count="13"] .image-box,
-    .product-grid[data-bulk="yes"][data-count="14"] .image-box,
-    .product-grid[data-bulk="yes"][data-count="15"] .image-box,
-    .product-grid[data-bulk="yes"][data-count="16"] .image-box {
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .image-box {
       height: 100% !important;
       max-height: 100% !important;
       flex: 1 1 auto !important;
-      width: 106% !important;
-      max-width: 106% !important;
     }
 
-    .product-grid[data-bulk="yes"][data-count="13"] .product-img,
-    .product-grid[data-bulk="yes"][data-count="14"] .product-img,
-    .product-grid[data-bulk="yes"][data-count="15"] .product-img,
-    .product-grid[data-bulk="yes"][data-count="16"] .product-img {
-      max-width: 112% !important;
-      max-height: 112% !important;
-      transform: scale(1.12) !important;
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-img,
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-card.auto-hover .product-img {
+      max-width: 88% !important;
+      max-height: 88% !important;
+      transform: scale(1) !important;
+      transform-origin: center bottom !important;
+      object-fit: contain !important;
     }
 
-    .product-grid[data-bulk="yes"][data-count="13"] .product-card:hover .product-img,
-    .product-grid[data-bulk="yes"][data-count="14"] .product-card:hover .product-img,
-    .product-grid[data-bulk="yes"][data-count="15"] .product-card:hover .product-img,
-    .product-grid[data-bulk="yes"][data-count="16"] .product-card:hover .product-img {
-      transform: scale(1.14) !important;
-    }
-
-    .product-grid[data-bulk="yes"][data-count="13"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="14"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="15"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="16"] .product-card,
-    .product-grid[data-bulk="yes"][data-count="13"] .product-card:hover,
-    .product-grid[data-bulk="yes"][data-count="14"] .product-card:hover,
-    .product-grid[data-bulk="yes"][data-count="15"] .product-card:hover,
-    .product-grid[data-bulk="yes"][data-count="16"] .product-card:hover {
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-card,
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .product-card:hover {
       transform: none !important;
     }
 
-    .product-grid[data-bulk="yes"][data-count="13"] .image-box > .info-box,
-    .product-grid[data-bulk="yes"][data-count="14"] .image-box > .info-box,
-    .product-grid[data-bulk="yes"][data-count="15"] .image-box > .info-box,
-    .product-grid[data-bulk="yes"][data-count="16"] .image-box > .info-box {
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="2"] .image-box > .info-box {
+      bottom: clamp(4px, 0.85vh, 11px) !important;
+    }
+
+    /* 13-21 items: fixed layout 7 x 3 */
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] {
+      grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+      gap: clamp(2px, 0.24vh, 6px) clamp(2px, 0.2vw, 5px) !important;
+      padding: clamp(1px, 0.12vh, 4px) clamp(1px, 0.12vw, 4px) !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] .product-card {
+      justify-content: stretch !important;
+      padding: 0 !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] .image-box {
+      height: 100% !important;
+      max-height: 100% !important;
+      flex: 1 1 auto !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] .product-card,
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] .product-card:hover {
+      transform: none !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="7"][data-rows="3"] .image-box > .info-box {
       bottom: clamp(4px, 0.8vh, 10px) !important;
     }
 
@@ -3954,6 +3956,185 @@
 
     .product-card.auto-hover .name-wrap {
       box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* 1-5 items: keep product image and price fully inside each card */
+    .product-grid[data-density="few"],
+    .product-grid[data-density="five"] {
+      gap: clamp(6px, 0.75vw, 16px) !important;
+      align-items: center !important;
+    }
+
+    .product-grid[data-density="few"] .product-card,
+    .product-grid[data-density="five"] .product-card {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: min(76vh, 100%) !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      justify-content: stretch !important;
+      align-self: center !important;
+      justify-self: center !important;
+      padding: clamp(4px, 0.55vh, 10px) clamp(4px, 0.45vw, 10px) clamp(5px, 0.65vh, 12px) !important;
+      overflow: hidden !important;
+      border-radius: 12px !important;
+      background: rgba(255,255,255,0.08) !important;
+    }
+
+    .product-grid[data-density="five"] .product-card {
+      width: min(18.4vw, 330px) !important;
+      justify-self: center !important;
+    }
+
+    .product-grid[data-density="few"][data-count="1"] .product-card,
+    .product-grid[data-density="few"][data-count="2"] .product-card {
+      height: min(78vh, 100%) !important;
+    }
+
+    .product-grid[data-density="few"] .image-box,
+    .product-grid[data-density="five"] .image-box {
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: clamp(3px, 0.45vh, 10px) clamp(3px, 0.35vw, 9px) clamp(2px, 0.25vh, 7px) !important;
+      display: grid !important;
+      grid-template-rows: minmax(0, 1fr) auto !important;
+      row-gap: clamp(2px, 0.35vh, 7px) !important;
+      align-items: end !important;
+      justify-items: center !important;
+      overflow: hidden !important;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0) 68%) !important;
+    }
+
+    .product-grid[data-density="few"] .image-box::before,
+    .product-grid[data-density="five"] .image-box::before,
+    .product-grid[data-density="few"] .info-box::before,
+    .product-grid[data-density="few"] .info-box::after,
+    .product-grid[data-density="five"] .info-box::before,
+    .product-grid[data-density="five"] .info-box::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .product-grid[data-density="few"] .product-img,
+    .product-grid[data-density="five"] .product-img,
+    .product-grid[data-density="few"] .product-card:hover .product-img,
+    .product-grid[data-density="five"] .product-card:hover .product-img,
+    .product-grid[data-density="few"] .product-card.auto-hover .product-img,
+    .product-grid[data-density="five"] .product-card.auto-hover .product-img {
+      grid-row: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      align-self: end !important;
+      justify-self: center !important;
+      object-fit: contain !important;
+      object-position: center bottom !important;
+      transform: scale(1) !important;
+      transform-origin: center bottom !important;
+      animation: none !important;
+      filter: drop-shadow(0 10px 12px rgba(0,0,0,0.24)) !important;
+    }
+
+    .product-grid[data-density="few"] .no-image,
+    .product-grid[data-density="five"] .no-image {
+      grid-row: 1 !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      align-self: center !important;
+      justify-self: center !important;
+    }
+
+    .product-grid[data-density="few"] .image-box > .info-box,
+    .product-grid[data-density="five"] .image-box > .info-box {
+      grid-row: 2 !important;
+      position: static !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      transform: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: clamp(2px, 0.24vh, 5px) !important;
+      border: 0 !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+
+    .product-grid[data-density="few"] .name-wrap,
+    .product-grid[data-density="five"] .name-wrap {
+      flex: 0 1 auto !important;
+      width: fit-content !important;
+      max-width: min(100%, 190px) !important;
+      min-width: 0 !important;
+      padding: clamp(1px, 0.12vh, 3px) clamp(5px, 0.45vw, 10px) !important;
+      border-radius: 5px !important;
+    }
+
+    .product-grid[data-density="few"] .product-name,
+    .product-grid[data-density="five"] .product-name {
+      font-size: clamp(0.42rem, 0.62vw, 0.86rem) !important;
+      line-height: 1.1 !important;
+      text-align: center !important;
+      word-break: break-word !important;
+    }
+
+    .product-grid[data-density="few"] .product-detail,
+    .product-grid[data-density="five"] .product-detail {
+      display: none !important;
+    }
+
+    .product-grid[data-density="few"] .price-wrap,
+    .product-grid[data-density="five"] .price-wrap {
+      max-width: 100% !important;
+      min-width: 0 !important;
+      width: fit-content !important;
+      padding: clamp(2px, 0.16vh, 4px) clamp(7px, 0.62vw, 13px) clamp(3px, 0.28vh, 6px) !important;
+      border-width: 2px !important;
+      border-radius: 6px !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+
+    .product-grid[data-density="few"] .price-val,
+    .product-grid[data-density="five"] .price-val {
+      white-space: nowrap !important;
+      line-height: 0.92 !important;
+      font-size: clamp(1.35rem, 2.05vw, 2.8rem) !important;
+    }
+
+    .product-grid[data-density="five"] .price-val {
+      font-size: clamp(1.2rem, 1.8vw, 2.35rem) !important;
+    }
+
+    .product-grid[data-density="few"][data-count="1"] .price-val,
+    .product-grid[data-density="few"][data-count="2"] .price-val {
+      font-size: clamp(1.7rem, 2.65vw, 3.5rem) !important;
+    }
+
+    .product-grid[data-density="few"] .price-unit,
+    .product-grid[data-density="five"] .price-unit {
+      flex: 0 0 auto !important;
+      font-size: clamp(0.55rem, 0.78vw, 1rem) !important;
+      margin-top: 0.25em !important;
     }
 
   </style>
@@ -4027,7 +4208,7 @@
   <div class="modal-overlay" id="editorModalOverlay">
     <div class="editor-modal">
       <h3>ตั้งค่าจอแสดงสินค้า</h3>
-      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะ)</p>
+      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะ, G=หมวดย่อย)</p>
 
       <div class="form-grid">
         <div class="form-group">
@@ -4114,6 +4295,11 @@
       "ปุ๋ยยางเล็ก"
     ];
 
+    const FIXED_SUBCATEGORIES_BY_SHEET = {
+      [normalizeText(MOTHER_SHEET_NAME)]: MOTHER_SUBCATEGORIES,
+      [normalizeText(RUBBER_SHEET_NAME)]: RUBBER_SUBCATEGORIES
+    };
+
     let currentMotherSubIndex = 0;
 
     const DEFAULT_DATA = {
@@ -4133,7 +4319,7 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const ENABLE_KEYPAD_SHORTCUTS = false;
-    const REMOTE_CONTROL_POLL_MS = 1200;
+    const REMOTE_CONTROL_POLL_MS = 450;
     const $ = (id) => document.getElementById(id);
 
     let data = loadData();
@@ -4144,6 +4330,7 @@
     let pageTimer = null;
     let autoHoverTimer = null;
     let remoteControlPollTimer = null;
+    let remoteControlPollInFlight = false;
     let lastRemoteCommandId = null;
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
@@ -4191,10 +4378,9 @@
 function getGridShape(count) {
       if (count <= 4) return { cols: Math.max(1, count), rows: 1, density: "few" };
       if (count === 5) return { cols: 5, rows: 1, density: "five" };
-      if (count <= 10) return { cols: Math.ceil(count / 2), rows: 2, density: "zigzag" };
-      if (count <= 12) return { cols: 4, rows: 3, density: "bulk" };
-      if (count <= 16) return { cols: 4, rows: 4, density: "bulk" };
-      if (count <= 20) return { cols: 5, rows: 4, density: "bulk" };
+      if (count <= 8) return { cols: Math.ceil(count / 2), rows: 2, density: "zigzag" };
+      if (count <= 12) return { cols: 7, rows: 2, density: "bulk" };
+      if (count <= 21) return { cols: 7, rows: 3, density: "bulk" };
       if (count <= 25) return { cols: 5, rows: 5, density: "bulk" };
       if (count <= 30) return { cols: 6, rows: 5, density: "bulk" };
       if (count <= 36) return { cols: 6, rows: 6, density: "bulk" };
@@ -4207,7 +4393,7 @@ function getGridShape(count) {
     function getItemsPerPage(count) {
       const total = Number(count) || 0;
       if (total <= 0) return 1;
-      return total > 16 ? 16 : total;
+      return total > 21 ? 21 : total;
     }
 
     function getControlWebAppUrl() {
@@ -4562,8 +4748,38 @@ function render() {
         status: clean(r[5]),
         subCategory: clean(r[6])
       })).filter((i) => {
-        return i.name && !["ซ่อน", "hide", "false", "no"].includes(i.status.toLowerCase());
+        return isProductVisible(i);
       });
+    }
+
+    function normalizeStatus(value) {
+      return clean(value).toLowerCase().replace(/\s+/g, "");
+    }
+
+    function isHiddenStatus(value) {
+      const status = normalizeStatus(value);
+
+      if (!status) return false;
+
+      return (
+        status === "ซ่อน" ||
+        status === "ไม่แสดง" ||
+        status === "hide" ||
+        status === "hidden" ||
+        status === "false" ||
+        status === "no" ||
+        status === "n" ||
+        status === "0" ||
+        status === "off" ||
+        status === "ปิด" ||
+        status.includes("ซ่อน") ||
+        status.includes("ไม่แสดง") ||
+        status.includes("hidden")
+      );
+    }
+
+    function isProductVisible(item) {
+      return Boolean(item?.name) && !isHiddenStatus(item?.status);
     }
 
     function normalizeText(value) {
@@ -4634,9 +4850,25 @@ function render() {
 
     function getSubCategoriesForSheet(sheetName) {
       const key = normalizeText(sheetName);
-      if (key === normalizeText(MOTHER_SHEET_NAME)) return MOTHER_SUBCATEGORIES;
-      if (key === normalizeText(RUBBER_SHEET_NAME)) return RUBBER_SUBCATEGORIES;
-      return [];
+      const fixedCategories = FIXED_SUBCATEGORIES_BY_SHEET[key];
+
+      if (fixedCategories) return fixedCategories;
+
+      const products = getProductsForSheetState(sheetName);
+      if (!products) return [];
+
+      return products.filter(isProductVisible).reduce((categories, item) => {
+        const subCategory = clean(item.subCategory);
+
+        if (
+          subCategory &&
+          !categories.some((category) => normalizeText(category) === normalizeText(subCategory))
+        ) {
+          categories.push(subCategory);
+        }
+
+        return categories;
+      }, []);
     }
 
     function getSubCategoryName(sheetName, subIndex = currentMotherSubIndex) {
@@ -4649,29 +4881,32 @@ function render() {
     }
 
     function detectSubCategoryForSheet(sheetName, item) {
-      if (sheetName === MOTHER_SHEET_NAME) return detectMotherSubCategory(item);
-      if (sheetName === RUBBER_SHEET_NAME) return detectRubberSubCategory(item);
-      return "";
+      const key = normalizeText(sheetName);
+      if (key === normalizeText(MOTHER_SHEET_NAME)) return detectMotherSubCategory(item);
+      if (key === normalizeText(RUBBER_SHEET_NAME)) return detectRubberSubCategory(item);
+      return clean(item.subCategory);
     }
 
     function getVisibleProducts(sheetName, products) {
+      const visibleProducts = products.filter(isProductVisible);
       const categories = getSubCategoriesForSheet(sheetName);
-      if (!categories.length) return products;
+      if (!categories.length) return visibleProducts;
 
       const subName = getSubCategoryName(sheetName);
 
-      return products.filter((item) => {
+      return visibleProducts.filter((item) => {
         return detectSubCategoryForSheet(sheetName, item) === subName;
       });
     }
 
     function getVisibleProductsForState(sheetName, products, motherSubIndex = currentMotherSubIndex) {
+      const visibleProducts = products.filter(isProductVisible);
       const categories = getSubCategoriesForSheet(sheetName);
-      if (!categories.length) return products;
+      if (!categories.length) return visibleProducts;
 
       const subName = getSubCategoryName(sheetName, motherSubIndex);
 
-      return products.filter((item) => {
+      return visibleProducts.filter((item) => {
         return detectSubCategoryForSheet(sheetName, item) === subName;
       });
     }
@@ -4983,7 +5218,9 @@ function render() {
     function pullRemoteCommand() {
       const endpoint = getControlWebAppUrl();
       if (!endpoint) return;
+      if (remoteControlPollInFlight) return;
 
+      remoteControlPollInFlight = true;
       runJsonp(endpoint, {
         mode: "pull_command",
         screen: "display",
@@ -4994,7 +5231,11 @@ function render() {
 
         lastRemoteCommandId = res.command.id;
         handleRemoteCommand(res.command);
-      }).catch(() => {});
+      }).catch(() => {
+        // ignore transient network errors
+      }).finally(() => {
+        remoteControlPollInFlight = false;
+      });
     }
 
     function restartRemoteControlPolling() {
