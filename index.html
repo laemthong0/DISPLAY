@@ -4456,6 +4456,7 @@
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const REMOTE_CONTROL_POLL_MS = 200;
+    const WALL_SYNC_TICK_GRACE_MS = 90;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
 
@@ -4471,6 +4472,7 @@
     let lastRemoteCommandId = null;
     let controlBroadcastChannel = null;
     let fastRenderUntil = 0;
+    let wallSyncHoldUntil = 0;
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
 
@@ -4498,11 +4500,15 @@
 
     function getWallConfig() {
       const params = new URLSearchParams(window.location.search);
-      const modeOverride = readWallModeOverride();
+      const urlMode = clean(params.get("wallMode") || params.get("mode")).toLowerCase();
+      const modeOverride = (urlMode === "single" || urlMode === "wall")
+        ? urlMode
+        : readWallModeOverride();
       const forceSingle = modeOverride === "single";
       const forceWall = modeOverride === "wall";
       const wallParam = clean(params.get("wall")).toLowerCase();
       const wallRequested = wallParam === "1" || wallParam === "true" || wallParam === "yes";
+      const syncParam = clean(params.get("sync")).toLowerCase();
       const rawScreens = params.has("screens")
         ? clampNum(params.get("screens"), 1, 4, 1)
         : (wallRequested || forceWall ? 2 : 1);
@@ -4513,11 +4519,16 @@
       const itemsPerWallPage = params.has("wallItems")
         ? clampNum(params.get("wallItems"), 2, 42, 21)
         : 21;
+      const syncOffsetMs = params.has("syncOffset")
+        ? clampNum(params.get("syncOffset"), -60000, 60000, 0)
+        : 0;
 
       return {
         enabled,
         mode: enabled ? "wall" : "single",
         modeOverride,
+        syncEnabled: enabled && syncParam !== "0" && syncParam !== "false" && syncParam !== "off",
+        syncOffsetMs,
         screen,
         screenIndex: screen - 1,
         screens: effectiveScreens,
@@ -4557,6 +4568,27 @@
       return `${start}-${end}/${totalCount}`;
     }
 
+    function getPageDurationMs() {
+      return Math.max(5000, Math.round((Number(data?.pageSeconds) || DEFAULT_DATA.pageSeconds) * 1000));
+    }
+
+    function getWallSyncElapsedMs(now = Date.now()) {
+      const duration = getPageDurationMs();
+      const syncNow = now + (Number(WALL_CONFIG.syncOffsetMs) || 0);
+      return ((syncNow % duration) + duration) % duration;
+    }
+
+    function getWallSyncDelayMs(now = Date.now()) {
+      const duration = getPageDurationMs();
+      const remaining = duration - getWallSyncElapsedMs(now);
+      return Math.max(250, remaining + WALL_SYNC_TICK_GRACE_MS);
+    }
+
+    function holdWallSync(durationMs = getPageDurationMs()) {
+      if (!WALL_CONFIG.syncEnabled) return;
+      wallSyncHoldUntil = Math.max(wallSyncHoldUntil, Date.now() + durationMs);
+    }
+
     function setWallMode(mode) {
       const normalized = clean(mode).toLowerCase() === "wall" ? "wall" : "single";
 
@@ -4567,6 +4599,7 @@
       }
 
       WALL_CONFIG = getWallConfig();
+      wallSyncHoldUntil = 0;
       render();
       restartPageTimer();
     }
@@ -4626,6 +4659,10 @@ function getGridShape(count) {
     }
 
     function getControlWebAppUrl() {
+      const remoteParam = clean(new URLSearchParams(window.location.search).get("remote")).toLowerCase();
+
+      if (remoteParam === "0" || remoteParam === "false" || remoteParam === "off") return "";
+
       const url = clean(data.controlWebAppUrl || "");
       return /^https:\/\/script\.google\.com\//i.test(url) ? url : "";
     }
@@ -4697,6 +4734,8 @@ function getGridShape(count) {
         wall: {
           mode: WALL_CONFIG.mode,
           enabled: WALL_CONFIG.enabled,
+          syncEnabled: WALL_CONFIG.syncEnabled,
+          syncOffsetMs: WALL_CONFIG.syncOffsetMs,
           screen: WALL_CONFIG.screen,
           screens: WALL_CONFIG.screens,
           itemsPerWallPage: WALL_CONFIG.itemsPerWallPage
@@ -4780,6 +4819,7 @@ function render() {
       renderTabs();
       renderSubTabs(sheetName);
       renderGrid(displayProducts, shape, wallEmptyText);
+      preloadWallSyncImages();
       publishControlMeta(viewProducts.length, totalSubPages);
       resetProgressAnim();
     }
@@ -4911,9 +4951,15 @@ function render() {
 
     function resetProgressAnim() {
       const bar = $("progressFill");
+      const durationSeconds = getPageDurationMs() / 1000;
       bar.style.animation = "none";
+      bar.style.animationDelay = "0s";
       bar.offsetHeight;
-      bar.style.animation = `pageProgress ${data.pageSeconds}s linear infinite`;
+      bar.style.animation = `pageProgress ${durationSeconds}s linear infinite`;
+
+      if (WALL_CONFIG.syncEnabled) {
+        bar.style.animationDelay = `-${getWallSyncElapsedMs() / 1000}s`;
+      }
     }
 
     async function loadSheetData(pageIdx) {
@@ -4929,10 +4975,16 @@ function render() {
         const rows = await fetchJsonp(data.sheetId, sheetName);
         productsCache[sheetName] = parseRows(rows);
 
+        if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
+
         if (pageIdx === currentPageIndex) {
           $("sheetStatus").textContent = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString("th-TH");
           $("sheetStatus").classList.remove("error");
-          if (!skipCurrentEmptyState(1)) render();
+          if (WALL_CONFIG.syncEnabled) {
+            if (!applyWallSyncedState()) render();
+          } else if (!skipCurrentEmptyState(1)) {
+            render();
+          }
         }
       } catch (err) {
         console.error(err);
@@ -5197,6 +5249,99 @@ function render() {
       return getVisibleProductsForState(sheetName, products, state.motherSubIndex).length;
     }
 
+    function getWallSyncSlots() {
+      const slots = [];
+
+      getNavigationStates().forEach((state) => {
+        const count = getStateProductCount(state);
+
+        if (count === 0) return;
+
+        const pageCount = count === null
+          ? 1
+          : Math.max(1, Math.ceil(count / getItemsPerPage(count)));
+
+        for (let subPageIndex = 0; subPageIndex < pageCount; subPageIndex++) {
+          slots.push({
+            pageIndex: state.pageIndex,
+            motherSubIndex: state.motherSubIndex,
+            subPageIndex
+          });
+        }
+      });
+
+      return slots.length ? slots : [{ pageIndex: 0, motherSubIndex: 0, subPageIndex: 0 }];
+    }
+
+    function getWallSyncedSlot(now = Date.now()) {
+      const slots = getWallSyncSlots();
+      const syncNow = now + (Number(WALL_CONFIG.syncOffsetMs) || 0);
+      const slotIndex = Math.floor(syncNow / getPageDurationMs()) % slots.length;
+      return slots[Math.max(0, slotIndex)];
+    }
+
+    function applyWallSyncedState(now = Date.now()) {
+      if (!WALL_CONFIG.syncEnabled || now < wallSyncHoldUntil) return false;
+
+      const slot = getWallSyncedSlot(now);
+
+      if (!slot) return false;
+
+      const changed = slot.pageIndex !== currentPageIndex
+        || slot.motherSubIndex !== currentMotherSubIndex
+        || slot.subPageIndex !== currentSubPageIndex;
+
+      currentPageIndex = slot.pageIndex;
+      currentMotherSubIndex = slot.motherSubIndex;
+      currentSubPageIndex = slot.subPageIndex;
+
+      if (changed) {
+        markFastRender(1200);
+        render();
+        loadSheetData(currentPageIndex);
+      }
+
+      return changed;
+    }
+
+    function getProductsForWallSlot(slot) {
+      if (!slot) return [];
+
+      const sheetName = data.sheetPages[slot.pageIndex];
+      const allProducts = getProductsForSheetState(sheetName) || [];
+      const viewProducts = getVisibleProductsForState(sheetName, allProducts, slot.motherSubIndex);
+      const itemsPerPage = getItemsPerPage(viewProducts.length);
+      const startIndex = slot.subPageIndex * itemsPerPage;
+      const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
+      const wallSlice = getWallSlice(wallPageProducts.length);
+
+      return wallPageProducts.slice(wallSlice.start, wallSlice.end);
+    }
+
+    function preloadProductImages(products) {
+      if (!Array.isArray(products) || !products.length) return;
+
+      const imageSize = getProductImageSize(products.length);
+
+      products.forEach((item) => {
+        const imgUrl = resolveImg(item?.image, imageSize);
+
+        if (!imgUrl) return;
+
+        const img = new Image();
+        img.decoding = "async";
+        img.src = imgUrl;
+      });
+    }
+
+    function preloadWallSyncImages() {
+      if (!WALL_CONFIG.syncEnabled) return;
+
+      const now = Date.now();
+      preloadProductImages(getProductsForWallSlot(getWallSyncedSlot(now)));
+      preloadProductImages(getProductsForWallSlot(getWallSyncedSlot(now + getPageDurationMs())));
+    }
+
     function findAvailableState(direction) {
       const states = getNavigationStates();
 
@@ -5332,6 +5477,7 @@ function render() {
         const categories = getSubCategoriesForSheet(sheetName);
 
         if (idx >= 0 && idx < categories.length) {
+          holdWallSync(getPageDurationMs() * 2);
           clearPendingNumericMain();
           currentPageIndex = pendingNumericMainIndex;
           currentMotherSubIndex = idx;
@@ -5349,6 +5495,7 @@ function render() {
 
       if (idx < 0 || idx >= data.sheetPages.length) return;
 
+      holdWallSync(getPageDurationMs() * 2);
       const sheetName = data.sheetPages[idx];
       currentPageIndex = idx;
       currentSubPageIndex = 0;
@@ -5365,6 +5512,7 @@ function render() {
       clearPendingNumericMain();
       if (idx < 0 || idx >= data.sheetPages.length) return;
 
+      holdWallSync(getPageDurationMs() * 2);
       currentPageIndex = idx;
       currentSubPageIndex = 0;
       currentMotherSubIndex = 0;
@@ -5375,6 +5523,7 @@ function render() {
     }
 
     function next() {
+      holdWallSync();
       const sheetName = getSheetName();
       const allProducts = getProductsForSheetState(sheetName) || [];
       const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
@@ -5395,6 +5544,7 @@ function render() {
     }
 
     function prev() {
+      holdWallSync();
       const sheetName = getSheetName();
       const allProducts = getProductsForSheetState(sheetName) || [];
       const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
@@ -5416,6 +5566,7 @@ function render() {
 
     function goToMainAndSub(pageIndex, motherSubIndex = 0, subPageIndex = 0) {
       if (pageIndex < 0 || pageIndex >= data.sheetPages.length) return false;
+      holdWallSync(getPageDurationMs() * 2);
 
       const sheetName = data.sheetPages[pageIndex];
       const categories = getSubCategoriesForSheet(sheetName);
@@ -5556,7 +5707,17 @@ function render() {
     function restartPageTimer() {
       if (pageTimer) clearInterval(pageTimer);
 
-      pageTimer = setInterval(next, data.pageSeconds * 1000);
+      if (WALL_CONFIG.syncEnabled) {
+        applyWallSyncedState();
+
+        pageTimer = setTimeout(() => {
+          applyWallSyncedState();
+          restartPageTimer();
+        }, getWallSyncDelayMs());
+      } else {
+        pageTimer = setInterval(next, getPageDurationMs());
+      }
+
       resetProgressAnim();
     }
 
@@ -5732,6 +5893,7 @@ function render() {
       const btn = e.target.closest(".subtab");
       if (!btn) return;
 
+      holdWallSync(getPageDurationMs() * 2);
       clearPendingNumericMain();
       currentMotherSubIndex = Number(btn.dataset.subIdx) || 0;
       currentSubPageIndex = 0;
