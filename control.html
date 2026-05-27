@@ -100,6 +100,10 @@
       font-size: 1.18rem;
     }
 
+    .mode-actions .btn {
+      flex: 1 1 150px;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
@@ -234,6 +238,17 @@
     </div>
 
     <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+        <b>โหมดจอ</b>
+        <span class="muted" id="wallModeLabel">รอข้อมูลจอหลัก</span>
+      </div>
+      <div class="row mode-actions">
+        <button class="btn" id="btnModeSingle">1 จอ</button>
+        <button class="btn" id="btnModeWall">2 จอ</button>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="row">
         <button class="btn" id="btnPrev">ก่อนหน้า</button>
         <button class="btn" id="btnNext">ถัดไป</button>
@@ -268,13 +283,16 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
+    const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
+    const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
-    const REMOTE_META_POLL_MS = 1500;
+    const REMOTE_META_POLL_MS = 900;
 
     const $ = (id) => document.getElementById(id);
 
     let meta = null;
     let remoteMetaTimer = null;
+    let controlBroadcastChannel = null;
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>\"']/g, (m) => ({
@@ -315,6 +333,31 @@
 
     function setHint(text) {
       $("connHint").textContent = text;
+    }
+
+    function storeWallModePreference(mode) {
+      const normalized = clean(mode).toLowerCase() === "wall" ? "wall" : "single";
+
+      try {
+        localStorage.setItem(WALL_MODE_KEY, normalized);
+      } catch {}
+
+      return normalized;
+    }
+
+    function postLocalCommand(cmd) {
+      try {
+        localStorage.setItem(CONTROL_COMMAND_KEY, JSON.stringify(cmd));
+      } catch {}
+
+      try {
+        if (!controlBroadcastChannel && "BroadcastChannel" in window) {
+          controlBroadcastChannel = new BroadcastChannel(CONTROL_CHANNEL_NAME);
+        }
+        if (controlBroadcastChannel) controlBroadcastChannel.postMessage(cmd);
+      } catch {
+        controlBroadcastChannel = null;
+      }
     }
 
     function runJsonp(url, params = {}, timeoutMs = 5000) {
@@ -360,29 +403,38 @@
         ...extra
       };
 
-      localStorage.setItem(CONTROL_COMMAND_KEY, JSON.stringify(cmd));
+      postLocalCommand(cmd);
 
       const endpoint = getWebAppUrl();
       if (!endpoint) return;
+      const payload = JSON.stringify({
+        mode: "push_command",
+        source: "control",
+        command: cmd
+      });
+
       const sendOnce = () => {
+        try {
+          if (navigator.sendBeacon) {
+            const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
+            if (navigator.sendBeacon(endpoint, blob)) return;
+          }
+        } catch {}
+
         try {
           fetch(endpoint, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-              mode: "push_command",
-              source: "control",
-              command: cmd
-            })
+            body: payload
           }).catch(() => {});
         } catch {}
       };
 
       // Retry short bursts to reduce dropped commands over remote network.
       sendOnce();
-      setTimeout(sendOnce, 220);
-      setTimeout(sendOnce, 520);
+      setTimeout(sendOnce, 120);
+      setTimeout(sendOnce, 260);
     }
 
     function readMetaLocal() {
@@ -423,12 +475,44 @@
         ? page.subCategories[meta.currentMotherSubIndex].name
         : "-";
       const subPageText = `${(meta.currentSubPageIndex || 0) + 1}/${Math.max(1, meta.totalSubPages || 1)}`;
+      const wallModeText = meta.wall
+        ? (meta.wall.mode === "wall" || meta.wall.enabled
+          ? `2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`
+          : "1 จอ")
+        : "-";
       el.innerHTML = `
         <span>หมวด: <b>${escapeHtml(pageName)}</b></span>
         <span>หมวดย่อย: <b>${escapeHtml(subName)}</b></span>
         <span>หน้าย่อย: <b>${escapeHtml(subPageText)}</b></span>
         <span>จำนวนสินค้า: <b>${Number(meta.viewCount || 0)}</b></span>
+        <span>โหมดจอ: <b>${escapeHtml(wallModeText)}</b></span>
       `;
+    }
+
+    function getWallModeFromMeta() {
+      if (!meta || !meta.wall) return "";
+      return meta.wall.mode === "wall" || meta.wall.enabled ? "wall" : "single";
+    }
+
+    function renderModeButtons() {
+      const mode = getWallModeFromMeta();
+      const singleBtn = $("btnModeSingle");
+      const wallBtn = $("btnModeWall");
+      const label = $("wallModeLabel");
+
+      singleBtn.classList.toggle("active", mode === "single");
+      wallBtn.classList.toggle("active", mode === "wall");
+      singleBtn.setAttribute("aria-pressed", mode === "single" ? "true" : "false");
+      wallBtn.setAttribute("aria-pressed", mode === "wall" ? "true" : "false");
+
+      if (!label) return;
+      if (mode === "wall") {
+        label.textContent = `กำลังแสดง 2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`;
+      } else if (mode === "single") {
+        label.textContent = "กำลังแสดง 1 จอ";
+      } else {
+        label.textContent = "รอข้อมูลจอหลัก";
+      }
     }
 
     function renderMainButtons() {
@@ -493,6 +577,7 @@
 
     function render() {
       renderState();
+      renderModeButtons();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -542,6 +627,16 @@
     $("btnNext").onclick = () => sendCommand("next");
     $("btnRefresh").onclick = () => sendCommand("refresh");
     $("btnReloadMeta").onclick = reloadMeta;
+    $("btnModeSingle").onclick = () => {
+      storeWallModePreference("single");
+      sendCommand("setWallMode", { mode: "single" });
+      setHint("สั่งเปลี่ยนเป็นโหมด 1 จอแล้ว");
+    };
+    $("btnModeWall").onclick = () => {
+      storeWallModePreference("wall");
+      sendCommand("setWallMode", { mode: "wall" });
+      setHint("สั่งเปลี่ยนเป็นโหมด 2 จอแล้ว");
+    };
 
     $("btnSaveGasUrl").onclick = () => {
       const url = clean($("gasUrlInput").value);
