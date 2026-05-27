@@ -8,270 +8,397 @@
   <style>
     :root {
       color-scheme: light;
-      --bg: #f3f5f7;
+      --bg: #edf3f0;
       --card: #ffffff;
-      --line: #d7dee6;
-      --text: #17212b;
-      --muted: #5a6b7c;
-      --brand: #1f6f43;
-      --brand-2: #2e8455;
+      --line: #cfd9d4;
+      --text: #14231b;
+      --muted: #64746d;
+      --brand: #155f38;
+      --brand-2: #1f7a49;
+      --brand-soft: #e5f4eb;
+      --danger: #b42318;
+      --shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
     }
 
     * { box-sizing: border-box; }
+    html {
+      background: var(--bg);
+    }
+
     body {
       margin: 0;
       font-family: "Segoe UI", Tahoma, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: 14px;
-      padding-left: max(14px, env(safe-area-inset-left));
-      padding-right: max(14px, env(safe-area-inset-right));
-      padding-top: max(14px, env(safe-area-inset-top));
-      padding-bottom: max(14px, env(safe-area-inset-bottom));
+      padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      -webkit-tap-highlight-color: transparent;
     }
 
     .wrap {
-      max-width: 1060px;
+      max-width: 840px;
       margin: 0 auto;
       display: grid;
-      gap: 12px;
+      gap: 10px;
     }
 
     .card {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 0 rgba(16, 24, 40, 0.03);
     }
 
     .row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
+    }
+
+    .control-header {
+      position: sticky;
+      top: max(8px, env(safe-area-inset-top));
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(207, 217, 212, 0.9);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: var(--shadow);
     }
 
     h1 {
       margin: 0;
-      font-size: 1.38rem;
+      font-size: clamp(1.15rem, 4.7vw, 1.6rem);
       color: var(--brand);
+      line-height: 1.18;
     }
 
     .muted {
       color: var(--muted);
-      font-size: 1rem;
+      font-size: clamp(0.9rem, 3.2vw, 1rem);
+      line-height: 1.3;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+      font-weight: 800;
+    }
+
+    .section-title .muted {
+      font-weight: 600;
+      text-align: right;
     }
 
     .btn {
       border: 1px solid #c7d0da;
       background: #fff;
       color: #1d2a36;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 12px 14px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 1.1rem;
-      line-height: 1;
-      min-height: 48px;
+      font-size: clamp(1rem, 3.7vw, 1.16rem);
+      line-height: 1.12;
+      min-height: 56px;
       box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04);
-      transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+      transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
       touch-action: manipulation;
+      user-select: none;
     }
+
     .btn:hover {
       background: #f2f6fa;
       transform: translateY(-1px);
       box-shadow: 0 3px 10px rgba(16, 24, 40, 0.09);
     }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
     .btn.primary {
       border-color: #1f6f43;
       background: var(--brand);
       color: #fff;
     }
+
     .btn.primary:hover { background: var(--brand-2); }
-    .btn.active {
-      border-color: #1f6f43;
-      box-shadow: inset 0 0 0 1px #1f6f43, 0 2px 8px rgba(31, 111, 67, 0.16);
-      background: #ecf7f0;
+
+    .btn.secondary {
+      border-color: #b9c7c0;
+      background: #f7faf8;
     }
 
-    #btnPrev, #btnNext {
-      min-width: 120px;
-      min-height: 52px;
-      font-size: 1.18rem;
+    .btn.utility {
+      min-height: 48px;
+      padding-inline: 13px;
+      font-size: 0.98rem;
+    }
+
+    .btn.active {
+      border-color: var(--brand);
+      box-shadow: inset 0 0 0 2px var(--brand), 0 2px 8px rgba(31, 111, 67, 0.16);
+      background: var(--brand-soft);
+      color: #0f5132;
+    }
+
+    .mode-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .mode-actions .btn {
-      flex: 1 1 150px;
+      min-height: 74px;
+      font-size: clamp(1.2rem, 5vw, 1.55rem);
+      font-weight: 900;
+    }
+
+    .transport-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #btnPrev,
+    #btnNext {
+      min-width: 0;
+      min-height: clamp(84px, 23vw, 112px);
+      font-size: clamp(1.32rem, 6vw, 1.9rem);
+      font-weight: 900;
+    }
+
+    #btnRefresh {
+      width: 100%;
+      margin-top: 8px;
+      min-height: 62px;
+      font-weight: 800;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .grid .btn {
-      min-height: 0;
-      aspect-ratio: 1 / 1;
-      height: auto;
-      font-size: 1.3rem;
+      min-height: 80px;
+      height: 100%;
+      font-size: clamp(1.02rem, 4.1vw, 1.24rem);
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
       white-space: normal;
-      line-height: 1.14;
-      padding: 8px;
+      line-height: 1.18;
+      padding: 10px;
       font-weight: 800;
       word-break: break-word;
     }
 
-    .state {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      font-size: 1.16rem;
+    #mainGrid .btn {
+      min-height: 92px;
+      font-size: clamp(1.08rem, 4.6vw, 1.36rem);
     }
-    .state b { color: #0f5132; }
+
+    #subGrid .btn {
+      min-height: 76px;
+    }
+
+    #subPageGrid {
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    }
+
+    #subPageGrid .btn {
+      min-height: 60px;
+      font-size: 1rem;
+    }
+
+    .state {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 1rem;
+    }
+
+    .state-item {
+      min-width: 0;
+      border: 1px solid #dbe5df;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fbf9;
+    }
+
+    .state-item small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 5px;
+    }
+
+    .state-item b {
+      display: block;
+      color: #0f5132;
+      font-size: clamp(1rem, 3.8vw, 1.18rem);
+      line-height: 1.22;
+      overflow-wrap: anywhere;
+    }
 
     .gas-config {
       display: none !important;
     }
 
-    @media (max-width: 1024px) {
+    @media (min-width: 720px) {
       .wrap {
-        max-width: 100%;
-        gap: 10px;
+        gap: 12px;
       }
 
       .card {
-        padding: 12px;
+        padding: 14px;
       }
 
       .grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 9px;
+        gap: 10px;
+      }
+
+      .state {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 520px) {
       body {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+      }
+
+      .wrap {
+        gap: 8px;
+      }
+
+      .control-header {
+        grid-template-columns: 1fr;
+        gap: 8px;
         padding: 10px;
       }
 
-      h1 {
-        font-size: 1.2rem;
-      }
-
-      .row {
-        gap: 6px;
+      .control-header .btn {
+        width: 100%;
       }
 
       .btn {
-        min-height: 50px;
-        font-size: 1.08rem;
-        border-radius: 11px;
-        padding: 10px 12px;
+        min-height: 58px;
       }
 
-      #btnPrev, #btnNext {
-        min-width: 0;
-        flex: 1 1 calc(50% - 6px);
+      .section-title {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
       }
 
-      .grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-      }
-
-      .grid .btn {
-        font-size: 1.12rem;
-        line-height: 1.12;
-        padding: 7px;
-      }
-
-      .state {
-        font-size: 1rem;
-        gap: 8px;
+      .section-title .muted {
+        text-align: left;
       }
     }
 
-    @media (max-width: 420px) {
-      .card {
-        border-radius: 12px;
-        padding: 10px;
-      }
-
-      .btn {
-        font-size: 1rem;
-        min-height: 48px;
-      }
-
-      .grid .btn {
-        font-size: 1.02rem;
-        padding: 6px;
-      }
-
+    @media (max-width: 360px) {
+      .transport-grid,
+      .mode-actions,
+      .grid,
       .state {
-        font-size: 0.92rem;
+        grid-template-columns: 1fr;
+      }
+
+      #btnPrev,
+      #btnNext {
+        min-height: 76px;
+      }
+
+      #mainGrid .btn,
+      #subGrid .btn {
+        min-height: 70px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn {
+        transition: none;
       }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <div class="row" style="justify-content:space-between;">
+    <header class="control-header">
+      <div>
         <h1>หน้าเว็บควบคุมจอแสดงสินค้า</h1>
-        <div class="row">
-          <button class="btn" id="btnReloadMeta">รีโหลดข้อมูล</button>
-          <button class="btn primary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
-        </div>
+        <div class="muted" id="connHint">ใช้ควบคุมข้ามอุปกรณ์ผ่าน Google Apps Script Web App</div>
       </div>
+      <button class="btn utility" id="btnReloadMeta">รีโหลดข้อมูล</button>
       <div class="row gas-config" style="margin-top:8px;">
         <input id="gasUrlInput" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)" style="flex:1;min-width:320px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;">
         <button class="btn" id="btnSaveGasUrl">บันทึก URL</button>
       </div>
-      <div class="muted" id="connHint" style="margin-top:6px;">
-        ใช้ควบคุมข้ามอุปกรณ์ผ่าน Google Apps Script Web App
-      </div>
-    </div>
+    </header>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+      <div class="section-title">
         <b>โหมดจอ</b>
         <span class="muted" id="wallModeLabel">รอข้อมูลจอหลัก</span>
       </div>
-      <div class="row mode-actions">
+      <div class="mode-actions">
         <button class="btn" id="btnModeSingle">1 จอ</button>
         <button class="btn" id="btnModeWall">2 จอ</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="row">
+      <div class="transport-grid">
         <button class="btn" id="btnPrev">ก่อนหน้า</button>
         <button class="btn" id="btnNext">ถัดไป</button>
       </div>
-      <div class="state" id="stateLine" style="margin-top:10px;"></div>
+      <button class="btn secondary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
     </div>
 
     <div class="card">
-      <div class="row" style="margin-bottom:8px;">
+      <div class="section-title">
+        <b>สถานะปัจจุบัน</b>
+      </div>
+      <div class="state" id="stateLine"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
         <b>หมวดหลัก</b>
       </div>
       <div class="grid" id="mainGrid"></div>
     </div>
 
     <div class="card">
-      <div class="row" style="margin-bottom:8px;">
+      <div class="section-title">
         <b>หมวดย่อยของหมวดที่เลือก</b>
       </div>
       <div class="grid" id="subGrid"></div>
     </div>
 
     <div class="card">
-      <div class="row" style="margin-bottom:8px;">
+      <div class="section-title">
         <b>หน้าย่อย (กรณีเกิน 21 รายการ)</b>
       </div>
       <div class="grid" id="subPageGrid"></div>
@@ -343,6 +470,15 @@
       } catch {}
 
       return normalized;
+    }
+
+    function readWallModePreference() {
+      try {
+        const mode = clean(localStorage.getItem(WALL_MODE_KEY)).toLowerCase();
+        return mode === "single" || mode === "wall" ? mode : "";
+      } catch {
+        return "";
+      }
     }
 
     function postLocalCommand(cmd) {
@@ -481,16 +617,16 @@
           : "1 จอ")
         : "-";
       el.innerHTML = `
-        <span>หมวด: <b>${escapeHtml(pageName)}</b></span>
-        <span>หมวดย่อย: <b>${escapeHtml(subName)}</b></span>
-        <span>หน้าย่อย: <b>${escapeHtml(subPageText)}</b></span>
-        <span>จำนวนสินค้า: <b>${Number(meta.viewCount || 0)}</b></span>
-        <span>โหมดจอ: <b>${escapeHtml(wallModeText)}</b></span>
+        <span class="state-item"><small>หมวด</small><b>${escapeHtml(pageName)}</b></span>
+        <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
+        <span class="state-item"><small>หน้าย่อย</small><b>${escapeHtml(subPageText)}</b></span>
+        <span class="state-item"><small>จำนวนสินค้า</small><b>${Number(meta.viewCount || 0)}</b></span>
+        <span class="state-item"><small>โหมดจอ</small><b>${escapeHtml(wallModeText)}</b></span>
       `;
     }
 
     function getWallModeFromMeta() {
-      if (!meta || !meta.wall) return "";
+      if (!meta || !meta.wall) return readWallModePreference();
       return meta.wall.mode === "wall" || meta.wall.enabled ? "wall" : "single";
     }
 
@@ -507,9 +643,11 @@
 
       if (!label) return;
       if (mode === "wall") {
-        label.textContent = `กำลังแสดง 2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`;
+        const screen = Number(meta?.wall?.screen || 0);
+        const screens = Number(meta?.wall?.screens || 0);
+        label.textContent = screen && screens ? `กำลังแสดง 2 จอ (${screen}/${screens})` : "เลือกโหมด 2 จอ";
       } else if (mode === "single") {
-        label.textContent = "กำลังแสดง 1 จอ";
+        label.textContent = meta?.wall ? "กำลังแสดง 1 จอ" : "เลือกโหมด 1 จอ";
       } else {
         label.textContent = "รอข้อมูลจอหลัก";
       }
@@ -629,11 +767,13 @@
     $("btnReloadMeta").onclick = reloadMeta;
     $("btnModeSingle").onclick = () => {
       storeWallModePreference("single");
+      renderModeButtons();
       sendCommand("setWallMode", { mode: "single" });
       setHint("สั่งเปลี่ยนเป็นโหมด 1 จอแล้ว");
     };
     $("btnModeWall").onclick = () => {
       storeWallModePreference("wall");
+      renderModeButtons();
       sendCommand("setWallMode", { mode: "wall" });
       setHint("สั่งเปลี่ยนเป็นโหมด 2 จอแล้ว");
     };
