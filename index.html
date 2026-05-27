@@ -1513,6 +1513,10 @@
       gap: clamp(10px, 1.1vw, 22px);
     }
 
+    .header-left {
+      gap: clamp(8px, 0.75vw, 14px);
+    }
+
     .shop-info {
       min-width: 0;
       max-width: 28vw;
@@ -1563,25 +1567,25 @@
 
     .clock {
       font-family: "Anuphan", system-ui, sans-serif;
-      font-size: clamp(0.82rem, 0.95vw, 1.2rem) !important;
+      font-size: clamp(0.72rem, 0.78vw, 1rem) !important;
       font-weight: 600;
       letter-spacing: 0;
     }
 
     .live-badge {
-      font-size: clamp(0.68rem, 0.78vw, 0.95rem) !important;
+      font-size: clamp(0.58rem, 0.68vw, 0.82rem) !important;
       font-weight: 800;
-      padding: 3px 10px;
-      gap: 6px;
+      padding: 2px 8px;
+      gap: 5px;
     }
 
     .live-badge::before {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
     }
 
     #pageCounter {
-      font-size: clamp(0.62rem, 0.72vw, 0.88rem) !important;
+      font-size: clamp(0.54rem, 0.62vw, 0.76rem) !important;
       opacity: 0.66 !important;
     }
 
@@ -1590,10 +1594,16 @@
     /* fix-thai-header-clipping */
     .header {
       align-items: center;
-      min-height: clamp(72px, 9vh, 104px);
+      height: clamp(54px, 6.4vh, 74px) !important;
+      min-height: clamp(54px, 6.4vh, 74px);
       overflow: visible;
-      padding-top: 0.35vh;
-      padding-bottom: 0.35vh;
+      padding-top: 0.18vh;
+      padding-bottom: 0.18vh;
+    }
+
+    .logo {
+      height: clamp(34px, 4.8vh, 52px) !important;
+      max-width: 118px;
     }
 
     .header-left,
@@ -1612,7 +1622,7 @@
     }
 
     .cat-title {
-      font-size: clamp(1.42rem, 2.18vw, 2.82rem) !important;
+      font-size: clamp(1.18rem, 1.78vw, 2.28rem) !important;
       max-height: none;
       color: #ffffff !important;
       background: none !important;
@@ -1625,13 +1635,15 @@
     }
 
     .shop-name {
-      font-size: clamp(1.08rem, 1.55vw, 2rem) !important;
+      font-size: clamp(0.9rem, 1.25vw, 1.6rem) !important;
       max-height: none;
     }
 
     .cat-count {
       align-self: center;
       margin-top: 0.1em;
+      font-size: clamp(0.5rem, 0.58vw, 0.72rem) !important;
+      padding: 1px 6px !important;
       background: rgba(255, 255, 255, 0.18) !important;
       color: rgba(255, 255, 255, 0.92) !important;
       border-color: rgba(255, 255, 255, 0.28) !important;
@@ -1649,7 +1661,7 @@
 
     .header-right {
       flex: 1.25;
-      gap: clamp(8px, 0.9vw, 18px);
+      gap: clamp(6px, 0.62vw, 12px);
     }
 
 
