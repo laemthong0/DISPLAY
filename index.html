@@ -8,6 +8,8 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://drive.google.com" crossorigin />
+  <link rel="dns-prefetch" href="//drive.google.com" />
   <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700;800&family=Bai+Jamjuree:wght@600;700;800&display=swap" rel="stylesheet" />
 
   <style>
@@ -2448,7 +2450,7 @@
     .product-grid[data-density="many"] .product-img {
       max-width: 106% !important;
       max-height: 92% !important;
-      transform: scale(1.16) !important;
+      transform: scale(1.25) !important;
       transform-origin: center bottom;
     }
 
@@ -2913,7 +2915,7 @@
     }
 
     .product-grid[data-density="five"] .product-card:hover .product-img {
-      transform: scale(1.24) translateY(-2px) !important;
+      transform: scale(1.29) translateY(-2px) !important;
     }
 
     .product-grid[data-density="five"] .price-val {
@@ -2958,7 +2960,7 @@
     }
 
     .product-grid[data-density="many"] .product-card:hover .product-img {
-      transform: scale(1.2) translateY(-2px) !important;
+      transform: scale(1.24) translateY(-2px) !important;
     }
 
     .product-grid[data-density="many"] .info-box {
@@ -4191,6 +4193,27 @@
       margin-top: 0.25em !important;
     }
 
+    /* five-product-image-fill */
+    .product-grid[data-density="five"] .product-card .product-img {
+      width: 108% !important;
+      height: 108% !important;
+      max-width: 108% !important;
+      max-height: 108% !important;
+      transform: scale(1.25) !important;
+      transform-origin: center bottom !important;
+      object-fit: contain !important;
+      object-position: center bottom !important;
+    }
+
+    .product-grid[data-density="five"] .product-card:hover .product-img,
+    .product-grid[data-density="five"] .product-card.auto-hover .product-img {
+      width: 108% !important;
+      height: 108% !important;
+      max-width: 108% !important;
+      max-height: 108% !important;
+      transform: scale(1.29) translateY(-2px) !important;
+    }
+
   </style>
 </head>
 
@@ -4254,8 +4277,9 @@
 
     <img
       class="watermark-logo top-qr-logo"
-      src="https://drive.google.com/thumbnail?id=1rJZ_3yhz9DUa81WDILLzppChKgAWTx8V&sz=w1000"
+      src="https://drive.google.com/thumbnail?id=1rJZ_3yhz9DUa81WDILLzppChKgAWTx8V&sz=w300"
       alt="QR Code"
+      decoding="async"
     >
   </main>
 
@@ -4575,7 +4599,7 @@ function render() {
       $("tickerText").textContent = data.tickerText || DEFAULT_DATA.tickerText;
 
       const logoEl = $("headerLogo");
-      const resolvedLogoUrl = resolveImg(data.logoUrl || DEFAULT_DATA.logoUrl);
+      const resolvedLogoUrl = resolveImg(data.logoUrl || DEFAULT_DATA.logoUrl, 240);
 
       if (logoEl.src !== resolvedLogoUrl) logoEl.src = resolvedLogoUrl;
 
@@ -4635,12 +4659,13 @@ function render() {
       }
 
       const isZigzag = shape && shape.density === "zigzag";
+      const imageSize = getProductImageSize(products.length);
 
       grid.innerHTML = products.map((item, idx) => {
-        const imgUrl = resolveImg(item.image);
+        const imgUrl = resolveImg(item.image, imageSize);
 
         const imgHtml = imgUrl
-          ? `<img class="product-img" src="${escapeHtml(imgUrl)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'no-image',textContent:'ไม่มีรูป'}))">`
+          ? `<img class="product-img" src="${escapeHtml(imgUrl)}" loading="eager" decoding="async" fetchpriority="${idx < 4 ? "high" : "auto"}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'no-image',textContent:'ไม่มีรูป'}))">`
           : `<div class="no-image">ไม่มีรูปภาพ</div>`;
 
         const price = clean(item.price);
@@ -5057,20 +5082,35 @@ function render() {
         : clean(val);
     }
 
-    function resolveImg(url) {
+    function getProductImageSize(count) {
+      if (count <= 2) return 900;
+      if (count <= 5) return 720;
+      if (count <= 8) return 560;
+      if (count <= 12) return 440;
+      if (count <= 21) return 340;
+      return 300;
+    }
+
+    function normalizeImageSize(size) {
+      const num = Number(size);
+      if (!Number.isFinite(num)) return 560;
+      return Math.min(1000, Math.max(180, Math.round(num)));
+    }
+
+    function resolveImg(url, size = 560) {
       const str = clean(url);
 
       if (!str) return "";
 
       const imageFormulaMatch = str.match(/^=IMAGE\(\s*"([^"]+)"/i);
-      if (imageFormulaMatch) return resolveImg(imageFormulaMatch[1]);
+      if (imageFormulaMatch) return resolveImg(imageFormulaMatch[1], size);
 
       if (/^\/\//.test(str)) return `https:${str}`;
 
       const driveMatch = str.match(/\/d\/([^/]+)/) || str.match(/id=([^&]+)/);
 
       if (driveMatch && (str.includes("drive.google") || str.includes("docs.google"))) {
-        return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
+        return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w${normalizeImageSize(size)}`;
       }
 
       return str;
