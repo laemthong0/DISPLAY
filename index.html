@@ -432,6 +432,11 @@
     .product-card:nth-child(7) { animation-delay: 0.35s; }
     .product-card:nth-child(8) { animation-delay: 0.40s; }
 
+    .product-grid.fast-switch .product-card {
+      animation-duration: 0.16s;
+      animation-delay: 0s !important;
+    }
+
     .image-box {
       flex: 1;
       position: relative;
@@ -4214,6 +4219,57 @@
       transform: scale(1.29) translateY(-2px) !important;
     }
 
+    /* 21-product-image-fill */
+    .product-grid[data-bulk="yes"][data-count="21"][data-cols="7"][data-rows="3"] .product-img {
+      max-width: 96% !important;
+      max-height: 96% !important;
+      transform: scale(1.06) !important;
+      transform-origin: center bottom !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-count="21"][data-cols="7"][data-rows="3"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-count="21"][data-cols="7"][data-rows="3"] .product-card.auto-hover .product-img {
+      max-width: 96% !important;
+      max-height: 96% !important;
+      transform: scale(1.08) translateY(-1px) !important;
+    }
+
+    /* 10-12-product-wall-fit */
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] {
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: clamp(3px, 0.38vh, 8px) clamp(3px, 0.34vw, 8px) !important;
+      padding: clamp(2px, 0.2vh, 6px) clamp(2px, 0.2vw, 6px) clamp(34px, 4vh, 52px) !important;
+      overflow: hidden !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .product-card,
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .product-card:hover {
+      transform: none !important;
+      padding: 0 !important;
+      justify-content: stretch !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .image-box {
+      height: 100% !important;
+      max-height: 100% !important;
+      flex: 1 1 auto !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .product-img {
+      max-width: 92% !important;
+      max-height: 100% !important;
+      transform: scale(1.08) !important;
+      transform-origin: center bottom !important;
+    }
+
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .product-card:hover .product-img,
+    .product-grid[data-bulk="yes"][data-cols="6"][data-rows="2"] .product-card.auto-hover .product-img {
+      max-width: 92% !important;
+      max-height: 100% !important;
+      transform: scale(1.11) translateY(-1px) !important;
+    }
+
   </style>
 </head>
 
@@ -4396,9 +4452,12 @@
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
+    const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
+    const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const ENABLE_KEYPAD_SHORTCUTS = false;
-    const REMOTE_CONTROL_POLL_MS = 450;
+    const REMOTE_CONTROL_POLL_MS = 200;
     const $ = (id) => document.getElementById(id);
+    let WALL_CONFIG = getWallConfig();
 
     let data = loadData();
     let currentPageIndex = 0;
@@ -4410,6 +4469,8 @@
     let remoteControlPollTimer = null;
     let remoteControlPollInFlight = false;
     let lastRemoteCommandId = null;
+    let controlBroadcastChannel = null;
+    let fastRenderUntil = 0;
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
 
@@ -4417,9 +4478,97 @@
       return String(value ?? "").trim();
     }
 
+    function markFastRender(durationMs = 4000) {
+      fastRenderUntil = Math.max(fastRenderUntil, Date.now() + durationMs);
+    }
+
     function clampNum(val, min, max, fallback) {
       const n = Number(val);
       return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+    }
+
+    function readWallModeOverride() {
+      try {
+        const mode = clean(localStorage.getItem(WALL_MODE_KEY)).toLowerCase();
+        return mode === "single" || mode === "wall" ? mode : "";
+      } catch {
+        return "";
+      }
+    }
+
+    function getWallConfig() {
+      const params = new URLSearchParams(window.location.search);
+      const modeOverride = readWallModeOverride();
+      const forceSingle = modeOverride === "single";
+      const forceWall = modeOverride === "wall";
+      const wallParam = clean(params.get("wall")).toLowerCase();
+      const wallRequested = wallParam === "1" || wallParam === "true" || wallParam === "yes";
+      const rawScreens = params.has("screens")
+        ? clampNum(params.get("screens"), 1, 4, 1)
+        : (wallRequested || forceWall ? 2 : 1);
+      const screens = wallRequested || forceWall ? Math.max(2, rawScreens) : rawScreens;
+      const enabled = !forceSingle && (forceWall || wallRequested || screens > 1);
+      const effectiveScreens = enabled ? Math.max(2, screens) : 1;
+      const screen = enabled ? clampNum(params.get("screen"), 1, effectiveScreens, 1) : 1;
+      const itemsPerWallPage = params.has("wallItems")
+        ? clampNum(params.get("wallItems"), 2, 42, 21)
+        : 21;
+
+      return {
+        enabled,
+        mode: enabled ? "wall" : "single",
+        modeOverride,
+        screen,
+        screenIndex: screen - 1,
+        screens: effectiveScreens,
+        itemsPerWallPage
+      };
+    }
+
+    function getWallSlice(count) {
+      const total = Number(count) || 0;
+
+      if (!WALL_CONFIG.enabled || total <= 0) {
+        return { start: 0, end: total, singleScreen: false };
+      }
+
+      if (total <= 3) {
+        return WALL_CONFIG.screenIndex === 0
+          ? { start: 0, end: total, singleScreen: true }
+          : { start: 0, end: 0, singleScreen: true };
+      }
+
+      const start = Math.ceil((total * WALL_CONFIG.screenIndex) / WALL_CONFIG.screens);
+      const end = Math.ceil((total * WALL_CONFIG.screen) / WALL_CONFIG.screens);
+
+      return {
+        start: Math.min(total, Math.max(0, start)),
+        end: Math.min(total, Math.max(start, end)),
+        singleScreen: false
+      };
+    }
+
+    function formatWallRange(pageStartIndex, slice, totalCount) {
+      if (!WALL_CONFIG.enabled || totalCount <= 0 || slice.end <= slice.start) return "";
+
+      const start = pageStartIndex + slice.start + 1;
+      const end = pageStartIndex + slice.end;
+
+      return `${start}-${end}/${totalCount}`;
+    }
+
+    function setWallMode(mode) {
+      const normalized = clean(mode).toLowerCase() === "wall" ? "wall" : "single";
+
+      try {
+        localStorage.setItem(WALL_MODE_KEY, normalized);
+      } catch {
+        // ignore storage failures on locked-down TV browsers
+      }
+
+      WALL_CONFIG = getWallConfig();
+      render();
+      restartPageTimer();
     }
 
     function escapeHtml(val) {
@@ -4458,7 +4607,7 @@ function getGridShape(count) {
       if (count === 5) return { cols: 5, rows: 1, density: "five" };
       if (count <= 8) return { cols: Math.ceil(count / 2), rows: 2, density: "zigzag" };
       if (count === 9) return { cols: 3, rows: 3, density: "zigzag" };
-      if (count <= 12) return { cols: 7, rows: 2, density: "bulk" };
+      if (count <= 12) return { cols: 6, rows: 2, density: "bulk" };
       if (count <= 21) return { cols: 7, rows: 3, density: "bulk" };
       if (count <= 25) return { cols: 5, rows: 5, density: "bulk" };
       if (count <= 30) return { cols: 6, rows: 5, density: "bulk" };
@@ -4472,7 +4621,8 @@ function getGridShape(count) {
     function getItemsPerPage(count) {
       const total = Number(count) || 0;
       if (total <= 0) return 1;
-      return total > 21 ? 21 : total;
+      const limit = WALL_CONFIG.enabled ? WALL_CONFIG.itemsPerWallPage : 21;
+      return total > limit ? limit : total;
     }
 
     function getControlWebAppUrl() {
@@ -4544,6 +4694,13 @@ function getGridShape(count) {
         currentSubPageIndex,
         viewCount,
         totalSubPages,
+        wall: {
+          mode: WALL_CONFIG.mode,
+          enabled: WALL_CONFIG.enabled,
+          screen: WALL_CONFIG.screen,
+          screens: WALL_CONFIG.screens,
+          itemsPerWallPage: WALL_CONFIG.itemsPerWallPage
+        },
         pages: data.sheetPages.map((name, idx) => ({
           index: idx,
           name,
@@ -4562,6 +4719,7 @@ function render() {
       const sheetName = getSheetName();
       const allProducts = productsCache[sheetName] || [];
       const viewProducts = getVisibleProducts(sheetName, allProducts);
+      const productGrid = $("productGrid");
 
       const itemsPerPage = getItemsPerPage(viewProducts.length);
       const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
@@ -4569,18 +4727,25 @@ function render() {
       if (currentSubPageIndex >= totalSubPages) currentSubPageIndex = 0;
 
       const startIndex = currentSubPageIndex * itemsPerPage;
-      const displayProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
+      const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
+      const wallSlice = getWallSlice(wallPageProducts.length);
+      const displayProducts = wallPageProducts.slice(wallSlice.start, wallSlice.end);
       const shape = getGridShape(displayProducts.length);
+      const wallRange = formatWallRange(startIndex, wallSlice, viewProducts.length);
+      const wallEmptyText = wallSlice.singleScreen && WALL_CONFIG.enabled && WALL_CONFIG.screenIndex > 0
+        ? "รายการนี้แสดงที่จอ 1"
+        : "ไม่มีสินค้าในหมวดหมู่นี้";
 
       document.documentElement.style.setProperty("--cols", String(shape.cols));
       document.documentElement.style.setProperty("--rows", String(shape.rows));
 
-      $("productGrid").dataset.density = shape.density;
-      $("productGrid").dataset.cols = String(shape.cols);
-      $("productGrid").dataset.rows = String(shape.rows);
-      $("productGrid").dataset.count = String(displayProducts.length);
-      $("productGrid").dataset.bulk = shape.density === "bulk" ? "yes" : "no";
-      $("productGrid").style.setProperty("--zig-cols", String((shape.cols * 2) + 1));
+      productGrid.classList.toggle("fast-switch", Date.now() < fastRenderUntil);
+      productGrid.dataset.density = shape.density;
+      productGrid.dataset.cols = String(shape.cols);
+      productGrid.dataset.rows = String(shape.rows);
+      productGrid.dataset.count = String(displayProducts.length);
+      productGrid.dataset.bulk = shape.density === "bulk" ? "yes" : "no";
+      productGrid.style.setProperty("--zig-cols", String((shape.cols * 2) + 1));
 
       $("shopName").textContent = data.shopName;
 
@@ -4588,14 +4753,23 @@ function render() {
         ? `${sheetName} • ${getSubCategoryName(sheetName)}`
         : sheetName;
 
-      $("heroDesc").textContent = `${viewProducts.length} รายการ`;
+      $("heroDesc").textContent = WALL_CONFIG.enabled
+        ? (wallSlice.singleScreen && WALL_CONFIG.screenIndex > 0
+          ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • แสดงที่จอ 1`
+          : `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
+        : `${viewProducts.length} รายการ`;
 
       const pageText = `หมวด ${currentPageIndex + 1}/${data.sheetPages.length}`;
       const subPageText = totalSubPages > 1 ? ` (หน้า ${currentSubPageIndex + 1}/${totalSubPages})` : "";
       const currentSubCategories = getSubCategoriesForSheet(sheetName);
       const motherText = currentSubCategories.length ? ` • กลุ่ม ${currentMotherSubIndex + 1}/${currentSubCategories.length}` : "";
+      const wallText = WALL_CONFIG.enabled
+        ? (wallSlice.singleScreen && WALL_CONFIG.screenIndex > 0
+          ? ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • แสดงที่จอ 1`
+          : ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
+        : "";
 
-      $("pageCounter").textContent = pageText + motherText + subPageText;
+      $("pageCounter").textContent = pageText + motherText + subPageText + wallText;
       $("tickerText").textContent = data.tickerText || DEFAULT_DATA.tickerText;
 
       const logoEl = $("headerLogo");
@@ -4605,7 +4779,7 @@ function render() {
 
       renderTabs();
       renderSubTabs(sheetName);
-      renderGrid(displayProducts, shape);
+      renderGrid(displayProducts, shape, wallEmptyText);
       publishControlMeta(viewProducts.length, totalSubPages);
       resetProgressAnim();
     }
@@ -4642,7 +4816,7 @@ function render() {
       `).join("");
     }
 
-    function renderGrid(products, shape = null) {
+    function renderGrid(products, shape = null, emptyText = "ไม่มีสินค้าในหมวดหมู่นี้") {
       const grid = $("productGrid");
 
       grid.innerHTML = "";
@@ -4654,7 +4828,7 @@ function render() {
       }
 
       if (!products.length) {
-        grid.innerHTML = `<div class="image-empty">ไม่มีสินค้าในหมวดหมู่นี้</div>`;
+        grid.innerHTML = `<div class="image-empty">${escapeHtml(emptyText)}</div>`;
         return;
       }
 
@@ -5268,6 +5442,8 @@ function render() {
     function handleRemoteCommand(command) {
       if (!command || !command.action) return;
 
+      markFastRender();
+
       switch (command.action) {
         case "next":
           next();
@@ -5284,6 +5460,9 @@ function render() {
         case "goSubPage":
           goToMainAndSub(Number(command.pageIndex) || 0, Number(command.subIndex) || 0, Number(command.subPageIndex) || 0);
           return;
+        case "setWallMode":
+          setWallMode(command.mode);
+          return;
         case "refresh":
           render();
           restartPageTimer();
@@ -5293,21 +5472,36 @@ function render() {
       }
     }
 
+    function acceptRemoteCommand(command) {
+      if (!command || !command.id) return false;
+      if (command.id === lastRemoteCommandId) return false;
+
+      lastRemoteCommandId = command.id;
+      handleRemoteCommand(command);
+      return true;
+    }
+
     function bindRemoteControlChannel() {
       window.addEventListener("storage", (event) => {
         if (event.key !== CONTROL_COMMAND_KEY || !event.newValue) return;
 
         try {
-          const command = JSON.parse(event.newValue);
-          if (!command || !command.id) return;
-          if (command.id === lastRemoteCommandId) return;
-
-          lastRemoteCommandId = command.id;
-          handleRemoteCommand(command);
+          acceptRemoteCommand(JSON.parse(event.newValue));
         } catch (err) {
           // ignore malformed command payload
         }
       });
+
+      try {
+        if ("BroadcastChannel" in window) {
+          controlBroadcastChannel = new BroadcastChannel(CONTROL_CHANNEL_NAME);
+          controlBroadcastChannel.onmessage = (event) => {
+            acceptRemoteCommand(event.data);
+          };
+        }
+      } catch (err) {
+        controlBroadcastChannel = null;
+      }
     }
 
     function pullRemoteCommand() {
@@ -5322,10 +5516,7 @@ function render() {
         lastId: lastRemoteCommandId || ""
       }, 4500).then((res) => {
         if (!res || !res.ok || !res.command) return;
-        if (!res.command.id || res.command.id === lastRemoteCommandId) return;
-
-        lastRemoteCommandId = res.command.id;
-        handleRemoteCommand(res.command);
+        acceptRemoteCommand(res.command);
       }).catch(() => {
         // ignore transient network errors
       }).finally(() => {
