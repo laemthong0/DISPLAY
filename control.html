@@ -188,6 +188,21 @@
       font-weight: 800;
     }
 
+    #btnAutoToggle {
+      width: 100%;
+      margin-top: 8px;
+      min-height: 70px;
+      font-size: clamp(1.18rem, 5vw, 1.45rem);
+      font-weight: 900;
+    }
+
+    #btnAutoToggle.paused {
+      border-color: #b42318;
+      background: #fff1f0;
+      color: #912018;
+      box-shadow: inset 0 0 0 2px rgba(180, 35, 24, 0.28);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -374,6 +389,7 @@
         <button class="btn" id="btnNext">ถัดไป</button>
       </div>
       <button class="btn secondary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
+      <button class="btn" id="btnAutoToggle">หยุดออโต้</button>
     </div>
 
     <div class="card">
@@ -412,6 +428,7 @@
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
+    const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
 
@@ -478,6 +495,25 @@
         return mode === "single" || mode === "wall" ? mode : "";
       } catch {
         return "";
+      }
+    }
+
+    function storeAutoPlayPreference(enabled) {
+      const isEnabled = enabled !== false;
+
+      try {
+        localStorage.setItem(AUTO_PLAY_KEY, isEnabled ? "running" : "paused");
+      } catch {}
+
+      return isEnabled;
+    }
+
+    function readAutoPlayPreference() {
+      try {
+        const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
+        return mode !== "paused" && mode !== "0" && mode !== "false" && mode !== "off";
+      } catch {
+        return true;
       }
     }
 
@@ -568,9 +604,24 @@
       };
 
       // Retry short bursts to reduce dropped commands over remote network.
-      sendOnce();
-      setTimeout(sendOnce, 120);
-      setTimeout(sendOnce, 260);
+      const retryDelays = action === "refresh"
+        ? [0, 120, 300, 700, 1200, 2000, 3200]
+        : [0, 120, 260, 700, 1200];
+
+      retryDelays.forEach((delay) => {
+        if (delay === 0) {
+          sendOnce();
+        } else {
+          setTimeout(sendOnce, delay);
+        }
+      });
+
+      if (action === "refresh") {
+        // Some locked-down TV browsers miss one storage event; repeat local delivery with a fresh wrapper.
+        [180, 520, 1100].forEach((delay) => {
+          setTimeout(() => postLocalCommand({ ...cmd, id: `${cmd.id}-local-${delay}` }), delay);
+        });
+      }
     }
 
     function readMetaLocal() {
@@ -616,18 +667,27 @@
           ? `2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`
           : "1 จอ")
         : "-";
+      const autoPlayText = meta.autoPlay
+        ? (meta.autoPlay.enabled === false ? "หยุด" : "เปิด")
+        : (readAutoPlayPreference() ? "เปิด" : "หยุด");
       el.innerHTML = `
         <span class="state-item"><small>หมวด</small><b>${escapeHtml(pageName)}</b></span>
         <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
         <span class="state-item"><small>หน้าย่อย</small><b>${escapeHtml(subPageText)}</b></span>
         <span class="state-item"><small>จำนวนสินค้า</small><b>${Number(meta.viewCount || 0)}</b></span>
         <span class="state-item"><small>โหมดจอ</small><b>${escapeHtml(wallModeText)}</b></span>
+        <span class="state-item"><small>ออโต้</small><b>${escapeHtml(autoPlayText)}</b></span>
       `;
     }
 
     function getWallModeFromMeta() {
       if (!meta || !meta.wall) return readWallModePreference();
       return meta.wall.mode === "wall" || meta.wall.enabled ? "wall" : "single";
+    }
+
+    function getAutoPlayFromMeta() {
+      if (meta && meta.autoPlay) return meta.autoPlay.enabled !== false;
+      return readAutoPlayPreference();
     }
 
     function renderModeButtons() {
@@ -651,6 +711,17 @@
       } else {
         label.textContent = "รอข้อมูลจอหลัก";
       }
+    }
+
+    function renderAutoButton() {
+      const enabled = getAutoPlayFromMeta();
+      const btn = $("btnAutoToggle");
+      if (!btn) return;
+
+      btn.textContent = enabled ? "หยุดออโต้" : "เล่นออโต้";
+      btn.classList.toggle("paused", !enabled);
+      btn.classList.toggle("active", !enabled);
+      btn.setAttribute("aria-pressed", enabled ? "false" : "true");
     }
 
     function renderMainButtons() {
@@ -716,6 +787,7 @@
     function render() {
       renderState();
       renderModeButtons();
+      renderAutoButton();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -763,8 +835,19 @@
 
     $("btnPrev").onclick = () => sendCommand("prev");
     $("btnNext").onclick = () => sendCommand("next");
-    $("btnRefresh").onclick = () => sendCommand("refresh");
+    $("btnRefresh").onclick = () => {
+      sendCommand("refresh");
+      setHint("ส่งคำสั่งรีเฟรชแล้ว");
+    };
     $("btnReloadMeta").onclick = reloadMeta;
+    $("btnAutoToggle").onclick = () => {
+      const nextEnabled = !getAutoPlayFromMeta();
+      storeAutoPlayPreference(nextEnabled);
+      if (meta) meta.autoPlay = { enabled: nextEnabled };
+      render();
+      sendCommand("setAutoPlay", { enabled: nextEnabled });
+      setHint(nextEnabled ? "สั่งเล่นออโต้แล้ว" : "สั่งหยุดออโต้แล้ว");
+    };
     $("btnModeSingle").onclick = () => {
       storeWallModePreference("single");
       renderModeButtons();
