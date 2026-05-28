@@ -5730,6 +5730,11 @@ function render() {
 
     function bindRemoteControlChannel() {
       window.addEventListener("storage", (event) => {
+        if (event.key === AUTO_PLAY_KEY) {
+          setAutoPlay(readAutoPlayPreference());
+          return;
+        }
+
         if (event.key !== CONTROL_COMMAND_KEY || !event.newValue) return;
 
         try {
