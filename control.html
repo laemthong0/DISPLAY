@@ -374,12 +374,19 @@
 
     <div class="card">
       <div class="section-title">
-        <b>โหมดจอ</b>
+        <b>สถานะปัจจุบัน</b>
+      </div>
+      <div class="state" id="stateLine"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <b>โหมดแสดงจอ</b>
         <span class="muted" id="wallModeLabel">รอข้อมูลจอหลัก</span>
       </div>
       <div class="mode-actions">
-        <button class="btn" id="btnModeSingle">1 จอ</button>
-        <button class="btn" id="btnModeWall">2 จอ</button>
+        <button class="btn" id="btnModeSingle">แสดง1จอ</button>
+        <button class="btn" id="btnModeWall">แสดง2จอ</button>
       </div>
     </div>
 
@@ -390,13 +397,6 @@
       </div>
       <button class="btn secondary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
       <button class="btn" id="btnAutoToggle">หยุดออโต้</button>
-    </div>
-
-    <div class="card">
-      <div class="section-title">
-        <b>สถานะปัจจุบัน</b>
-      </div>
-      <div class="state" id="stateLine"></div>
     </div>
 
     <div class="card">
@@ -746,7 +746,7 @@
         <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
         <span class="state-item"><small>หน้าย่อย</small><b>${escapeHtml(subPageText)}</b></span>
         <span class="state-item"><small>จำนวนสินค้า</small><b>${Number(meta.viewCount || 0)}</b></span>
-        <span class="state-item"><small>โหมดจอ</small><b>${escapeHtml(wallModeText)}</b></span>
+        <span class="state-item"><small>โหมดแสดงจอ</small><b>${escapeHtml(wallModeText)}</b></span>
         <span class="state-item"><small>ออโต้</small><b>${escapeHtml(autoPlayText)}</b></span>
       `;
     }
@@ -777,9 +777,9 @@
       if (mode === "wall") {
         const screen = Number(meta?.wall?.screen || 0);
         const screens = Number(meta?.wall?.screens || 0);
-        label.textContent = screen && screens ? `กำลังแสดง 2 จอ (${screen}/${screens})` : "เลือกโหมด 2 จอ";
+        label.textContent = screen && screens ? `กำลังแสดง2จอ (${screen}/${screens})` : "เลือกแสดง2จอ";
       } else if (mode === "single") {
-        label.textContent = meta?.wall ? "กำลังแสดง 1 จอ" : "เลือกโหมด 1 จอ";
+        label.textContent = meta?.wall ? "กำลังแสดง1จอ" : "เลือกแสดง1จอ";
       } else {
         label.textContent = "รอข้อมูลจอหลัก";
       }
@@ -922,13 +922,13 @@
       storeWallModePreference("single");
       renderModeButtons();
       sendCommand("setWallMode", { mode: "single" });
-      setHint("สั่งเปลี่ยนเป็นโหมด 1 จอแล้ว");
+      setHint("สั่งแสดง1จอแล้ว");
     };
     $("btnModeWall").onclick = () => {
       storeWallModePreference("wall");
       renderModeButtons();
       sendCommand("setWallMode", { mode: "wall" });
-      setHint("สั่งเปลี่ยนเป็นโหมด 2 จอแล้ว");
+      setHint("สั่งแสดง2จอแล้ว");
     };
 
     $("btnSaveGasUrl").onclick = () => {
