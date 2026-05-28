@@ -4521,6 +4521,9 @@
       const wallRequested = wallParam === "1" || wallParam === "true" || wallParam === "yes";
       const syncParam = clean(params.get("sync")).toLowerCase();
       const syncScopeParam = clean(params.get("syncScope")).toLowerCase();
+      const syncScope = syncScopeParam === "all" || syncScopeParam === "page"
+        ? syncScopeParam
+        : "auto";
       const rawScreens = params.has("screens")
         ? clampNum(params.get("screens"), 1, 4, 1)
         : (wallRequested || forceWall ? 2 : 1);
@@ -4540,7 +4543,7 @@
         mode: enabled ? "wall" : "single",
         modeOverride,
         syncEnabled: enabled && syncParam !== "0" && syncParam !== "false" && syncParam !== "off",
-        syncScope: syncScopeParam === "all" ? "all" : "page",
+        syncScope,
         syncOffsetMs,
         screen,
         screenIndex: screen - 1,
@@ -5326,34 +5329,38 @@ function render() {
       return getVisibleProductsForState(sheetName, products, state.motherSubIndex).length;
     }
 
-    function getWallSyncSlots() {
-      if (WALL_CONFIG.syncScope !== "all") {
-        const sheetName = getSheetName();
-        const products = getProductsForSheetState(sheetName);
-        const count = products
-          ? getVisibleProductsForState(sheetName, products, currentMotherSubIndex).length
-          : 0;
-        const pageCount = count > 0
-          ? Math.max(1, Math.ceil(count / getItemsPerPage(count)))
-          : 1;
+    function getCurrentWallSyncSlots() {
+      const sheetName = getSheetName();
+      const products = getProductsForSheetState(sheetName);
+      const count = products
+        ? getVisibleProductsForState(sheetName, products, currentMotherSubIndex).length
+        : 0;
+      const pageCount = count > 0
+        ? Math.max(1, Math.ceil(count / getItemsPerPage(count)))
+        : 1;
 
-        return Array.from({ length: pageCount }, (_, subPageIndex) => ({
-          pageIndex: currentPageIndex,
-          motherSubIndex: currentMotherSubIndex,
-          subPageIndex
-        }));
-      }
+      return Array.from({ length: pageCount }, (_, subPageIndex) => ({
+        pageIndex: currentPageIndex,
+        motherSubIndex: currentMotherSubIndex,
+        subPageIndex
+      }));
+    }
 
+    function getAllWallSyncSlots() {
       const slots = [];
+      let allCountsReady = true;
 
       getNavigationStates().forEach((state) => {
         const count = getStateProductCount(state);
 
+        if (count === null) {
+          allCountsReady = false;
+          return;
+        }
+
         if (count === 0) return;
 
-        const pageCount = count === null
-          ? 1
-          : Math.max(1, Math.ceil(count / getItemsPerPage(count)));
+        const pageCount = Math.max(1, Math.ceil(count / getItemsPerPage(count)));
 
         for (let subPageIndex = 0; subPageIndex < pageCount; subPageIndex++) {
           slots.push({
@@ -5364,7 +5371,24 @@ function render() {
         }
       });
 
+      if (!allCountsReady) return null;
       return slots.length ? slots : [{ pageIndex: 0, motherSubIndex: 0, subPageIndex: 0 }];
+    }
+
+    function getWallSyncSlots() {
+      const allSlots = getAllWallSyncSlots();
+
+      if (WALL_CONFIG.syncScope === "all") {
+        return allSlots || getCurrentWallSyncSlots();
+      }
+
+      if (WALL_CONFIG.syncScope === "page") {
+        return getCurrentWallSyncSlots();
+      }
+
+      return allSlots && allSlots.length > 1
+        ? allSlots
+        : getCurrentWallSyncSlots();
     }
 
     function getWallSyncedSlot(now = Date.now()) {
