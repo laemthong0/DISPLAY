@@ -4568,6 +4568,7 @@
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
+    const HIDDEN_SHEET_NAMES = new Set(["price"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const REMOTE_CONTROL_POLL_MS = 200;
     const WALL_SYNC_TICK_GRACE_MS = 90;
@@ -4592,9 +4593,27 @@
     let wallSyncHoldUntil = 0;
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
+    let startLoopsRunId = 0;
 
     function clean(value) {
       return String(value ?? "").trim();
+    }
+
+    function normalizeSheetName(value) {
+      return clean(value).toLowerCase();
+    }
+
+    function isDisplaySheetName(name) {
+      const normalized = normalizeSheetName(name);
+      return Boolean(normalized) && !normalized.startsWith("_") && !HIDDEN_SHEET_NAMES.has(normalized);
+    }
+
+    function filterDisplaySheetPages(pages) {
+      return Array.isArray(pages) ? pages.map(clean).filter(isDisplaySheetName) : [];
+    }
+
+    function canUseGoogleVisualizationFallback(sheetName) {
+      return true; // อนุญาตให้ทุกชีตใช้ Fallback (ดึงข้อมูลโดยตรง) ได้
     }
 
     function markFastRender(durationMs = 4000) {
@@ -4804,7 +4823,8 @@
         const saved = localStorage.getItem(STORAGE_KEY);
         const parsed = saved ? JSON.parse(saved) : {};
         const merged = { ...DEFAULT_DATA, ...parsed };
-        merged.sheetPages = Array.isArray(merged.sheetPages) ? merged.sheetPages : DEFAULT_SHEET_PAGES;
+        merged.sheetPages = filterDisplaySheetPages(merged.sheetPages);
+        if (!merged.sheetPages.length) merged.sheetPages = filterDisplaySheetPages(DEFAULT_SHEET_PAGES);
         return merged;
       } catch (e) {
         return JSON.parse(JSON.stringify(DEFAULT_DATA));
@@ -4929,6 +4949,7 @@
           body: JSON.stringify({
             mode: "push_meta",
             source: "display",
+            sheetId: data.sheetId,
             meta: metaPayload
           })
         }).catch(() => {});
@@ -4970,6 +4991,40 @@
 
       localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
       pushRemoteMeta(payload);
+    }
+
+    function sameSheetPages(a, b) {
+      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+      return a.every((name, idx) => clean(name) === clean(b[idx]));
+    }
+
+    async function syncSheetPagesFromRemote() {
+      const endpoint = getControlWebAppUrl();
+      if (!endpoint || !data.sheetId) return false;
+
+      try {
+        const res = await runJsonp(endpoint, {
+          mode: "pull_sheet_pages",
+          sheetId: data.sheetId
+        }, 6000);
+        const livePages = Array.isArray(res?.sheetPages)
+          ? filterDisplaySheetPages(res.sheetPages)
+          : [];
+
+        if (!res?.ok || !livePages.length || sameSheetPages(data.sheetPages, livePages)) {
+          return false;
+        }
+
+        data.sheetPages = livePages;
+        if (currentPageIndex >= data.sheetPages.length) currentPageIndex = 0;
+        currentSubPageIndex = 0;
+        currentMotherSubIndex = 0;
+        productsCache = {};
+        saveData();
+        return true;
+      } catch (err) {
+        return false;
+      }
     }
 
 function render() {
@@ -5196,7 +5251,7 @@ function render() {
           $("sheetStatus").classList.remove("error");
         }
 
-        const rows = await fetchJsonp(data.sheetId, sheetName);
+        const rows = await fetchSheetRows(data.sheetId, sheetName);
         productsCache[sheetName] = parseRows(rows);
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
@@ -5214,9 +5269,26 @@ function render() {
         console.error(err);
 
         if (pageIdx === currentPageIndex) {
-          $("sheetStatus").textContent = "โหลดไม่สำเร็จ แสดงข้อมูลล่าสุด";
+          $("sheetStatus").textContent = "โหลดไม่สำเร็จ โปรดตรวจสอบชื่อชีต Sheet ID หรือสิทธิ์การเข้าถึงไฟล์";
           $("sheetStatus").classList.add("error");
         }
+      }
+    }
+
+    async function fetchRowsFromRemote(sheetId, sheetName) {
+      const endpoint = getControlWebAppUrl();
+      if (!endpoint || !sheetId || !sheetName) return null;
+
+      try {
+        const res = await runJsonp(endpoint, {
+          mode: "pull_sheet_rows",
+          sheetId,
+          sheetName
+        }, 8000);
+
+        return res?.ok && Array.isArray(res.rows) ? res.rows : null;
+      } catch (err) {
+        return null;
       }
     }
 
@@ -5251,6 +5323,7 @@ function render() {
         const params = new URLSearchParams({
           sheet: sheetName,
           range: "A:G",
+          headers: "0",
           tqx: `out:json;responseHandler:${cb}`
         });
 
@@ -5264,20 +5337,49 @@ function render() {
       });
     }
 
+    async function fetchSheetRows(sheetId, sheetName) {
+      const remoteRows = await fetchRowsFromRemote(sheetId, sheetName);
+      if (remoteRows) return remoteRows;
+      return fetchJsonp(sheetId, sheetName);
+    }
+
     function parseRows(rows) {
       if (rows.length > 0 && String(rows[0][0]).includes("ชื่อ")) {
         rows.shift();
       }
 
-      return rows.map((r) => ({
-        name: clean(r[0]),
-        detail: clean(r[1]),
-        price: formatPrice(r[2]),
-        unit: clean(r[3]),
-        image: clean(r[4]),
-        status: clean(r[5]),
-        subCategory: clean(r[6])
-      })).filter((i) => {
+      const hasExtendedColumns = rows.some((r) => {
+        return [2, 3, 4, 5, 6].some((idx) => clean(r[idx]));
+      });
+      const isCompactPriceSheet = !hasExtendedColumns && rows.some((r) => clean(r[0]) && clean(r[1]));
+
+      const products = isCompactPriceSheet
+        ? rows.map((r) => {
+          const name = clean(r[0]);
+          const price = clean(r[1]);
+          if (!name || !price) return null;
+
+          return {
+            name,
+            detail: "",
+            price: formatPrice(price),
+            unit: "",
+            image: "",
+            status: "",
+            subCategory: ""
+          };
+        }).filter(Boolean)
+        : rows.map((r) => ({
+          name: clean(r[0]),
+          detail: clean(r[1]),
+          price: formatPrice(r[2]),
+          unit: clean(r[3]),
+          image: clean(r[4]),
+          status: clean(r[5]),
+          subCategory: clean(r[6])
+        }));
+
+      return products.filter((i) => {
         return isProductVisible(i);
       });
     }
@@ -5953,8 +6055,13 @@ function render() {
       remoteControlPollTimer = setInterval(pullRemoteCommand, REMOTE_CONTROL_POLL_MS);
     }
 
-    function startLoops() {
+    async function startLoops() {
+      const loopId = ++startLoopsRunId;
       if (sheetTimer) clearInterval(sheetTimer);
+
+      const changedPages = await syncSheetPagesFromRemote();
+      if (loopId !== startLoopsRunId) return;
+      if (changedPages) render();
 
       loadSheetData(currentPageIndex);
 
@@ -6040,7 +6147,7 @@ function render() {
       data.shopName = $("editShopName").value.trim() || "ร้านค้า";
       data.refreshSeconds = clampNum($("editRefreshSeconds").value, 10, 3600, 60);
       data.pageSeconds = clampNum($("editPageSeconds").value, 5, 600, 30);
-      data.sheetPages = $("editSheetPages").value.split("\n").map(clean).filter(Boolean);
+      data.sheetPages = filterDisplaySheetPages($("editSheetPages").value.split("\n"));
 
       if (!data.sheetPages.length) data.sheetPages = ["หน้า 1"];
 
