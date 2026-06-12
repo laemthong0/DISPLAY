@@ -4873,6 +4873,42 @@
       line-height: 0.92;
     }
 
+    .product-card.has-special .special-badge {
+      top: clamp(5px, 0.72vh, 12px);
+      right: clamp(5px, 0.55vw, 12px);
+      left: auto;
+      min-width: 0;
+      min-height: clamp(22px, 2.45vh, 34px);
+      max-width: calc(100% - clamp(14px, 1.4vw, 28px));
+      padding: clamp(3px, 0.34vh, 6px) clamp(7px, 0.6vw, 13px);
+      border-width: 2px;
+      border-radius: 7px;
+      font-size: clamp(0.74rem, 0.9vw, 1.22rem);
+      line-height: 1;
+      transform: rotate(2deg);
+      box-shadow: 0 3px 0 rgba(67, 34, 0, 0.48), 0 8px 16px rgba(0,0,0,0.22);
+    }
+
+    .product-card.has-special .product-img,
+    .product-card.has-special:hover .product-img,
+    .product-card.has-special.auto-hover .product-img {
+      max-width: 88% !important;
+      max-height: calc(100% - clamp(28px, 4vh, 56px)) !important;
+      transform-origin: center bottom !important;
+    }
+
+    body.wall-mode .product-card.has-special .special-badge {
+      top: clamp(6px, 0.95vh, 16px);
+      right: clamp(6px, 0.72vw, 16px);
+      left: auto;
+      min-width: 0;
+      min-height: clamp(24px, 2.9vh, 40px);
+      max-width: calc(100% - clamp(16px, 1.65vw, 34px));
+      padding: clamp(4px, 0.44vh, 7px) clamp(8px, 0.7vw, 15px);
+      font-size: clamp(0.86rem, 1.05vw, 1.42rem);
+      transform: rotate(2deg);
+    }
+
     @keyframes smartTvContentShift {
       0%, 100% { transform: translate3d(0, 0, 0); filter: brightness(1); }
       24% { transform: translate3d(5px, -3px, 0); filter: brightness(0.985); }
@@ -5783,7 +5819,7 @@ function render() {
         }
 
         return `
-          <article class="product-card"${layoutStyle}>
+          <article class="product-card${badge ? " has-special" : ""}"${layoutStyle}>
             <div class="image-box">
               ${badge ? `<div class="special-badge ${badgeClass}">${escapeHtml(badge)}</div>` : ""}
               ${imgHtml}
