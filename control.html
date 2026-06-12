@@ -274,6 +274,62 @@
       overflow-wrap: anywhere;
     }
 
+    .health-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .health-item {
+      min-width: 0;
+      border: 1px solid #dbe5df;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fbf9;
+    }
+
+    .health-item small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .health-item b {
+      display: block;
+      color: #0f5132;
+      font-size: clamp(1rem, 3.8vw, 1.18rem);
+      line-height: 1.22;
+      overflow-wrap: anywhere;
+    }
+
+    .health-dot {
+      display: inline-block;
+      width: 0.72em;
+      height: 0.72em;
+      border-radius: 999px;
+      margin-right: 6px;
+      background: #9aa7a0;
+      box-shadow: 0 0 0 3px rgba(154, 167, 160, 0.14);
+      vertical-align: middle;
+    }
+
+    .health-dot.ok {
+      background: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+    }
+
+    .health-dot.warn {
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+    }
+
+    .health-dot.bad {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+    }
+
     .gas-config {
       display: none !important;
     }
@@ -336,7 +392,8 @@
       .transport-grid,
       .mode-actions,
       .grid,
-      .state {
+      .state,
+      .health-grid {
         grid-template-columns: 1fr;
       }
 
@@ -377,6 +434,14 @@
         <b>สถานะปัจจุบัน</b>
       </div>
       <div class="state" id="stateLine"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <b>Health Check ทีวี</b>
+        <span class="muted" id="healthSummary">รอข้อมูลจอ</span>
+      </div>
+      <div class="health-grid" id="healthLine"></div>
     </div>
 
     <div class="card">
@@ -751,6 +816,58 @@
       `;
     }
 
+    function formatTime(value) {
+      const timestamp = Number(value || 0);
+      if (!timestamp) return "-";
+      return new Date(timestamp).toLocaleTimeString("th-TH", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      });
+    }
+
+    function formatAge(value) {
+      const timestamp = Number(value || 0);
+      if (!timestamp) return "-";
+      const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+      if (seconds < 60) return `${seconds} วินาทีที่แล้ว`;
+      const minutes = Math.floor(seconds / 60);
+      const remain = seconds % 60;
+      return `${minutes} นาที ${remain} วินาทีที่แล้ว`;
+    }
+
+    function renderHealth() {
+      const el = $("healthLine");
+      const summary = $("healthSummary");
+
+      if (!meta || !meta.health) {
+        summary.textContent = "รอข้อมูลจอ";
+        el.innerHTML = `<span class="muted">ยังไม่มี heartbeat จากทีวี</span>`;
+        return;
+      }
+
+      const health = meta.health || {};
+      const lastSeenAt = Number(health.lastSeenAt || meta.updatedAt || 0);
+      const ageMs = lastSeenAt ? Date.now() - lastSeenAt : Infinity;
+      const onlineState = ageMs <= 30000 ? "ok" : (ageMs <= 90000 ? "warn" : "bad");
+      const onlineText = onlineState === "ok" ? "ออนไลน์" : (onlineState === "warn" ? "สัญญาณช้า" : "ออฟไลน์");
+      const sheetState = health.lastSheetLoadOk ? "ok" : "bad";
+      const sheetText = health.lastSheetLoadOk ? "โหลดสำเร็จ" : "โหลดมีปัญหา";
+
+      summary.innerHTML = `<span class="health-dot ${onlineState}"></span>${escapeHtml(onlineText)}`;
+      el.innerHTML = `
+        <span class="health-item"><small>สถานะจอ</small><b><span class="health-dot ${onlineState}"></span>${escapeHtml(onlineText)}</b></span>
+        <span class="health-item"><small>เห็นล่าสุด</small><b>${escapeHtml(formatAge(lastSeenAt))}</b></span>
+        <span class="health-item"><small>โหลดชีตล่าสุด</small><b><span class="health-dot ${sheetState}"></span>${escapeHtml(sheetText)}</b></span>
+        <span class="health-item"><small>เวลาโหลดชีต</small><b>${escapeHtml(formatTime(health.lastSheetLoadAt))}</b></span>
+        <span class="health-item"><small>สินค้าบนจอ</small><b>${Number(health.displayedProductCount || 0)} รายการ</b></span>
+        <span class="health-item"><small>ป้ายโปรบนจอ</small><b>${Number(health.specialBadgeCount || 0)} ป้าย</b></span>
+        <span class="health-item"><small>ข้อมูลในเครื่อง</small><b>${health.cacheReady ? "พร้อม" : "ยังไม่พร้อม"}</b></span>
+        <span class="health-item"><small>ข้อความล่าสุด</small><b>${escapeHtml(health.lastSheetLoadMessage || "-")}</b></span>
+      `;
+    }
+
     function getWallModeFromMeta() {
       if (!meta || !meta.wall) return readWallModePreference();
       return meta.wall.mode === "wall" || meta.wall.enabled ? "wall" : "single";
@@ -859,6 +976,7 @@
 
     function render() {
       renderState();
+      renderHealth();
       renderModeButtons();
       renderAutoButton();
       renderMainButtons();
