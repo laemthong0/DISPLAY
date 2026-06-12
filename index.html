@@ -4383,6 +4383,534 @@
       transform: scale(1.11) translateY(-1px) !important;
     }
 
+    /* wall-mode-polish-refresh-promo */
+    body.wall-mode .header {
+      height: clamp(48px, 5.8vh, 64px) !important;
+      min-height: clamp(48px, 5.8vh, 64px) !important;
+      padding: 0.45vh clamp(118px, 7.4vw, 154px) 0.55vh 1.45vw !important;
+      gap: clamp(8px, 0.8vw, 16px) !important;
+    }
+
+    body.wall-mode .logo {
+      width: clamp(38px, 4.4vh, 52px) !important;
+      height: clamp(38px, 4.4vh, 52px) !important;
+    }
+
+    body.wall-mode .shop-name {
+      font-size: clamp(1.05rem, 1.55vw, 2rem) !important;
+      line-height: 1.05 !important;
+    }
+
+    body.wall-mode .shop-sub {
+      font-size: clamp(0.62rem, 0.8vw, 0.98rem) !important;
+      line-height: 1.1 !important;
+    }
+
+    body.wall-mode .cat-title {
+      font-size: clamp(1.55rem, 2.28vw, 3rem) !important;
+      line-height: 1.05 !important;
+      max-width: 52vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    body.wall-mode .cat-count {
+      font-size: clamp(0.6rem, 0.78vw, 0.95rem) !important;
+      padding: 0.22vh 0.6vw !important;
+    }
+
+    body.wall-mode .header-right {
+      gap: clamp(5px, 0.5vw, 10px) !important;
+      flex: 1.05 !important;
+      min-width: 0;
+    }
+
+    body.wall-mode .control-link,
+    body.wall-mode .live-badge,
+    body.wall-mode #pageCounter {
+      display: none !important;
+    }
+
+    body.wall-mode .dateText,
+    body.wall-mode .clock {
+      opacity: 0.82 !important;
+    }
+
+    body.wall-mode .clock {
+      font-size: clamp(0.68rem, 0.82vw, 1rem) !important;
+      line-height: 1.1 !important;
+    }
+
+    body.wall-mode .tabs-container {
+      padding: 0.2vh 1.25vw 0.08vh !important;
+      gap: 3px !important;
+      opacity: 0.48 !important;
+    }
+
+    body.wall-mode .subtabs-container,
+    body.wall-mode .subtabs-container.active {
+      padding: 0.08vh 1.25vw 0.1vh !important;
+      gap: 3px !important;
+      opacity: 0.46 !important;
+    }
+
+    body.wall-mode .tab,
+    body.wall-mode .subtab {
+      min-height: 18px !important;
+      padding: 1px 7px !important;
+      font-size: clamp(0.42rem, 0.58vw, 0.72rem) !important;
+      border-radius: 4px !important;
+    }
+
+    body.wall-mode .board {
+      min-height: 0;
+    }
+
+    body.wall-mode .product-grid {
+      gap: clamp(4px, 0.52vh, 10px) clamp(6px, 0.56vw, 12px) !important;
+      padding-top: clamp(2px, 0.28vh, 6px) !important;
+      transition: opacity 220ms ease, filter 220ms ease;
+    }
+
+    body.wall-mode .product-grid.refreshing {
+      opacity: 0.84;
+      filter: saturate(0.92);
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .product-img,
+    body.wall-mode .product-grid[data-density="five"] .product-img {
+      max-height: 96% !important;
+    }
+
+    body.wall-mode .price-wrap {
+      box-shadow: 0 2px 0 #3a0808, 0 7px 14px rgba(0,0,0,0.22) !important;
+    }
+
+    body.wall-mode .price-val {
+      line-height: 0.9 !important;
+    }
+
+    .wall-promo {
+      grid-column: 1 / -1;
+      grid-row: 1 / -1;
+      align-self: stretch;
+      justify-self: stretch;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+      align-items: center;
+      gap: clamp(18px, 2.6vw, 54px);
+      margin: clamp(18px, 2.1vw, 44px);
+      padding: clamp(22px, 3.1vw, 58px);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 245, 0.92), rgba(251, 242, 205, 0.82)),
+        repeating-linear-gradient(90deg, rgba(20, 74, 45, 0.08) 0 8px, transparent 8px 24px);
+      border: 1px solid rgba(255,255,255,0.64);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 18px 44px rgba(14, 45, 25, 0.18);
+      color: #244534;
+      overflow: hidden;
+    }
+
+    .wall-promo-main {
+      min-width: 0;
+    }
+
+    .wall-promo-kicker {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      background: rgba(3, 61, 32, 0.1);
+      color: #0c5a31;
+      font-weight: 900;
+      font-size: clamp(0.82rem, 0.95vw, 1.16rem);
+      margin-bottom: clamp(10px, 1.2vh, 18px);
+    }
+
+    .wall-promo-title {
+      font-weight: 950;
+      font-size: clamp(2.2rem, 4.2vw, 5.6rem);
+      line-height: 1.02;
+      letter-spacing: 0;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.72);
+    }
+
+    .wall-promo-message {
+      margin-top: clamp(10px, 1.5vh, 22px);
+      font-weight: 850;
+      font-size: clamp(1.05rem, 1.55vw, 2.1rem);
+      line-height: 1.28;
+      color: #3c5a48;
+      max-width: 42ch;
+    }
+
+    .wall-promo-side {
+      display: grid;
+      gap: clamp(10px, 1.2vh, 18px);
+      justify-items: stretch;
+    }
+
+    .wall-promo-pill {
+      min-height: clamp(48px, 6vh, 76px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7vh 1vw;
+      border-radius: 8px;
+      background: #0d4e2b;
+      color: #ffe78a;
+      font-weight: 950;
+      font-size: clamp(1rem, 1.35vw, 1.8rem);
+      text-align: center;
+      box-shadow: 0 7px 0 rgba(1, 31, 16, 0.58);
+    }
+
+    .wall-promo-pill.light {
+      background: #fff7d2;
+      color: #234634;
+      box-shadow: 0 7px 0 rgba(129, 103, 24, 0.22);
+    }
+
+    .wall-promo.loading .wall-promo-title::after {
+      content: "";
+      display: inline-block;
+      width: 0.7em;
+      text-align: left;
+      animation: promoDots 1.2s steps(3, end) infinite;
+    }
+
+    @keyframes promoDots {
+      0% { content: ""; }
+      33% { content: "."; }
+      66% { content: ".."; }
+      100% { content: "..."; }
+    }
+
+    @media (max-width: 900px) {
+      .wall-promo {
+        grid-template-columns: 1fr;
+        margin: 14px;
+        padding: 20px;
+      }
+    }
+
+    /* wall-mode-storefront-redesign */
+    body.wall-mode {
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255, 231, 138, 0.16), transparent 34%),
+        linear-gradient(90deg, rgba(20, 74, 45, 0.9), rgba(248, 244, 216, 0.18) 16%, rgba(248, 244, 216, 0.18) 84%, rgba(20, 74, 45, 0.9)),
+        #f4efd6;
+    }
+
+    body.wall-mode .screen {
+      background:
+        linear-gradient(90deg, rgba(19, 75, 45, 0.42), transparent 15%, transparent 85%, rgba(19, 75, 45, 0.42)),
+        repeating-linear-gradient(90deg, rgba(25, 91, 54, 0.1) 0 5px, transparent 5px 28px),
+        linear-gradient(180deg, #f8f5dc 0%, #efe7bd 100%) !important;
+    }
+
+    body.wall-mode .header {
+      background: linear-gradient(180deg, #0b5630 0%, #06391f 100%) !important;
+      border-bottom: 3px solid #ffd957 !important;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22) !important;
+    }
+
+    body.wall-mode .tabs-container,
+    body.wall-mode .subtabs-container,
+    body.wall-mode .subtabs-container.active {
+      display: none !important;
+    }
+
+    body.wall-mode .board {
+      padding: clamp(8px, 1vh, 14px) clamp(18px, 2.3vw, 48px) 0 !important;
+      background: transparent !important;
+    }
+
+    body.wall-mode .product-grid {
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02), rgba(255,255,255,0.18)),
+        rgba(255, 255, 238, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22);
+      padding: clamp(8px, 1.2vh, 18px) clamp(12px, 1.6vw, 32px) clamp(44px, 5.4vh, 68px) !important;
+      animation: smartTvContentShift 240s ease-in-out infinite;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] {
+      gap: clamp(16px, 2vw, 44px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .product-card,
+    body.wall-mode .product-grid[data-density="five"] .product-card {
+      filter: drop-shadow(0 18px 20px rgba(31, 53, 33, 0.16));
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .image-box,
+    body.wall-mode .product-grid[data-density="five"] .image-box {
+      padding-bottom: clamp(82px, 10vh, 122px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .product-img,
+    body.wall-mode .product-grid[data-density="five"] .product-img {
+      max-width: 106% !important;
+      max-height: 101% !important;
+      transform-origin: center bottom !important;
+      filter: drop-shadow(0 20px 18px rgba(38, 54, 32, 0.26)) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .product-card:hover .product-img,
+    body.wall-mode .product-grid[data-density="few"] .product-card.auto-hover .product-img,
+    body.wall-mode .product-grid[data-density="five"] .product-card:hover .product-img,
+    body.wall-mode .product-grid[data-density="five"] .product-card.auto-hover .product-img {
+      transform: scale(1.07) translateY(-2px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .image-box > .info-box,
+    body.wall-mode .product-grid[data-density="five"] .image-box > .info-box {
+      gap: clamp(5px, 0.55vh, 9px) !important;
+      align-items: center !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .name-wrap,
+    body.wall-mode .product-grid[data-density="five"] .name-wrap {
+      max-width: min(94%, 320px) !important;
+      padding: 0.32vh 0.8vw !important;
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.94) !important;
+      box-shadow: 0 5px 12px rgba(19, 56, 31, 0.16) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .product-name,
+    body.wall-mode .product-grid[data-density="five"] .product-name {
+      font-size: clamp(0.88rem, 1.02vw, 1.35rem) !important;
+      line-height: 1.15 !important;
+      color: #10391f !important;
+      font-weight: 950 !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .price-wrap,
+    body.wall-mode .product-grid[data-density="five"] .price-wrap {
+      min-width: clamp(104px, 8.4vw, 164px) !important;
+      padding: 0.18vh 0.9vw 0.48vh !important;
+      border: 3px solid #180200 !important;
+      border-radius: 7px !important;
+      background: linear-gradient(180deg, #ff3a1e 0%, #d10b00 55%, #910400 100%) !important;
+      box-shadow: 0 4px 0 #2c0704, 0 9px 16px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.48) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .price-val,
+    body.wall-mode .product-grid[data-density="five"] .price-val {
+      font-size: clamp(2.5rem, 3.55vw, 5.2rem) !important;
+      letter-spacing: 0 !important;
+      -webkit-text-stroke: 2px #120000 !important;
+      text-shadow: 0 3px 0 #120000, 0 5px 10px rgba(0,0,0,0.4) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"] .price-unit,
+    body.wall-mode .product-grid[data-density="five"] .price-unit {
+      font-size: clamp(0.62rem, 0.88vw, 1.16rem) !important;
+      font-weight: 950 !important;
+    }
+
+    body.wall-mode .status-line {
+      left: clamp(12px, 2vw, 36px) !important;
+      bottom: clamp(36px, 5.2vh, 58px) !important;
+      font-size: clamp(0.72rem, 0.92vw, 1rem) !important;
+      background: rgba(255, 255, 255, 0.72) !important;
+      color: #274334 !important;
+      border-radius: 6px !important;
+      padding: 3px 9px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+      animation: smartTvBadgeShift 210s ease-in-out infinite;
+    }
+
+    body.wall-mode .ticker {
+      border-top: 3px solid #ffd957 !important;
+      background: linear-gradient(180deg, #08190e 0%, #102719 100%) !important;
+    }
+
+    body.wall-mode .ticker-text {
+      color: #ffe990 !important;
+      font-size: clamp(0.92rem, 1.08vw, 1.36rem) !important;
+      font-weight: 850 !important;
+    }
+
+    body.wall-mode .top-qr-logo {
+      animation: smartTvQrShift 300s ease-in-out infinite;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="1"] {
+      grid-template-columns: minmax(0, 1fr) !important;
+      padding-left: clamp(160px, 14vw, 300px) !important;
+      padding-right: clamp(160px, 14vw, 300px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="1"] .product-card {
+      max-width: min(62vw, 900px) !important;
+      justify-self: center !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="1"] .product-img {
+      max-width: 108% !important;
+      max-height: 104% !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="1"] .price-wrap {
+      min-width: clamp(150px, 11vw, 230px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="1"] .price-val {
+      font-size: clamp(3.5rem, 5.3vw, 7rem) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      padding-left: clamp(90px, 7vw, 170px) !important;
+      padding-right: clamp(90px, 7vw, 170px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="3"] {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="few"][data-count="2"] .product-img,
+    body.wall-mode .product-grid[data-density="few"][data-count="3"] .product-img {
+      max-width: 112% !important;
+    }
+
+    body.wall-mode .product-grid[data-density="mid"],
+    body.wall-mode .product-grid[data-density="many"],
+    body.wall-mode .product-grid[data-density="nine"],
+    body.wall-mode .product-grid[data-density="zigzag"],
+    body.wall-mode .product-grid[data-bulk="yes"] {
+      padding-top: clamp(6px, 0.7vh, 12px) !important;
+      padding-bottom: clamp(38px, 4.8vh, 60px) !important;
+    }
+
+    body.wall-mode .product-grid[data-density="mid"] .price-val,
+    body.wall-mode .product-grid[data-density="many"] .price-val,
+    body.wall-mode .product-grid[data-density="nine"] .price-val,
+    body.wall-mode .product-grid[data-density="zigzag"] .price-val,
+    body.wall-mode .product-grid[data-bulk="yes"] .price-val {
+      letter-spacing: 0 !important;
+      text-shadow: 0 2px 0 #120000, 0 4px 8px rgba(0,0,0,0.35) !important;
+    }
+
+    .special-badge {
+      position: absolute;
+      top: clamp(6px, 0.9vh, 14px);
+      left: clamp(6px, 0.72vw, 14px);
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: clamp(24px, 3vh, 38px);
+      padding: 0.22vh 0.72vw;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #ffec70 0%, #ffb300 100%);
+      border: 2px solid rgba(81, 43, 0, 0.82);
+      color: #4b2100;
+      font-weight: 950;
+      font-size: clamp(0.75rem, 0.98vw, 1.32rem);
+      line-height: 1;
+      letter-spacing: 0;
+      box-shadow: 0 4px 0 rgba(67, 34, 0, 0.42), 0 9px 18px rgba(0,0,0,0.2);
+      transform: rotate(-2deg);
+      pointer-events: none;
+    }
+
+    .special-badge.sale {
+      background: linear-gradient(180deg, #ff4b31 0%, #c70900 100%);
+      color: #fff3d0;
+      border-color: #280100;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.32);
+    }
+
+    .special-badge.recommend {
+      background: linear-gradient(180deg, #25b86a 0%, #08713a 100%);
+      color: #fff9d6;
+      border-color: #06351e;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.28);
+    }
+
+    body.wall-mode .special-badge {
+      top: clamp(10px, 1.3vh, 18px);
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      font-size: clamp(0.95rem, 1.2vw, 1.58rem);
+      min-height: clamp(30px, 3.5vh, 44px);
+      padding: 0.25vh 0.95vw;
+    }
+
+    @keyframes smartTvContentShift {
+      0%, 100% { transform: translate3d(0, 0, 0); filter: brightness(1); }
+      24% { transform: translate3d(5px, -3px, 0); filter: brightness(0.985); }
+      50% { transform: translate3d(-4px, 4px, 0); filter: brightness(1.015); }
+      76% { transform: translate3d(3px, 3px, 0); filter: brightness(0.995); }
+    }
+
+    @keyframes smartTvBadgeShift {
+      0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.86; }
+      50% { transform: translate3d(8px, -3px, 0); opacity: 0.72; }
+    }
+
+    @keyframes smartTvQrShift {
+      0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.98; }
+      33% { transform: translate3d(-5px, 4px, 0); opacity: 0.92; }
+      66% { transform: translate3d(4px, -3px, 0); opacity: 0.95; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body.wall-mode .product-grid,
+      body.wall-mode .status-line,
+      body.wall-mode .top-qr-logo {
+        animation: none !important;
+      }
+    }
+
+    body.wall-mode .wall-promo {
+      margin: clamp(20px, 3vh, 42px) clamp(38px, 5vw, 92px) clamp(26px, 3.8vh, 56px);
+      padding: clamp(28px, 4.3vw, 76px);
+      grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+      background:
+        linear-gradient(120deg, rgba(255,255,255,0.94) 0%, rgba(255,249,218,0.92) 58%, rgba(255,226,106,0.28) 100%),
+        repeating-linear-gradient(90deg, rgba(14, 85, 45, 0.08) 0 8px, transparent 8px 30px);
+      border: 2px solid rgba(255,255,255,0.9);
+      box-shadow: 0 24px 54px rgba(21, 56, 34, 0.2), inset 0 1px 0 #fff;
+    }
+
+    body.wall-mode .wall-promo-kicker {
+      background: #0b5630;
+      color: #ffe990;
+      border-radius: 6px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+    }
+
+    body.wall-mode .wall-promo-title {
+      max-width: 11ch;
+      font-size: clamp(3.2rem, 5.15vw, 7rem);
+      color: #10391f;
+      line-height: 0.98;
+    }
+
+    body.wall-mode .wall-promo-message {
+      max-width: 34ch;
+      font-size: clamp(1.2rem, 1.75vw, 2.25rem);
+      color: #2b4b37;
+    }
+
+    body.wall-mode .wall-promo-side {
+      gap: clamp(14px, 1.75vh, 24px);
+    }
+
+    body.wall-mode .wall-promo-pill {
+      border-radius: 7px;
+      font-size: clamp(1.16rem, 1.62vw, 2.15rem);
+      min-height: clamp(58px, 7vh, 92px);
+    }
+
   </style>
 </head>
 
@@ -4455,7 +4983,7 @@
   <div class="modal-overlay" id="editorModalOverlay">
     <div class="editor-modal">
       <h3>ตั้งค่าจอแสดงสินค้า</h3>
-      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะ, G=หมวดย่อย)</p>
+      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะแสดง/ซ่อน, G=หมวดย่อย, H=ป้ายพิเศษ)</p>
 
       <div class="form-grid">
         <div class="form-group">
@@ -4595,6 +5123,16 @@
     let pendingNumericMainIndex = null;
     let pendingNumericTimer = null;
     let startLoopsRunId = 0;
+    let sheetLoadErrors = {};
+    let healthTimer = null;
+    let lastSheetLoadAt = 0;
+    let lastSheetLoadOk = false;
+    let lastSheetLoadMessage = "ยังไม่โหลดข้อมูล";
+    let lastRenderAt = 0;
+    let lastPublishedViewCount = 0;
+    let lastPublishedTotalSubPages = 1;
+    let lastDisplayedProductCount = 0;
+    let lastDisplayedSpecialCount = 0;
 
     function clean(value) {
       return String(value ?? "").trim();
@@ -4960,6 +5498,9 @@
     }
 
     function publishControlMeta(viewCount = 0, totalSubPages = 1) {
+      lastPublishedViewCount = viewCount;
+      lastPublishedTotalSubPages = totalSubPages;
+
       const payload = {
         updatedAt: Date.now(),
         currentPageIndex,
@@ -4980,6 +5521,19 @@
           screens: WALL_CONFIG.screens,
           itemsPerWallPage: WALL_CONFIG.itemsPerWallPage
         },
+        health: {
+          online: true,
+          lastSeenAt: Date.now(),
+          lastRenderAt,
+          lastSheetLoadAt,
+          lastSheetLoadOk,
+          lastSheetLoadMessage,
+          displayedProductCount: lastDisplayedProductCount,
+          specialBadgeCount: lastDisplayedSpecialCount,
+          cacheReady: Object.prototype.hasOwnProperty.call(productsCache, getSheetName()),
+          screenUrl: window.location.href,
+          userAgent: navigator.userAgent
+        },
         pages: data.sheetPages.map((name, idx) => ({
           index: idx,
           name,
@@ -4992,6 +5546,14 @@
 
       localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
       pushRemoteMeta(payload);
+    }
+
+    function restartHealthHeartbeat() {
+      if (healthTimer) clearInterval(healthTimer);
+      publishControlMeta(lastPublishedViewCount, lastPublishedTotalSubPages);
+      healthTimer = setInterval(() => {
+        publishControlMeta(lastPublishedViewCount, lastPublishedTotalSubPages);
+      }, 10000);
     }
 
     function sameSheetPages(a, b) {
@@ -5030,6 +5592,8 @@
 
 function render() {
       const sheetName = getSheetName();
+      const hasLoadedSheet = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
+      const hasLoadError = Boolean(sheetLoadErrors[sheetName]) && !hasLoadedSheet;
       const allProducts = productsCache[sheetName] || [];
       const viewProducts = getVisibleProducts(sheetName, allProducts);
       const productGrid = $("productGrid");
@@ -5045,9 +5609,22 @@ function render() {
       const displayProducts = wallPageProducts.slice(wallSlice.start, wallSlice.end);
       const shape = getGridShape(displayProducts.length);
       const wallRange = formatWallRange(startIndex, wallSlice, viewProducts.length);
-      const wallEmptyText = wallSlice.singleScreen && WALL_CONFIG.enabled && WALL_CONFIG.screenIndex > 0
-        ? "รายการนี้แสดงที่จอ 1"
-        : "ไม่มีสินค้าในหมวดหมู่นี้";
+      const wallEmptyKind = !hasLoadedSheet
+        ? (hasLoadError ? "error" : "loading")
+        : (wallSlice.singleScreen && WALL_CONFIG.enabled && WALL_CONFIG.screenIndex > 0 ? "wall-idle" : "empty");
+      const wallEmptyText = wallEmptyKind === "loading"
+        ? "กำลังเชื่อมต่อข้อมูล"
+        : wallEmptyKind === "error"
+          ? "โหลดข้อมูลไม่สำเร็จ"
+          : wallEmptyKind === "wall-idle"
+            ? "รายการนี้แสดงที่จอ 1"
+            : "ไม่มีสินค้าในหมวดหมู่นี้";
+
+      lastRenderAt = Date.now();
+      lastDisplayedProductCount = displayProducts.length;
+      lastDisplayedSpecialCount = displayProducts.filter((item) => Boolean(getSpecialBadgeLabel(item))).length;
+
+      document.body.classList.toggle("wall-mode", WALL_CONFIG.enabled);
 
       document.documentElement.style.setProperty("--cols", String(shape.cols));
       document.documentElement.style.setProperty("--rows", String(shape.rows));
@@ -5061,6 +5638,7 @@ function render() {
       productGrid.style.setProperty("--zig-cols", String((shape.cols * 2) + 1));
 
       $("shopName").textContent = data.shopName;
+      $("shopSub").textContent = data.shopSub || DEFAULT_DATA.shopSub;
 
       $("heroTitle").textContent = getSubCategoriesForSheet(sheetName).length
         ? `${sheetName} • ${getSubCategoryName(sheetName)}`
@@ -5068,7 +5646,7 @@ function render() {
 
       $("heroDesc").textContent = WALL_CONFIG.enabled
         ? (wallSlice.singleScreen && WALL_CONFIG.screenIndex > 0
-          ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • แสดงที่จอ 1`
+          ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • พร้อมประชาสัมพันธ์`
           : `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
         : `${viewProducts.length} รายการ`;
 
@@ -5078,7 +5656,7 @@ function render() {
       const motherText = currentSubCategories.length ? ` • กลุ่ม ${currentMotherSubIndex + 1}/${currentSubCategories.length}` : "";
       const wallText = WALL_CONFIG.enabled
         ? (wallSlice.singleScreen && WALL_CONFIG.screenIndex > 0
-          ? ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • แสดงที่จอ 1`
+          ? ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • พร้อมประชาสัมพันธ์`
           : ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
         : "";
 
@@ -5092,7 +5670,7 @@ function render() {
 
       renderTabs();
       renderSubTabs(sheetName);
-      renderGrid(displayProducts, shape, wallEmptyText);
+      renderGrid(displayProducts, shape, wallEmptyText, { kind: wallEmptyKind, sheetName });
       preloadWallSyncImages();
       publishControlMeta(viewProducts.length, totalSubPages);
       resetProgressAnim();
@@ -5130,8 +5708,13 @@ function render() {
       `).join("");
     }
 
-    function renderGrid(products, shape = null, emptyText = "ไม่มีสินค้าในหมวดหมู่นี้") {
+    function renderGrid(products, shape = null, emptyText = "ไม่มีสินค้าในหมวดหมู่นี้", emptyState = {}) {
       const grid = $("productGrid");
+      const renderSignature = getGridRenderSignature(products, shape, emptyText, emptyState);
+
+      if (grid.dataset.renderSignature === renderSignature) return;
+
+      grid.dataset.renderSignature = renderSignature;
 
       grid.innerHTML = "";
       void grid.offsetWidth;
@@ -5142,7 +5725,7 @@ function render() {
       }
 
       if (!products.length) {
-        grid.innerHTML = `<div class="image-empty">${escapeHtml(emptyText)}</div>`;
+        grid.innerHTML = renderEmptyState(emptyText, emptyState);
         return;
       }
 
@@ -5151,6 +5734,8 @@ function render() {
 
       grid.innerHTML = products.map((item, idx) => {
         const imgUrl = resolveImg(item.image, imageSize);
+        const badge = getSpecialBadgeLabel(item);
+        const badgeClass = getSpecialBadgeClass(badge);
 
         const imgHtml = imgUrl
           ? `<img class="product-img" src="${escapeHtml(imgUrl)}" loading="eager" decoding="async" fetchpriority="${idx < 4 ? "high" : "auto"}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'no-image',textContent:'ไม่มีรูป'}))">`
@@ -5171,6 +5756,7 @@ function render() {
         return `
           <article class="product-card"${layoutStyle}>
             <div class="image-box">
+              ${badge ? `<div class="special-badge ${badgeClass}">${escapeHtml(badge)}</div>` : ""}
               ${imgHtml}
               <div class="info-box">
                 <div class="name-wrap">
@@ -5189,6 +5775,111 @@ function render() {
       }).join("");
 
       startAutoHoverPreview();
+    }
+
+    function getSpecialBadgeLabel(item) {
+      const rawBadge = clean(item?.specialBadge || "");
+      const source = normalizeText(rawBadge);
+
+      if (!source || isHiddenStatus(item?.status)) return "";
+      if (source.includes("ราคาพิเศษ")) return "ราคาพิเศษ";
+      if (source.includes("โปร") || source.includes("promotion")) return "โปร";
+      if (source.includes("ลด") || source.includes("sale")) return "ลดราคา";
+      if (source.includes("แนะนำ") || source.includes("recommend")) return "แนะนำ";
+      if (source.includes("ขายดี") || source.includes("hot")) return "ขายดี";
+      if (source.includes("มาใหม่") || source.includes("new")) return "มาใหม่";
+      if (source === "พิเศษ" || source === "special") return "พิเศษ";
+      return rawBadge.slice(0, 16);
+    }
+
+    function getSpecialBadgeClass(label) {
+      const normalized = normalizeText(label);
+      if (normalized.includes("ลด") || normalized.includes("โปร") || normalized.includes("ราคา")) return "sale";
+      if (normalized.includes("แนะนำ") || normalized.includes("ขายดี") || normalized.includes("ใหม่")) return "recommend";
+      return "";
+    }
+
+    function getGridRenderSignature(products, shape, emptyText, emptyState) {
+      const productPart = (products || []).map((item) => [
+        clean(item.name),
+        clean(item.detail),
+        clean(item.price),
+        clean(item.unit),
+        clean(item.image),
+        clean(item.status),
+        clean(item.specialBadge),
+        getSpecialBadgeLabel(item)
+      ].join("|")).join("~");
+
+      return JSON.stringify({
+        productPart,
+        cols: shape?.cols || 0,
+        rows: shape?.rows || 0,
+        density: shape?.density || "",
+        emptyText,
+        kind: emptyState?.kind || ""
+      });
+    }
+
+    function getProductsDataSignature(products) {
+      return (products || []).map((item) => [
+        clean(item.name),
+        clean(item.detail),
+        clean(item.price),
+        clean(item.unit),
+        clean(item.image),
+        clean(item.status),
+        clean(item.subCategory),
+        clean(item.specialBadge)
+      ].join("|")).join("~");
+    }
+
+    function renderEmptyState(emptyText, state = {}) {
+      if (!WALL_CONFIG.enabled) {
+        return `<div class="image-empty">${escapeHtml(emptyText)}</div>`;
+      }
+
+      const kind = state.kind || "empty";
+      const isLoading = kind === "loading";
+      const isError = kind === "error";
+      const isWallIdle = kind === "wall-idle";
+      const title = isLoading
+        ? "กำลังโหลดข้อมูล"
+        : isError
+          ? "กำลังรอข้อมูลกลับมา"
+          : isWallIdle
+            ? "สอบถามสินค้าเพิ่มเติม"
+            : "ยังไม่มีรายการในหมวดนี้";
+      const message = isLoading
+        ? "ระบบกำลังเชื่อมต่อข้อมูลราคา สินค้าจะขึ้นอัตโนมัติเมื่อโหลดเสร็จ"
+        : isError
+          ? "แสดงหน้าพักไว้ก่อน เพื่อลดจอว่างระหว่างรอการเชื่อมต่อหรือการอัปเดตข้อมูล"
+          : isWallIdle
+            ? "สแกน QR หรือสอบถามหน้าร้าน เพื่อเช็กราคาและสินค้าพร้อมจำหน่าย"
+            : "ระบบจะข้ามไปหมวดที่มีสินค้าเมื่อถึงรอบถัดไป";
+      const kicker = isWallIdle ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}` : "แหลมทองกิจเกษตร";
+      const finalPill = isWallIdle ? "พร้อมให้บริการหน้าร้าน" : emptyText;
+
+      return `
+        <div class="wall-promo ${escapeHtml(kind)}">
+          <div class="wall-promo-main">
+            <div class="wall-promo-kicker">${escapeHtml(kicker)}</div>
+            <div class="wall-promo-title">${escapeHtml(title)}</div>
+            <div class="wall-promo-message">${escapeHtml(message)}</div>
+          </div>
+          <div class="wall-promo-side">
+            <div class="wall-promo-pill">สแกน QR เพื่อสอบถามสินค้า</div>
+            <div class="wall-promo-pill light">ราคาสินค้าอัปเดตประจำวัน</div>
+            <div class="wall-promo-pill">${escapeHtml(finalPill)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setGridRefreshing(active) {
+      const grid = $("productGrid");
+      if (!grid) return;
+      grid.classList.toggle("refreshing", Boolean(active));
     }
 
     function startAutoHoverPreview() {
@@ -5245,33 +5936,55 @@ function render() {
     async function loadSheetData(pageIdx) {
       const sheetName = data.sheetPages[pageIdx];
       if (!data.sheetId) return;
+      const isCurrentPage = pageIdx === currentPageIndex;
+      const hadProductsCache = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
 
       try {
-        if (pageIdx === currentPageIndex) {
-          $("sheetStatus").textContent = `กำลังอัปเดตข้อมูล ${sheetName}...`;
+        if (isCurrentPage) {
+          if (hadProductsCache) setGridRefreshing(true);
+          $("sheetStatus").textContent = hadProductsCache
+            ? `กำลังตรวจสอบราคา ${sheetName}...`
+            : `กำลังอัปเดตข้อมูล ${sheetName}...`;
           $("sheetStatus").classList.remove("error");
         }
 
         const rows = await fetchSheetRows(data.sheetId, sheetName);
-        productsCache[sheetName] = parseRows(rows);
+        const nextProducts = parseRows(rows);
+        const productsChanged = getProductsDataSignature(productsCache[sheetName]) !== getProductsDataSignature(nextProducts);
+
+        productsCache[sheetName] = nextProducts;
+        sheetLoadErrors[sheetName] = false;
+        lastSheetLoadAt = Date.now();
+        lastSheetLoadOk = true;
+        lastSheetLoadMessage = `โหลด ${sheetName} สำเร็จ (${nextProducts.length} รายการ)`;
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
 
-        if (pageIdx === currentPageIndex) {
+        if (isCurrentPage) {
           $("sheetStatus").textContent = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString("th-TH");
           $("sheetStatus").classList.remove("error");
-          if (WALL_CONFIG.syncEnabled && autoPlayEnabled) {
-            if (!applyWallSyncedState()) render();
-          } else if (!skipCurrentEmptyState(1)) {
-            render();
+          setGridRefreshing(false);
+
+          if (!hadProductsCache || productsChanged) {
+            if (WALL_CONFIG.syncEnabled && autoPlayEnabled) {
+              if (!applyWallSyncedState()) render();
+            } else if (!skipCurrentEmptyState(1)) {
+              render();
+            }
           }
         }
       } catch (err) {
         console.error(err);
+        sheetLoadErrors[sheetName] = true;
+        lastSheetLoadAt = Date.now();
+        lastSheetLoadOk = false;
+        lastSheetLoadMessage = `โหลด ${sheetName} ไม่สำเร็จ`;
 
-        if (pageIdx === currentPageIndex) {
+        if (isCurrentPage) {
+          setGridRefreshing(false);
           $("sheetStatus").textContent = "โหลดไม่สำเร็จ โปรดตรวจสอบชื่อชีต Sheet ID หรือสิทธิ์การเข้าถึงไฟล์";
           $("sheetStatus").classList.add("error");
+          if (!hadProductsCache) render();
         }
       }
     }
@@ -5367,7 +6080,8 @@ function render() {
             unit: "",
             image: "",
             status: "",
-            subCategory: ""
+            subCategory: "",
+            specialBadge: ""
           };
         }).filter(Boolean)
         : rows.map((r) => ({
@@ -5377,7 +6091,8 @@ function render() {
           unit: clean(r[3]),
           image: clean(r[4]),
           status: clean(r[5]),
-          subCategory: clean(r[6])
+          subCategory: clean(r[6]),
+          specialBadge: clean(r[7])
         }));
 
       return products.filter((i) => {
@@ -6080,6 +6795,7 @@ function render() {
 
       restartPageTimer();
       restartRemoteControlPolling();
+      restartHealthHeartbeat();
     }
 
     function restartPageTimer() {
