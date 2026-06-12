@@ -4437,6 +4437,12 @@
       opacity: 0.82 !important;
     }
 
+    body.wall-mode #dateText {
+      max-width: clamp(220px, 28vw, 520px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     body.wall-mode .clock {
       font-size: clamp(0.68rem, 0.82vw, 1rem) !important;
       line-height: 1.1 !important;
@@ -4726,6 +4732,10 @@
       animation: smartTvBadgeShift 210s ease-in-out infinite;
     }
 
+    body.wall-mode .status-line {
+      display: none !important;
+    }
+
     body.wall-mode .ticker {
       border-top: 3px solid #ffd957 !important;
       background: linear-gradient(180deg, #08190e 0%, #102719 100%) !important;
@@ -4800,23 +4810,25 @@
 
     .special-badge {
       position: absolute;
-      top: clamp(6px, 0.9vh, 14px);
-      left: clamp(6px, 0.72vw, 14px);
+      top: clamp(8px, 1.1vh, 18px);
+      left: clamp(8px, 0.9vw, 18px);
       z-index: 4;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: clamp(24px, 3vh, 38px);
-      padding: 0.22vh 0.72vw;
-      border-radius: 7px;
-      background: linear-gradient(180deg, #ffec70 0%, #ffb300 100%);
-      border: 2px solid rgba(81, 43, 0, 0.82);
-      color: #4b2100;
+      min-width: clamp(72px, 6vw, 128px);
+      min-height: clamp(34px, 4vh, 54px);
+      padding: clamp(5px, 0.55vh, 10px) clamp(12px, 1.05vw, 24px);
+      border-radius: 9px;
+      background: linear-gradient(180deg, #fff26a 0%, #ffb000 100%);
+      border: 3px solid rgba(79, 38, 0, 0.95);
+      color: #421800;
       font-weight: 950;
-      font-size: clamp(0.75rem, 0.98vw, 1.32rem);
+      font-size: clamp(0.95rem, 1.2vw, 1.62rem);
       line-height: 1;
       letter-spacing: 0;
-      box-shadow: 0 4px 0 rgba(67, 34, 0, 0.42), 0 9px 18px rgba(0,0,0,0.2);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+      box-shadow: 0 5px 0 rgba(67, 34, 0, 0.55), 0 12px 24px rgba(0,0,0,0.26);
       transform: rotate(-2deg);
       pointer-events: none;
     }
@@ -4835,13 +4847,28 @@
       text-shadow: 0 2px 0 rgba(0,0,0,0.28);
     }
 
+    .special-badge.hot {
+      background: linear-gradient(180deg, #ff8a00 0%, #e31717 100%);
+      color: #fff7dc;
+      border-color: #470000;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.32);
+    }
+
+    .special-badge.new {
+      background: linear-gradient(180deg, #2f8cff 0%, #0047b8 100%);
+      color: #f2fbff;
+      border-color: #00285f;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+    }
+
     body.wall-mode .special-badge {
-      top: clamp(10px, 1.3vh, 18px);
+      top: clamp(12px, 1.6vh, 24px);
       left: 50%;
       transform: translateX(-50%) rotate(-2deg);
-      font-size: clamp(0.95rem, 1.2vw, 1.58rem);
-      min-height: clamp(30px, 3.5vh, 44px);
-      padding: 0.25vh 0.95vw;
+      min-width: clamp(92px, 7.4vw, 160px);
+      min-height: clamp(42px, 4.9vh, 66px);
+      padding: clamp(7px, 0.75vh, 13px) clamp(18px, 1.4vw, 32px);
+      font-size: clamp(1.18rem, 1.55vw, 2.05rem);
     }
 
     @keyframes smartTvContentShift {
@@ -5795,7 +5822,9 @@ function render() {
     function getSpecialBadgeClass(label) {
       const normalized = normalizeText(label);
       if (normalized.includes("ลด") || normalized.includes("โปร") || normalized.includes("ราคา")) return "sale";
-      if (normalized.includes("แนะนำ") || normalized.includes("ขายดี") || normalized.includes("ใหม่")) return "recommend";
+      if (normalized.includes("ขายดี")) return "hot";
+      if (normalized.includes("ใหม่")) return "new";
+      if (normalized.includes("แนะนำ")) return "recommend";
       return "";
     }
 
@@ -5911,7 +5940,24 @@ function render() {
         hour12: false
       }).format(now);
 
-      $("dateText").textContent = date + " " + time;
+      const updatedText = getHeaderUpdateText();
+      $("dateText").textContent = updatedText
+        ? `${date} ${time} • ${updatedText}`
+        : `${date} ${time}`;
+    }
+
+    function getHeaderUpdateText() {
+      if (!lastSheetLoadAt) return "";
+
+      const loadTime = new Intl.DateTimeFormat("th-TH", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(new Date(lastSheetLoadAt));
+
+      return lastSheetLoadOk
+        ? `อัปเดต ${loadTime}`
+        : `โหลดไม่สำเร็จ ${loadTime}`;
     }
 
     function resetProgressAnim() {
@@ -5957,6 +6003,7 @@ function render() {
         lastSheetLoadAt = Date.now();
         lastSheetLoadOk = true;
         lastSheetLoadMessage = `โหลด ${sheetName} สำเร็จ (${nextProducts.length} รายการ)`;
+        updateClock();
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
 
@@ -5979,6 +6026,7 @@ function render() {
         lastSheetLoadAt = Date.now();
         lastSheetLoadOk = false;
         lastSheetLoadMessage = `โหลด ${sheetName} ไม่สำเร็จ`;
+        updateClock();
 
         if (isCurrentPage) {
           setGridRefreshing(false);
