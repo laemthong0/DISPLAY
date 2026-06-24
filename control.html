@@ -502,6 +502,7 @@
 
     let meta = null;
     let remoteMetaTimer = null;
+    let remoteMetaPollInFlight = false;
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
     let autoPlayAckTimer = null;
@@ -623,6 +624,10 @@
     function applyMeta(nextMeta) {
       if (!nextMeta) return;
 
+      const currentUpdatedAt = Number(meta?.updatedAt || 0);
+      const nextUpdatedAt = Number(nextMeta.updatedAt || 0);
+      if (currentUpdatedAt && nextUpdatedAt && nextUpdatedAt < currentUpdatedAt) return;
+
       const metaAutoPlay = getAutoPlayEnabledFromMeta(nextMeta);
       if (pendingAutoPlay) {
         if (metaAutoPlay === pendingAutoPlay.enabled) {
@@ -692,9 +697,15 @@
     }
 
     function sendCommand(action, extra = {}) {
+      const commandId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      const currentAutoPlay = action === "setAutoPlay"
+        ? extra.enabled !== false
+        : readAutoPlayPreference();
       const cmd = {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        id: commandId,
+        dedupeKey: commandId,
         action,
+        autoPlay: currentAutoPlay,
         ...extra
       };
 
@@ -990,11 +1001,16 @@
       if (!endpoint) return;
 
       const tick = () => {
+        if (remoteMetaPollInFlight) return;
+        remoteMetaPollInFlight = true;
+
         readMetaRemote().then((remoteMeta) => {
           if (remoteMeta) {
             applyMeta(remoteMeta);
             setHint("เชื่อมต่อ GAS แล้ว");
           }
+        }).finally(() => {
+          remoteMetaPollInFlight = false;
         });
       };
       tick();
