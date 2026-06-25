@@ -659,6 +659,7 @@
     }
 
     .progress {
+      display: none !important;
       height: 6px;
       background: rgba(0,0,0,0.3);
       width: 100%;
@@ -5111,6 +5112,7 @@
 
   <script>
     const DEFAULT_SHEET_PAGES = [
+      "ปาล์มใหญ่",
       "แม่ปุ๋ย",
       "ปุ๋ยปาล์ม",
       "ปุ๋ยยาง",
@@ -5122,6 +5124,7 @@
     ];
 
     const MOTHER_SHEET_NAME = "แม่ปุ๋ย";
+    const PRIMARY_SHEET_NAME = "ปาล์มใหญ่";
     const RUBBER_SHEET_NAME = "ปุ๋ยยาง";
 
     const MOTHER_SUBCATEGORIES = [
@@ -5167,13 +5170,13 @@
     const REMOTE_CONTROL_POLL_MS = 750;
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "nine-zigzag-gap2-20260530";
+    const APP_VERSION = "primary-palm-yai-20260625";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
 
     let data = loadData();
-    let currentPageIndex = 0;
+    let currentPageIndex = getPrimarySheetPageIndex(data.sheetPages);
     let currentSubPageIndex = 0;
     let productsCache = {};
     let sheetTimer = null;
@@ -5219,6 +5222,28 @@
       return Array.isArray(pages) ? pages.map(clean).filter(isDisplaySheetName) : [];
     }
 
+    function getPrimarySheetPageIndex(pages = data?.sheetPages) {
+      const sheetPages = filterDisplaySheetPages(pages);
+      if (!sheetPages.length) return 0;
+
+      const primaryName = normalizeSheetName(PRIMARY_SHEET_NAME);
+      const exactIndex = sheetPages.findIndex((name) => normalizeSheetName(name) === primaryName);
+      if (exactIndex >= 0) return exactIndex;
+
+      const containsPrimaryIndex = sheetPages.findIndex((name) => normalizeSheetName(name).includes(primaryName));
+      if (containsPrimaryIndex >= 0) return containsPrimaryIndex;
+
+      const palmIndex = sheetPages.findIndex((name) => normalizeSheetName(name).includes("ปาล์ม"));
+      return palmIndex >= 0 ? palmIndex : 0;
+    }
+
+    function resetToPrimaryPage() {
+      currentPageIndex = getPrimarySheetPageIndex(data.sheetPages);
+      currentSubPageIndex = 0;
+      currentMotherSubIndex = 0;
+      clearPendingNumericMain();
+    }
+
     function canUseGoogleVisualizationFallback(sheetName) {
       return true; // อนุญาตให้ทุกชีตใช้ Fallback (ดึงข้อมูลโดยตรง) ได้
     }
@@ -5242,12 +5267,7 @@
     }
 
     function readAutoPlayPreference() {
-      try {
-        const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
-        return mode !== "paused" && mode !== "0" && mode !== "false" && mode !== "off";
-      } catch {
-        return true;
-      }
+      return false;
     }
 
     function getWallConfig() {
@@ -5378,25 +5398,16 @@
     }
 
     function setAutoPlay(enabled) {
-      autoPlayEnabled = enabled !== false;
+      autoPlayEnabled = false;
 
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, autoPlayEnabled ? "running" : "paused");
+        localStorage.setItem(AUTO_PLAY_KEY, "paused");
       } catch {
         // ignore storage failures on locked-down TV browsers
       }
 
-      if (autoPlayEnabled) {
-        wallSyncHoldUntil = 0;
-      }
-
       render();
-
-      if (autoPlayEnabled) {
-        restartPageTimer();
-      } else {
-        stopPageTimer();
-      }
+      stopPageTimer();
     }
 
     function refreshMainView() {
@@ -5433,6 +5444,9 @@
         const parsed = saved ? JSON.parse(saved) : {};
         const merged = { ...DEFAULT_DATA, ...parsed };
         merged.sheetPages = filterDisplaySheetPages(merged.sheetPages);
+        if (!merged.sheetPages.some((name) => normalizeSheetName(name) === normalizeSheetName(PRIMARY_SHEET_NAME))) {
+          merged.sheetPages = [PRIMARY_SHEET_NAME, ...merged.sheetPages];
+        }
         if (!merged.sheetPages.length) merged.sheetPages = filterDisplaySheetPages(DEFAULT_SHEET_PAGES);
         return merged;
       } catch (e) {
@@ -5441,7 +5455,11 @@
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch {
+        // Some TV browsers restrict storage; keep the in-memory data running.
+      }
     }
 
     async function checkAppVersion() {
@@ -5614,7 +5632,11 @@
         }))
       };
 
-      localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
+      try {
+        localStorage.setItem(CONTROL_META_KEY, JSON.stringify(payload));
+      } catch {
+        // Keep rendering even when local status sharing is unavailable.
+      }
       pushRemoteMeta(payload);
     }
 
@@ -5649,9 +5671,7 @@
         }
 
         data.sheetPages = livePages;
-        if (currentPageIndex >= data.sheetPages.length) currentPageIndex = 0;
-        currentSubPageIndex = 0;
-        currentMotherSubIndex = 0;
+        resetToPrimaryPage();
         productsCache = {};
         saveData();
         return true;
@@ -6005,6 +6025,7 @@ function render() {
 
     function resetProgressAnim() {
       const bar = $("progressFill");
+      if (!bar) return;
       const durationSeconds = getPageDurationMs() / 1000;
       bar.style.animation = "none";
       bar.style.animationDelay = "0s";
@@ -6911,39 +6932,7 @@ function render() {
     }
 
     function restartPageTimer() {
-      pageTimerToken++;
-      const token = pageTimerToken;
-
-      if (pageTimer) {
-        clearInterval(pageTimer);
-        clearTimeout(pageTimer);
-        pageTimer = null;
-      }
-
-      if (!autoPlayEnabled) {
-        resetProgressAnim();
-        return;
-      }
-
-      if (WALL_CONFIG.syncEnabled) {
-        applyWallSyncedState();
-
-        pageTimer = setTimeout(() => {
-          if (token !== pageTimerToken || !autoPlayEnabled) return;
-          applyWallSyncedState();
-          restartPageTimer();
-        }, getWallSyncDelayMs());
-      } else {
-        pageTimer = setInterval(() => {
-          if (token !== pageTimerToken || !autoPlayEnabled) {
-            stopPageTimer();
-            return;
-          }
-          next();
-        }, getPageDurationMs());
-      }
-
-      resetProgressAnim();
+      stopPageTimer();
     }
 
     function customAlert(msg, onConfirm = null, isConfirm = false) {
@@ -6998,9 +6987,7 @@ function render() {
 
       $("editorModalOverlay").classList.remove("open");
 
-      currentPageIndex = 0;
-      currentSubPageIndex = 0;
-      currentMotherSubIndex = 0;
+      resetToPrimaryPage();
       productsCache = {};
 
       render();
@@ -7021,8 +7008,7 @@ function render() {
 
         $("editorModalOverlay").classList.remove("open");
 
-        currentPageIndex = 0;
-        currentSubPageIndex = 0;
+        resetToPrimaryPage();
         productsCache = {};
 
         render();
