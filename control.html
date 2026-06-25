@@ -101,6 +101,31 @@
       text-align: right;
     }
 
+    .section-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .mini-btn {
+      min-height: 34px;
+      border: 1px solid #c7d0da;
+      background: #fff;
+      color: #1d2a36;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.9rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .mini-btn:active {
+      transform: translateY(1px);
+    }
+
     .btn {
       border: 1px solid #c7d0da;
       background: #fff;
@@ -188,21 +213,6 @@
       font-weight: 800;
     }
 
-    #btnAutoToggle {
-      width: 100%;
-      margin-top: 8px;
-      min-height: 70px;
-      font-size: clamp(1.18rem, 5vw, 1.45rem);
-      font-weight: 900;
-    }
-
-    #btnAutoToggle.paused {
-      border-color: #b42318;
-      background: #fff1f0;
-      color: #912018;
-      box-shadow: inset 0 0 0 2px rgba(180, 35, 24, 0.28);
-    }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -278,6 +288,10 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
+    }
+
+    .health-card.collapsed .health-grid {
+      display: none;
     }
 
     .health-item {
@@ -436,10 +450,13 @@
       <div class="state" id="stateLine"></div>
     </div>
 
-    <div class="card">
+    <div class="card health-card" id="healthCard">
       <div class="section-title">
         <b>Health Check ทีวี</b>
-        <span class="muted" id="healthSummary">รอข้อมูลจอ</span>
+        <span class="section-actions">
+          <span class="muted" id="healthSummary">รอข้อมูลจอ</span>
+          <button class="mini-btn" id="btnToggleHealth" type="button">ซ่อน</button>
+        </span>
       </div>
       <div class="health-grid" id="healthLine"></div>
     </div>
@@ -461,7 +478,6 @@
         <button class="btn" id="btnNext">ถัดไป</button>
       </div>
       <button class="btn secondary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
-      <button class="btn" id="btnAutoToggle">หยุดออโต้</button>
     </div>
 
     <div class="card">
@@ -494,6 +510,7 @@
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
+    const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
@@ -548,6 +565,32 @@
       $("connHint").textContent = text;
     }
 
+    function readHealthCollapsedPreference() {
+      try {
+        return clean(localStorage.getItem(HEALTH_COLLAPSED_KEY)).toLowerCase() === "1";
+      } catch {
+        return false;
+      }
+    }
+
+    function applyHealthCollapsed(collapsed) {
+      const card = $("healthCard");
+      const btn = $("btnToggleHealth");
+      if (!card || !btn) return;
+
+      card.classList.toggle("collapsed", Boolean(collapsed));
+      btn.textContent = collapsed ? "แสดง" : "ซ่อน";
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+
+      try {
+        localStorage.setItem(HEALTH_COLLAPSED_KEY, collapsed ? "1" : "0");
+      } catch {}
+    }
+
+    function toggleHealthCollapsed() {
+      applyHealthCollapsed(!$("healthCard").classList.contains("collapsed"));
+    }
+
     function storeWallModePreference(mode) {
       const normalized = clean(mode).toLowerCase() === "wall" ? "wall" : "single";
 
@@ -568,27 +611,19 @@
     }
 
     function storeAutoPlayPreference(enabled) {
-      const isEnabled = enabled !== false;
-
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, isEnabled ? "running" : "paused");
+        localStorage.setItem(AUTO_PLAY_KEY, "paused");
       } catch {}
 
-      return isEnabled;
+      return false;
     }
 
     function readAutoPlayPreference() {
-      try {
-        const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
-        return mode !== "paused" && mode !== "0" && mode !== "false" && mode !== "off";
-      } catch {
-        return true;
-      }
+      return false;
     }
 
     function getAutoPlayEnabledFromMeta(metaPayload = meta) {
-      if (!metaPayload || !metaPayload.autoPlay) return null;
-      return metaPayload.autoPlay.enabled !== false;
+      return false;
     }
 
     function isPendingAutoPlayActive() {
@@ -698,15 +733,12 @@
 
     function sendCommand(action, extra = {}) {
       const commandId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-      const currentAutoPlay = action === "setAutoPlay"
-        ? extra.enabled !== false
-        : readAutoPlayPreference();
       const cmd = {
         id: commandId,
         dedupeKey: commandId,
         action,
-        autoPlay: currentAutoPlay,
-        ...extra
+        ...extra,
+        autoPlay: false
       };
 
       postLocalCommand(cmd);
@@ -719,10 +751,7 @@
         command: cmd
       });
 
-      const isCurrentAutoPlayCommand = () => {
-        if (action !== "setAutoPlay") return true;
-        return readAutoPlayPreference() === (cmd.enabled !== false);
-      };
+      const isCurrentAutoPlayCommand = () => true;
 
       const sendOnce = () => {
         if (!isCurrentAutoPlayCommand()) return;
@@ -745,7 +774,7 @@
       };
 
       // Retry short bursts to reduce dropped commands over remote network.
-      const highReliabilityAction = action === "refresh" || action === "setAutoPlay";
+      const highReliabilityAction = action === "refresh";
       const retryDelays = highReliabilityAction
         ? [0, 120, 300, 700, 1200, 2000, 3200]
         : [0, 120, 260, 700, 1200];
@@ -813,17 +842,12 @@
           ? `2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`
           : "1 จอ")
         : "-";
-      const autoPlayEnabled = getAutoPlayFromMeta();
-      const autoPlayText = isPendingAutoPlayActive()
-        ? (autoPlayEnabled ? "กำลังเปิด" : "กำลังหยุด")
-        : (autoPlayEnabled ? "เปิด" : "หยุด");
       el.innerHTML = `
         <span class="state-item"><small>หมวด</small><b>${escapeHtml(pageName)}</b></span>
         <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
         <span class="state-item"><small>หน้าย่อย</small><b>${escapeHtml(subPageText)}</b></span>
         <span class="state-item"><small>จำนวนสินค้า</small><b>${Number(meta.viewCount || 0)}</b></span>
         <span class="state-item"><small>โหมดแสดงจอ</small><b>${escapeHtml(wallModeText)}</b></span>
-        <span class="state-item"><small>ออโต้</small><b>${escapeHtml(autoPlayText)}</b></span>
       `;
     }
 
@@ -913,18 +937,6 @@
       }
     }
 
-    function renderAutoButton() {
-      const enabled = getAutoPlayFromMeta();
-      const btn = $("btnAutoToggle");
-      if (!btn) return;
-
-      btn.textContent = enabled ? "หยุดออโต้" : "เล่นออโต้";
-      btn.classList.toggle("paused", !enabled);
-      btn.classList.toggle("active", !enabled);
-      btn.setAttribute("aria-pressed", enabled ? "false" : "true");
-      btn.setAttribute("aria-busy", isPendingAutoPlayActive() ? "true" : "false");
-    }
-
     function renderMainButtons() {
       const grid = $("mainGrid");
       grid.innerHTML = "";
@@ -989,7 +1001,6 @@
       renderState();
       renderHealth();
       renderModeButtons();
-      renderAutoButton();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -1044,14 +1055,7 @@
       setHint("ส่งคำสั่งรีเฟรชแล้ว");
     };
     $("btnReloadMeta").onclick = reloadMeta;
-    $("btnAutoToggle").onclick = () => {
-      const nextEnabled = !getAutoPlayFromMeta();
-      setPendingAutoPlay(nextEnabled);
-      storeAutoPlayPreference(nextEnabled);
-      render();
-      sendCommand("setAutoPlay", { enabled: nextEnabled });
-      setHint(nextEnabled ? "สั่งเล่นออโต้แล้ว" : "สั่งหยุดออโต้แล้ว");
-    };
+    $("btnToggleHealth").onclick = toggleHealthCollapsed;
     $("btnModeSingle").onclick = () => {
       storeWallModePreference("single");
       renderModeButtons();
@@ -1071,7 +1075,9 @@
         setHint("URL ไม่ถูกต้อง (ต้องขึ้นต้นด้วย https://script.google.com/)");
         return;
       }
-      localStorage.setItem(CONTROL_WEBAPP_KEY, url);
+      try {
+        localStorage.setItem(CONTROL_WEBAPP_KEY, url);
+      } catch {}
       setHint("บันทึก GAS URL แล้ว");
       restartRemoteMetaPolling();
       reloadMeta();
@@ -1082,6 +1088,7 @@
     });
 
     (function init() {
+      applyHealthCollapsed(readHealthCollapsedPreference());
       const saved = getWebAppUrl();
       if (saved) $("gasUrlInput").value = saved;
       restartRemoteMetaPolling();
