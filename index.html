@@ -6,7 +6,13 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="icon" href="data:," />
+  <meta name="theme-color" content="#033d20" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Laemthong Display" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="icon" href="favicon.svg" />
   <title>Laemthong Product Price TV</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -5162,18 +5168,53 @@
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
+    const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HIDDEN_SHEET_NAMES = new Set(["price"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
+    const WALL_MULTI_SCREEN_MIN_ITEMS = 4;
     const REMOTE_CONTROL_POLL_MS = 750;
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
+    const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "primary-palm-yai-20260625";
+    const APP_VERSION = "display-pwa-fullscreen-20260626";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
+
+    function isDisplayFullscreen() {
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function requestDisplayFullscreen() {
+      if (isDisplayFullscreen()) return;
+
+      const root = document.documentElement;
+      const requestFullscreen = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
+      if (!requestFullscreen) return;
+
+      try {
+        const result = requestFullscreen.call(root, { navigationUI: "hide" });
+        if (result && typeof result.catch === "function") result.catch(() => {});
+      } catch {
+        // Some TV browsers expose fullscreen APIs but reject them outside a real user action.
+      }
+    }
+
+    function bindDisplayFullscreenTriggers() {
+      const triggerFullscreen = () => requestDisplayFullscreen();
+      document.addEventListener("click", triggerFullscreen, { passive: true });
+      document.addEventListener("touchend", triggerFullscreen, { passive: true });
+      document.addEventListener("keydown", triggerFullscreen);
+    }
+
+    function registerDisplayServiceWorker() {
+      if (!("serviceWorker" in navigator) || location.protocol !== "https:") return;
+
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
 
     let data = loadData();
     let currentPageIndex = getPrimarySheetPageIndex(data.sheetPages);
@@ -5186,6 +5227,7 @@
     let remoteControlPollTimer = null;
     let remoteControlPollInFlight = false;
     let lastRemoteCommandId = null;
+    let lastAcceptedRemoteCommandAt = 0;
     let seenRemoteCommandKeys = new Map();
     let controlBroadcastChannel = null;
     let autoPlayEnabled = readAutoPlayPreference();
@@ -5267,7 +5309,15 @@
     }
 
     function readAutoPlayPreference() {
-      return false;
+      try {
+        const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
+        if (["paused", "pause", "off", "false", "0", "no"].includes(mode)) return false;
+        if (["playing", "play", "on", "true", "1", "yes"].includes(mode)) return true;
+      } catch {
+        // ignore storage failures on locked-down TV browsers
+      }
+
+      return true;
     }
 
     function getWallConfig() {
@@ -5398,16 +5448,25 @@
     }
 
     function setAutoPlay(enabled) {
-      autoPlayEnabled = false;
+      autoPlayEnabled = enabled !== false &&
+        clean(enabled).toLowerCase() !== "false" &&
+        clean(enabled).toLowerCase() !== "0" &&
+        clean(enabled).toLowerCase() !== "paused" &&
+        clean(enabled).toLowerCase() !== "off";
 
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, "paused");
+        localStorage.setItem(AUTO_PLAY_KEY, autoPlayEnabled ? "playing" : "paused");
       } catch {
         // ignore storage failures on locked-down TV browsers
       }
 
       render();
-      stopPageTimer();
+
+      if (autoPlayEnabled) {
+        restartPageTimer();
+      } else {
+        stopPageTimer();
+      }
     }
 
     function refreshMainView() {
@@ -5524,7 +5583,14 @@
 
       if (remoteParam === "0" || remoteParam === "false" || remoteParam === "off") return "";
 
-      const url = clean(data.controlWebAppUrl || "");
+      let storedUrl = "";
+      try {
+        storedUrl = clean(localStorage.getItem(CONTROL_WEBAPP_KEY) || "");
+      } catch {
+        storedUrl = "";
+      }
+
+      const url = clean(storedUrl || data.controlWebAppUrl || "");
       return /^https:\/\/script\.google\.com\//i.test(url) ? url : "";
     }
 
@@ -6148,7 +6214,7 @@ function render() {
 
         const params = new URLSearchParams({
           sheet: sheetName,
-          range: "A:G",
+          range: "A:H",
           headers: "0",
           tqx: `out:json;responseHandler:${cb}`
         });
@@ -6403,24 +6469,24 @@ function render() {
       return getVisibleProductsForState(sheetName, products, state.motherSubIndex).length;
     }
 
-    function getCurrentWallSyncSlots() {
-      const sheetName = getSheetName();
-      const products = getProductsForSheetState(sheetName);
-      const count = products
-        ? getVisibleProductsForState(sheetName, products, currentMotherSubIndex).length
-        : 0;
-      const pageCount = count > 0
-        ? Math.max(1, Math.ceil(count / getItemsPerPage(count)))
-        : 1;
+    function getSubPageItemCount(totalCount, subPageIndex = 0) {
+      const total = Number(totalCount) || 0;
+      if (total <= 0) return 0;
 
-      return Array.from({ length: pageCount }, (_, subPageIndex) => ({
-        pageIndex: currentPageIndex,
-        motherSubIndex: currentMotherSubIndex,
-        subPageIndex
-      }));
+      const itemsPerPage = getItemsPerPage(total);
+      const start = Math.max(0, Number(subPageIndex) || 0) * itemsPerPage;
+      return Math.max(0, Math.min(itemsPerPage, total - start));
     }
 
-    function getAllWallSyncSlots() {
+    function isAutoPlaySlotEligible(slot) {
+      if (!slot) return false;
+      if (!WALL_CONFIG.enabled) return true;
+
+      const itemCount = Number(slot.itemCount ?? 0);
+      return itemCount >= WALL_MULTI_SCREEN_MIN_ITEMS;
+    }
+
+    function getAllNavigationSlots() {
       const slots = [];
       let allCountsReady = true;
 
@@ -6440,27 +6506,99 @@ function render() {
           slots.push({
             pageIndex: state.pageIndex,
             motherSubIndex: state.motherSubIndex,
-            subPageIndex
+            subPageIndex,
+            itemCount: getSubPageItemCount(count, subPageIndex)
           });
         }
       });
 
       if (!allCountsReady) return null;
-      return slots.length ? slots : [{ pageIndex: 0, motherSubIndex: 0, subPageIndex: 0 }];
+      return slots;
+    }
+
+    function getAutoPlaySlots() {
+      const slots = getAllNavigationSlots();
+      if (!slots) return null;
+      if (!WALL_CONFIG.enabled) return slots;
+      return slots.filter(isAutoPlaySlotEligible);
+    }
+
+    function findAutoPlaySlot(direction = 1) {
+      const allSlots = getAllNavigationSlots();
+      if (!allSlots || !allSlots.length) return null;
+
+      const stepDirection = direction < 0 ? -1 : 1;
+      const currentSlotIndex = allSlots.findIndex((slot) => {
+        return slot.pageIndex === currentPageIndex
+          && slot.motherSubIndex === currentMotherSubIndex
+          && slot.subPageIndex === currentSubPageIndex;
+      });
+      const startIndex = currentSlotIndex >= 0
+        ? currentSlotIndex
+        : (stepDirection > 0 ? -1 : allSlots.length);
+
+      for (let step = 1; step <= allSlots.length; step++) {
+        const idx = (startIndex + (stepDirection * step) + allSlots.length) % allSlots.length;
+        const slot = allSlots[idx];
+        if (isAutoPlaySlotEligible(slot)) return slot;
+      }
+
+      return null;
+    }
+
+    function getCurrentAutoPlaySlot() {
+      const count = getStateProductCount({
+        pageIndex: currentPageIndex,
+        motherSubIndex: currentMotherSubIndex
+      });
+
+      if (count === null) return null;
+
+      return {
+        pageIndex: currentPageIndex,
+        motherSubIndex: currentMotherSubIndex,
+        subPageIndex: currentSubPageIndex,
+        itemCount: getSubPageItemCount(count, currentSubPageIndex)
+      };
+    }
+
+    function getCurrentWallSyncSlots() {
+      const sheetName = getSheetName();
+      const products = getProductsForSheetState(sheetName);
+      const count = products
+        ? getVisibleProductsForState(sheetName, products, currentMotherSubIndex).length
+        : 0;
+      const pageCount = count > 0
+        ? Math.max(1, Math.ceil(count / getItemsPerPage(count)))
+        : 1;
+
+      return Array.from({ length: pageCount }, (_, subPageIndex) => ({
+        pageIndex: currentPageIndex,
+        motherSubIndex: currentMotherSubIndex,
+        subPageIndex,
+        itemCount: getSubPageItemCount(count, subPageIndex)
+      }));
+    }
+
+    function getAllWallSyncSlots() {
+      const slots = getAutoPlaySlots();
+      if (!slots) return null;
+      return slots;
     }
 
     function getWallSyncSlots() {
       const allSlots = getAllWallSyncSlots();
 
       if (WALL_CONFIG.syncScope === "all") {
-        return allSlots || getCurrentWallSyncSlots();
+        return allSlots && allSlots.length ? allSlots : getCurrentWallSyncSlots();
       }
 
       if (WALL_CONFIG.syncScope === "page") {
-        return getCurrentWallSyncSlots();
+        const pageSlots = getCurrentWallSyncSlots().filter(isAutoPlaySlotEligible);
+        return pageSlots.length ? pageSlots : (allSlots || getCurrentWallSyncSlots());
       }
 
-      return allSlots && allSlots.length > 1
+      return allSlots && allSlots.length
         ? allSlots
         : getCurrentWallSyncSlots();
     }
@@ -6568,6 +6706,31 @@ function render() {
       render();
       loadSheetData(currentPageIndex);
       restartPageTimer();
+      return true;
+    }
+
+    function applyAutoPlaySlot(slot) {
+      if (!slot) return false;
+
+      currentPageIndex = slot.pageIndex;
+      currentMotherSubIndex = slot.motherSubIndex;
+      currentSubPageIndex = Math.max(0, Number(slot.subPageIndex) || 0);
+
+      render();
+      loadSheetData(currentPageIndex);
+      restartPageTimer();
+      return true;
+    }
+
+    function advanceAutoPlay(direction = 1) {
+      if (WALL_CONFIG.enabled) {
+        const slot = findAutoPlaySlot(direction);
+        if (slot) return applyAutoPlaySlot(slot);
+        restartPageTimer();
+        return false;
+      }
+
+      next();
       return true;
     }
 
@@ -6834,15 +6997,31 @@ function render() {
       return clean(command?.dedupeKey || command?.commandId || command?.id);
     }
 
+    function getRemoteCommandCreatedAt(command) {
+      const createdAt = Number(command?.createdAt || command?.sentAt || 0);
+      return Number.isFinite(createdAt) && createdAt > 0 ? createdAt : 0;
+    }
+
     function acceptRemoteCommand(command) {
       const commandKey = getRemoteCommandKey(command);
       if (!command || !commandKey) return false;
 
       const now = Date.now();
+      const commandCreatedAt = getRemoteCommandCreatedAt(command);
+
+      if (
+        commandCreatedAt > 0 &&
+        lastAcceptedRemoteCommandAt > 0 &&
+        commandCreatedAt + REMOTE_COMMAND_STALE_GRACE_MS < lastAcceptedRemoteCommandAt
+      ) {
+        return false;
+      }
+
       pruneRemoteCommandKeys(now);
       if (seenRemoteCommandKeys.has(commandKey)) return false;
 
       seenRemoteCommandKeys.set(commandKey, now);
+      lastAcceptedRemoteCommandAt = Math.max(lastAcceptedRemoteCommandAt, commandCreatedAt || now);
       lastRemoteCommandId = clean(command.id) || commandKey;
       handleRemoteCommand(command);
       return true;
@@ -6933,6 +7112,46 @@ function render() {
 
     function restartPageTimer() {
       stopPageTimer();
+
+      if (!autoPlayEnabled) return;
+
+      if (WALL_CONFIG.enabled && !WALL_CONFIG.syncEnabled && !isAutoPlaySlotEligible(getCurrentAutoPlaySlot())) {
+        const nextEligibleSlot = findAutoPlaySlot(1);
+        if (nextEligibleSlot) {
+          applyAutoPlaySlot(nextEligibleSlot);
+          return;
+        }
+      }
+
+      if (WALL_CONFIG.syncEnabled && Date.now() >= wallSyncHoldUntil) {
+        applyWallSyncedState();
+      }
+
+      resetProgressAnim();
+      const token = pageTimerToken;
+
+      const scheduleNextTick = () => {
+        if (token !== pageTimerToken || !autoPlayEnabled) return;
+
+        const delay = WALL_CONFIG.syncEnabled ? getWallSyncDelayMs() : getPageDurationMs();
+        pageTimer = setTimeout(() => {
+          if (token !== pageTimerToken || !autoPlayEnabled) return;
+
+          if (WALL_CONFIG.syncEnabled) {
+            if (Date.now() >= wallSyncHoldUntil) {
+              applyWallSyncedState();
+            }
+            preloadWallSyncImages();
+            resetProgressAnim();
+            scheduleNextTick();
+            return;
+          }
+
+          advanceAutoPlay(1);
+        }, delay);
+      };
+
+      scheduleNextTick();
     }
 
     function customAlert(msg, onConfirm = null, isConfirm = false) {
@@ -6982,6 +7201,16 @@ function render() {
       data.logoUrl = $("editLogoUrl").value.trim();
       data.tickerText = $("editTickerText").value.trim();
       data.controlWebAppUrl = $("editControlWebAppUrl").value.trim();
+
+      try {
+        if (/^https:\/\/script\.google\.com\//i.test(data.controlWebAppUrl)) {
+          localStorage.setItem(CONTROL_WEBAPP_KEY, data.controlWebAppUrl);
+        } else {
+          localStorage.removeItem(CONTROL_WEBAPP_KEY);
+        }
+      } catch {
+        // The main display can still use the saved data object in this tab.
+      }
 
       saveData();
 
@@ -7128,6 +7357,8 @@ function render() {
     }, { passive: true });
 
     bindRemoteControlChannel();
+    bindDisplayFullscreenTriggers();
+    registerDisplayServiceWorker();
     updateClock();
     setInterval(updateClock, 1000);
 
