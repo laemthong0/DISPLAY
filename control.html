@@ -27,26 +27,30 @@
 
     body {
       margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-family: "Anuphan", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
+      font-size: 16px;
       background: var(--bg);
       color: var(--text);
-      padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      min-height: 100dvh;
+      padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
       -webkit-tap-highlight-color: transparent;
     }
 
     .wrap {
-      max-width: 840px;
+      width: min(100%, 1180px);
       margin: 0 auto;
       display: grid;
-      gap: 10px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
     }
 
     .card {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 12px;
+      padding: 9px;
       box-shadow: 0 1px 0 rgba(16, 24, 40, 0.03);
+      min-width: 0;
     }
 
     .row {
@@ -62,38 +66,42 @@
       z-index: 20;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(207, 217, 212, 0.9);
       border-radius: 8px;
-      padding: 12px;
+      padding: 9px 10px;
       box-shadow: var(--shadow);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.15rem, 4.7vw, 1.6rem);
+      font-size: clamp(1.18rem, 3.9vw, 1.52rem);
       color: var(--brand);
-      line-height: 1.18;
+      line-height: 1.12;
+      letter-spacing: 0;
     }
 
     .muted {
       color: var(--muted);
-      font-size: clamp(0.9rem, 3.2vw, 1rem);
-      line-height: 1.3;
+      font-size: clamp(0.88rem, 2.9vw, 1.02rem);
+      line-height: 1.2;
+      letter-spacing: 0;
     }
 
     .section-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-      font-size: 1.02rem;
-      font-weight: 800;
+      gap: 6px;
+      margin-bottom: 7px;
+      font-size: clamp(1.02rem, 2.8vw, 1.14rem);
+      font-weight: 900;
+      line-height: 1.14;
+      letter-spacing: 0;
     }
 
     .section-title .muted {
@@ -109,15 +117,15 @@
     }
 
     .mini-btn {
-      min-height: 34px;
+      min-height: 30px;
       border: 1px solid #c7d0da;
       background: #fff;
       color: #1d2a36;
       border-radius: 8px;
-      padding: 7px 10px;
+      padding: 6px 9px;
       cursor: pointer;
       font-weight: 800;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       line-height: 1;
       white-space: nowrap;
     }
@@ -131,12 +139,13 @@
       background: #fff;
       color: #1d2a36;
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 8px 10px;
       cursor: pointer;
-      font-weight: 700;
-      font-size: clamp(1rem, 3.7vw, 1.16rem);
-      line-height: 1.12;
-      min-height: 56px;
+      font-weight: 850;
+      font-size: clamp(1.02rem, 3.35vw, 1.16rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+      min-height: 44px;
       box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04);
       transition: background 120ms ease, transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
       touch-action: manipulation;
@@ -168,9 +177,9 @@
     }
 
     .btn.utility {
-      min-height: 48px;
-      padding-inline: 13px;
-      font-size: 0.98rem;
+      min-height: 40px;
+      padding-inline: 11px;
+      font-size: clamp(0.98rem, 2.7vw, 1.08rem);
     }
 
     .btn.active {
@@ -187,8 +196,9 @@
     }
 
     .mode-actions .btn {
-      min-height: 74px;
-      font-size: clamp(1.2rem, 5vw, 1.55rem);
+      min-height: 56px;
+      font-size: clamp(1.12rem, 4.1vw, 1.42rem);
+      line-height: 1.05;
       font-weight: 900;
     }
 
@@ -201,46 +211,52 @@
     #btnPrev,
     #btnNext {
       min-width: 0;
-      min-height: clamp(84px, 23vw, 112px);
-      font-size: clamp(1.32rem, 6vw, 1.9rem);
+      min-height: clamp(58px, 15vw, 78px);
+      font-size: clamp(1.28rem, 5.4vw, 1.82rem);
+      line-height: 1.02;
       font-weight: 900;
     }
 
     #btnRefresh {
       width: 100%;
-      margin-top: 8px;
-      min-height: 62px;
+      margin-top: 7px;
+      min-height: 46px;
       font-weight: 800;
+      font-size: clamp(1.04rem, 3.3vw, 1.22rem);
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 7px;
+      align-content: start;
     }
 
     .grid .btn {
-      min-height: 80px;
+      min-height: 56px;
       height: 100%;
-      font-size: clamp(1.02rem, 4.1vw, 1.24rem);
+      font-size: clamp(1rem, 3.45vw, 1.18rem);
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
       white-space: normal;
-      line-height: 1.18;
-      padding: 10px;
-      font-weight: 800;
+      line-height: 1.08;
+      padding: 8px;
+      font-weight: 900;
       word-break: break-word;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     #mainGrid .btn {
-      min-height: 92px;
-      font-size: clamp(1.08rem, 4.6vw, 1.36rem);
+      min-height: 60px;
+      font-size: clamp(1.04rem, 3.6vw, 1.22rem);
     }
 
     #subGrid .btn {
-      min-height: 76px;
+      min-height: 54px;
+      font-size: clamp(1.02rem, 3.45vw, 1.18rem);
     }
 
     #subPageGrid {
@@ -248,46 +264,47 @@
     }
 
     #subPageGrid .btn {
-      min-height: 60px;
-      font-size: 1rem;
+      min-height: 44px;
+      font-size: clamp(1rem, 3vw, 1.12rem);
     }
 
     .state {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      font-size: 1rem;
+      gap: 6px;
+      font-size: 0.92rem;
     }
 
     .state-item {
       min-width: 0;
       border: 1px solid #dbe5df;
       border-radius: 8px;
-      padding: 10px;
+      padding: 7px;
       background: #f8fbf9;
     }
 
     .state-item small {
       display: block;
       color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 700;
+      font-size: clamp(0.78rem, 2.45vw, 0.9rem);
+      font-weight: 800;
       line-height: 1.15;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
 
     .state-item b {
       display: block;
       color: #0f5132;
-      font-size: clamp(1rem, 3.8vw, 1.18rem);
-      line-height: 1.22;
+      font-size: clamp(1rem, 3.25vw, 1.16rem);
+      line-height: 1.12;
       overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     .health-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 6px;
     }
 
     .health-card.collapsed .health-grid {
@@ -298,24 +315,25 @@
       min-width: 0;
       border: 1px solid #dbe5df;
       border-radius: 8px;
-      padding: 10px;
+      padding: 7px;
       background: #f8fbf9;
     }
 
     .health-item small {
       display: block;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: clamp(0.78rem, 2.45vw, 0.9rem);
       font-weight: 700;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
 
     .health-item b {
       display: block;
       color: #0f5132;
-      font-size: clamp(1rem, 3.8vw, 1.18rem);
-      line-height: 1.22;
+      font-size: clamp(1rem, 3.25vw, 1.16rem);
+      line-height: 1.12;
       overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     .health-dot {
@@ -348,22 +366,84 @@
       display: none !important;
     }
 
+    .main-card .grid,
+    .sub-card .grid,
+    .subpage-card .grid {
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
     @media (min-width: 720px) {
       .wrap {
-        gap: 12px;
+        gap: 9px;
       }
 
       .card {
-        padding: 14px;
+        padding: 10px;
       }
 
       .grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+        gap: 7px;
       }
 
       .state {
         grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .wrap {
+        min-height: calc(100dvh - max(6px, env(safe-area-inset-top)) - max(10px, env(safe-area-inset-bottom)));
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        align-content: start;
+      }
+
+      .control-header,
+      .state-card {
+        grid-column: 1 / -1;
+      }
+
+      .health-card {
+        grid-column: 1 / span 4;
+      }
+
+      .mode-card {
+        grid-column: 5 / span 4;
+      }
+
+      .autoplay-card {
+        grid-column: 9 / span 4;
+      }
+
+      .transport-card {
+        grid-column: 1 / span 3;
+      }
+
+      .main-card {
+        grid-column: 4 / span 5;
+      }
+
+      .sub-card,
+      .subpage-card {
+        grid-column: 9 / span 4;
+      }
+
+      .subpage-card {
+        align-self: start;
+      }
+
+      .health-grid {
+        grid-template-columns: 1fr;
+        max-height: 190px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
       }
     }
 
@@ -374,21 +454,21 @@
       }
 
       .wrap {
-        gap: 8px;
+        gap: 7px;
       }
 
       .control-header {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 10px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px;
+        padding: 8px;
       }
 
       .control-header .btn {
-        width: 100%;
+        width: auto;
       }
 
       .btn {
-        min-height: 58px;
+        min-height: 44px;
       }
 
       .section-title {
@@ -400,25 +480,53 @@
       .section-title .muted {
         text-align: left;
       }
+
+      .state {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .state-item,
+      .health-item {
+        padding: 6px;
+      }
+
+      .state-item small,
+      .health-item small {
+        font-size: 0.76rem;
+      }
+
+      .state-item b,
+      .health-item b {
+        font-size: 0.98rem;
+        line-height: 1.08;
+      }
+
     }
 
-    @media (max-width: 360px) {
+    @media (max-width: 340px) {
+      .control-header {
+        grid-template-columns: 1fr;
+      }
+
+      .control-header .btn {
+        width: 100%;
+      }
+
       .transport-grid,
       .mode-actions,
       .grid,
-      .state,
       .health-grid {
         grid-template-columns: 1fr;
       }
 
       #btnPrev,
       #btnNext {
-        min-height: 76px;
+        min-height: 54px;
       }
 
       #mainGrid .btn,
       #subGrid .btn {
-        min-height: 70px;
+        min-height: 52px;
       }
     }
 
@@ -443,7 +551,7 @@
       </div>
     </header>
 
-    <div class="card">
+    <div class="card state-card">
       <div class="section-title">
         <b>สถานะปัจจุบัน</b>
       </div>
@@ -461,7 +569,7 @@
       <div class="health-grid" id="healthLine"></div>
     </div>
 
-    <div class="card">
+    <div class="card mode-card">
       <div class="section-title">
         <b>โหมดแสดงจอ</b>
         <span class="muted" id="wallModeLabel">รอข้อมูลจอหลัก</span>
@@ -472,7 +580,18 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card autoplay-card">
+      <div class="section-title">
+        <b>สลับหน้าอัตโนมัติ</b>
+        <span class="muted" id="autoPlayLabel">รอข้อมูลจอหลัก</span>
+      </div>
+      <div class="mode-actions">
+        <button class="btn" id="btnAutoPlayOn">เปิดอัตโนมัติ</button>
+        <button class="btn" id="btnAutoPlayOff">หยุดอัตโนมัติ</button>
+      </div>
+    </div>
+
+    <div class="card transport-card">
       <div class="transport-grid">
         <button class="btn" id="btnPrev">ก่อนหน้า</button>
         <button class="btn" id="btnNext">ถัดไป</button>
@@ -480,21 +599,21 @@
       <button class="btn secondary" id="btnRefresh">รีเฟรชหน้าจอหลัก</button>
     </div>
 
-    <div class="card">
+    <div class="card main-card">
       <div class="section-title">
         <b>หมวดหลัก</b>
       </div>
       <div class="grid" id="mainGrid"></div>
     </div>
 
-    <div class="card">
+    <div class="card sub-card">
       <div class="section-title">
         <b>หมวดย่อยของหมวดที่เลือก</b>
       </div>
       <div class="grid" id="subGrid"></div>
     </div>
 
-    <div class="card">
+    <div class="card subpage-card">
       <div class="section-title">
         <b>หน้าย่อย (กรณีเกิน 21 รายการ)</b>
       </div>
@@ -508,12 +627,15 @@
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
+    const CONTROL_CLIENT_ID_KEY = "tv-display-control-client-id-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
+    const APP_VERSION = "display-pwa-fullscreen-20260626";
+    const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
 
     const $ = (id) => document.getElementById(id);
 
@@ -523,6 +645,7 @@
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
     let autoPlayAckTimer = null;
+    let lastIssuedCommandAt = 0;
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>\"']/g, (m) => ({
@@ -540,6 +663,24 @@
 
     function validWebAppUrl(url) {
       return /^https:\/\/script\.google\.com\//i.test(clean(url));
+    }
+
+    function createControlClientId() {
+      const randomPart = Math.random().toString(16).slice(2, 10);
+      return `ctrl-${Date.now()}-${randomPart}`;
+    }
+
+    function getControlClientId() {
+      try {
+        const saved = clean(localStorage.getItem(CONTROL_CLIENT_ID_KEY) || "");
+        if (saved) return saved;
+
+        const next = createControlClientId();
+        localStorage.setItem(CONTROL_CLIENT_ID_KEY, next);
+        return next;
+      } catch {
+        return createControlClientId();
+      }
     }
 
     function getWebAppUrl() {
@@ -565,11 +706,44 @@
       $("connHint").textContent = text;
     }
 
+    async function checkAppVersion() {
+      if (!("fetch" in window) || !("URL" in window)) return;
+
+      try {
+        const versionUrl = new URL("version.json", window.location.href);
+        versionUrl.searchParams.set("_", String(Date.now()));
+
+        const res = await fetch(versionUrl.toString(), { cache: "no-store" });
+        if (!res.ok) return;
+
+        const payload = await res.json();
+        const latestVersion = clean(payload?.version);
+        if (!latestVersion || latestVersion === APP_VERSION) return;
+
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.get("_fresh") === latestVersion) return;
+
+        currentUrl.searchParams.set("_fresh", latestVersion);
+        currentUrl.searchParams.set("_ts", String(Date.now()));
+        window.location.replace(currentUrl.toString());
+      } catch {
+        // Local file:// pages and offline devices may block version.json; keep control usable.
+      }
+    }
+
+    function startVersionCheck() {
+      checkAppVersion();
+      setInterval(checkAppVersion, VERSION_CHECK_INTERVAL_MS);
+    }
+
     function readHealthCollapsedPreference() {
       try {
-        return clean(localStorage.getItem(HEALTH_COLLAPSED_KEY)).toLowerCase() === "1";
+        const saved = clean(localStorage.getItem(HEALTH_COLLAPSED_KEY)).toLowerCase();
+        if (saved === "0") return false;
+        if (saved === "1") return true;
+        return true;
       } catch {
-        return false;
+        return true;
       }
     }
 
@@ -611,19 +785,41 @@
     }
 
     function storeAutoPlayPreference(enabled) {
+      const normalized = enabled !== false &&
+        clean(enabled).toLowerCase() !== "false" &&
+        clean(enabled).toLowerCase() !== "0" &&
+        clean(enabled).toLowerCase() !== "paused" &&
+        clean(enabled).toLowerCase() !== "off";
+
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, "paused");
+        localStorage.setItem(AUTO_PLAY_KEY, normalized ? "playing" : "paused");
       } catch {}
 
-      return false;
+      return normalized;
     }
 
     function readAutoPlayPreference() {
-      return false;
+      try {
+        const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
+        if (["paused", "pause", "off", "false", "0", "no"].includes(mode)) return false;
+        if (["playing", "play", "on", "true", "1", "yes"].includes(mode)) return true;
+      } catch {}
+
+      return true;
     }
 
     function getAutoPlayEnabledFromMeta(metaPayload = meta) {
-      return false;
+      if (!metaPayload || typeof metaPayload !== "object") return null;
+      const autoPlay = metaPayload.autoPlay;
+      if (!autoPlay || typeof autoPlay !== "object") return null;
+
+      if (typeof autoPlay.enabled === "boolean") return autoPlay.enabled;
+
+      const raw = clean(autoPlay.enabled).toLowerCase();
+      if (["playing", "play", "on", "true", "1", "yes"].includes(raw)) return true;
+      if (["paused", "pause", "off", "false", "0", "no"].includes(raw)) return false;
+
+      return null;
     }
 
     function isPendingAutoPlayActive() {
@@ -732,13 +928,18 @@
     }
 
     function sendCommand(action, extra = {}) {
-      const commandId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      const createdAt = Date.now();
+      const sourceId = getControlClientId();
+      const commandId = `${createdAt}-${sourceId}-${Math.random().toString(16).slice(2, 8)}`;
+      lastIssuedCommandAt = createdAt;
       const cmd = {
         id: commandId,
         dedupeKey: commandId,
+        createdAt,
+        sourceId,
+        source: "control",
         action,
-        ...extra,
-        autoPlay: false
+        ...extra
       };
 
       postLocalCommand(cmd);
@@ -751,10 +952,10 @@
         command: cmd
       });
 
-      const isCurrentAutoPlayCommand = () => true;
+      const isCurrentCommand = () => createdAt >= lastIssuedCommandAt;
 
       const sendOnce = () => {
-        if (!isCurrentAutoPlayCommand()) return;
+        if (!isCurrentCommand()) return;
 
         try {
           if (navigator.sendBeacon) {
@@ -791,7 +992,7 @@
         // Some locked-down TV browsers miss one storage event; repeat local delivery with a fresh wrapper.
         [180, 520, 1100].forEach((delay) => {
           setTimeout(() => {
-            if (isCurrentAutoPlayCommand()) {
+            if (isCurrentCommand()) {
               postLocalCommand({ ...cmd, id: `${cmd.id}-local-${delay}` });
             }
           }, delay);
@@ -937,6 +1138,25 @@
       }
     }
 
+    function renderAutoPlayButtons() {
+      const enabled = getAutoPlayFromMeta();
+      const onBtn = $("btnAutoPlayOn");
+      const offBtn = $("btnAutoPlayOff");
+      const label = $("autoPlayLabel");
+
+      onBtn.classList.toggle("active", enabled === true);
+      offBtn.classList.toggle("active", enabled === false);
+      onBtn.setAttribute("aria-pressed", enabled === true ? "true" : "false");
+      offBtn.setAttribute("aria-pressed", enabled === false ? "true" : "false");
+
+      if (!label) return;
+      if (!meta && !isPendingAutoPlayActive()) {
+        label.textContent = enabled ? "ตั้งค่าเปิดไว้ในเครื่องนี้" : "ตั้งค่าหยุดไว้ในเครื่องนี้";
+      } else {
+        label.textContent = enabled ? "กำลังสลับหน้าอัตโนมัติ" : "หยุดสลับหน้าอัตโนมัติ";
+      }
+    }
+
     function renderMainButtons() {
       const grid = $("mainGrid");
       grid.innerHTML = "";
@@ -1001,6 +1221,7 @@
       renderState();
       renderHealth();
       renderModeButtons();
+      renderAutoPlayButtons();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -1068,6 +1289,20 @@
       sendCommand("setWallMode", { mode: "wall" });
       setHint("สั่งแสดง2จอแล้ว");
     };
+    $("btnAutoPlayOn").onclick = () => {
+      const enabled = storeAutoPlayPreference(true);
+      setPendingAutoPlay(enabled);
+      renderAutoPlayButtons();
+      sendCommand("setAutoPlay", { enabled });
+      setHint("สั่งเปิดสลับหน้าอัตโนมัติแล้ว");
+    };
+    $("btnAutoPlayOff").onclick = () => {
+      const enabled = storeAutoPlayPreference(false);
+      setPendingAutoPlay(enabled);
+      renderAutoPlayButtons();
+      sendCommand("setAutoPlay", { enabled });
+      setHint("สั่งหยุดสลับหน้าอัตโนมัติแล้ว");
+    };
 
     $("btnSaveGasUrl").onclick = () => {
       const url = clean($("gasUrlInput").value);
@@ -1078,6 +1313,12 @@
       try {
         localStorage.setItem(CONTROL_WEBAPP_KEY, url);
       } catch {}
+      try {
+        const rawMain = localStorage.getItem(STORAGE_KEY);
+        const parsed = rawMain ? JSON.parse(rawMain) : {};
+        parsed.controlWebAppUrl = url;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      } catch {}
       setHint("บันทึก GAS URL แล้ว");
       restartRemoteMetaPolling();
       reloadMeta();
@@ -1085,6 +1326,7 @@
 
     window.addEventListener("storage", (event) => {
       if (event.key === CONTROL_META_KEY) reloadMeta();
+      if (event.key === AUTO_PLAY_KEY) renderAutoPlayButtons();
     });
 
     (function init() {
@@ -1093,6 +1335,7 @@
       if (saved) $("gasUrlInput").value = saved;
       restartRemoteMetaPolling();
       reloadMeta();
+      startVersionCheck();
     })();
   </script>
 </body>
