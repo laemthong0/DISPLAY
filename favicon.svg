@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#033d20"/>
+  <path d="M82 360c72-16 130-64 166-142 58 40 111 48 182 28-30 78-98 140-180 158-60 14-116 0-168-44z" fill="#ffd166"/>
+  <path d="M126 316c62-18 108-58 140-124 44 38 92 47 156 34-28 60-88 110-158 126-48 11-94 0-138-36z" fill="#18a058"/>
+  <path d="M204 150c28 54 75 83 140 86-54 34-132 20-176-34-32-39-43-87-33-144 27 28 50 58 69 92z" fill="#f7fff9"/>
+  <text x="256" y="435" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#ffffff">LT</text>
+</svg>
