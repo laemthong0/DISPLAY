@@ -32,7 +32,7 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100dvh;
-      padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      padding: 6px 8px 92px;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -223,6 +223,132 @@
       min-height: 46px;
       font-weight: 800;
       font-size: clamp(1.04rem, 3.3vw, 1.22rem);
+    }
+
+    .voice-widget {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 80;
+      display: grid;
+      gap: 8px;
+      justify-items: start;
+      width: auto;
+      pointer-events: none;
+    }
+
+    .voice-widget > * {
+      pointer-events: auto;
+    }
+
+    .voice-float-button {
+      min-height: 54px;
+      width: fit-content;
+      max-width: 100%;
+      border-radius: 999px;
+      border-color: #1f6f43;
+      background: var(--brand);
+      color: #fff;
+      padding: 0 18px;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.24);
+      font-size: clamp(1rem, 3.2vw, 1.16rem);
+      white-space: nowrap;
+    }
+
+    .voice-float-button.listening {
+      border-color: #b42318;
+      background: #b42318;
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.15), 0 10px 24px rgba(16, 24, 40, 0.24);
+    }
+
+    .voice-panel {
+      width: min(360px, 100%);
+      border: 1px solid #cfe0d7;
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: 0 16px 34px rgba(16, 24, 40, 0.22);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .voice-panel[hidden] {
+      display: none;
+    }
+
+    .voice-panel-title {
+      align-items: center;
+      gap: 10px;
+    }
+
+    .voice-panel-title .mini-btn {
+      margin-left: auto;
+    }
+
+    .voice-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    #btnVoiceListen {
+      min-height: 54px;
+      border-color: #1f6f43;
+      background: var(--brand);
+      color: #fff;
+      font-size: clamp(1.08rem, 3.6vw, 1.32rem);
+    }
+
+    #btnVoiceListen.listening {
+      border-color: #b42318;
+      background: #b42318;
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.12);
+    }
+
+    #btnVoiceClear {
+      min-width: 88px;
+      min-height: 54px;
+    }
+
+    .voice-status,
+    .voice-transcript {
+      border: 1px solid #dbe5df;
+      border-radius: 8px;
+      background: #f8fbf9;
+      padding: 8px;
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .voice-transcript b {
+      color: var(--brand);
+    }
+
+    .voice-examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .voice-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: #0f5132;
+      border: 1px solid #cfe6d8;
+      padding: 4px 9px;
+      font-size: clamp(0.82rem, 2.4vw, 0.94rem);
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .grid {
@@ -471,6 +597,16 @@
         min-height: 44px;
       }
 
+      .voice-widget {
+        left: 10px;
+        right: 10px;
+      }
+
+      .voice-float-button {
+        max-width: 100%;
+        padding: 0 16px;
+      }
+
       .section-title {
         align-items: flex-start;
         flex-direction: column;
@@ -514,6 +650,7 @@
 
       .transport-grid,
       .mode-actions,
+      .voice-actions,
       .grid,
       .health-grid {
         grid-template-columns: 1fr;
@@ -621,6 +758,34 @@
     </div>
   </div>
 
+  <div class="voice-widget" id="voiceWidget">
+    <div class="voice-panel" id="voicePanel" hidden>
+      <div class="section-title voice-panel-title">
+        <b>พูดชื่อหมวดหรือคำสั่ง</b>
+        <button class="mini-btn" id="btnVoiceClose" type="button">ปิด</button>
+      </div>
+      <div class="voice-actions">
+        <button class="btn" id="btnVoiceListen" type="button">เริ่มฟังเสียง</button>
+        <button class="btn secondary" id="btnVoiceClear" type="button">ล้าง</button>
+      </div>
+      <div class="voice-status" id="voiceStatus">กดปุ่มสั่งด้วยเสียง แล้วพูดคำสั่ง</div>
+      <div class="voice-transcript" id="voiceTranscript">ยังไม่มีคำสั่งเสียง</div>
+      <div class="voice-examples" aria-label="ตัวอย่างคำสั่งเสียง">
+        <span class="voice-chip">ปาล์มใหญ่</span>
+        <span class="voice-chip">แม่ปุ๋ย</span>
+        <span class="voice-chip">21-0-0 เม็ด</span>
+        <span class="voice-chip">ยางกรีด</span>
+        <span class="voice-chip">ถัดไป</span>
+        <span class="voice-chip">ก่อนหน้า</span>
+        <span class="voice-chip">รีเฟรช</span>
+        <span class="voice-chip">หยุดอัตโนมัติ</span>
+      </div>
+    </div>
+    <button class="btn voice-float-button" id="btnVoiceToggle" type="button" aria-expanded="false" aria-controls="voicePanel" aria-pressed="false">
+      <span id="voiceToggleText">สั่งด้วยเสียง</span>
+    </button>
+  </div>
+
   <script>
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
@@ -634,8 +799,26 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-logo-favicon-png-20260626";
+    const APP_VERSION = "display-control-voice-float-20260630";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
+    const VOICE_NAVIGATION_SHORTCUTS = [
+      { phrases: ["แม่ปุ๋ย"], pageAliases: ["แม่ปุ๋ย"] },
+      { phrases: ["21-0-0 เกล็ด", "21-0-0 เกร็ด", "21-0-0 ผง"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เกร็ด/ผง", "21-0-0เกล็ด", "21-0-0เกร็ด", "21-0-0ผง"] },
+      { phrases: ["21-0-0 เม็ด"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เม็ด"] },
+      { phrases: ["18-46-0"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "18-46-0"] },
+      { phrases: ["0-0-60"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["0-0-60"] },
+      { phrases: ["46-0-0"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "46-0-0"] },
+      { phrases: ["ปาล์มใหญ่"], pageAliases: ["ปาล์มใหญ่"] },
+      { phrases: ["ปาล์มเล็ก"], pageAliases: ["ปาล์มเล็ก"] },
+      { phrases: ["ยางกรีด"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางกรีด", "ยางกรีด"] },
+      { phrases: ["ยางเล็ก"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางเล็ก", "ยางเล็ก"] },
+      { phrases: ["ปุ๋ยทุเรียน", "ทุเรียน"], pageAliases: ["ปุ๋ยทุเรียน", "ทุเรียน"] },
+      { phrases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี"], pageAliases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี"] },
+      { phrases: ["ปุ๋ยอินทรีย์"], pageAliases: ["ปุ๋ยอินทรีย์"] },
+      { phrases: ["ปุ๋ยเสมอ", "เสมอ"], pageAliases: ["ปุ๋ยเสมอ", "เสมอ"] },
+      { phrases: ["แมกนีเซียม"], pageAliases: ["แมกนีเซียม"], subAliases: ["แมกนีเซียม"] },
+      { phrases: ["โดโลไมต์-โบรอน", "โดโลไมต์ โบรอน", "โดโลไมต์", "โบรอน"], pageAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน"], subAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน", "โดโลไมต์", "โบรอน"] }
+    ];
 
     const $ = (id) => document.getElementById(id);
 
@@ -646,6 +829,11 @@
     let pendingAutoPlay = null;
     let autoPlayAckTimer = null;
     let lastIssuedCommandAt = 0;
+    let voiceRecognition = null;
+    let voiceListening = false;
+    let voiceRestartTimer = null;
+    let lastVoiceCommandText = "";
+    let lastVoiceCommandAt = 0;
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>\"']/g, (m) => ({
@@ -1000,6 +1188,537 @@
       }
     }
 
+    function getSpeechRecognitionConstructor() {
+      return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    }
+
+    function setVoiceStatus(text) {
+      const el = $("voiceStatus");
+      if (el) el.textContent = text;
+    }
+
+    function setVoiceTranscript(text) {
+      const el = $("voiceTranscript");
+      if (!el) return;
+      el.innerHTML = text ? `ได้ยิน: <b>${escapeHtml(text)}</b>` : "ยังไม่มีคำสั่งเสียง";
+    }
+
+    function setVoicePanelOpen(open) {
+      const panel = $("voicePanel");
+      const toggle = $("btnVoiceToggle");
+      const widget = $("voiceWidget");
+      if (!panel || !toggle) return;
+
+      panel.hidden = !open;
+      widget?.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function setVoiceListeningState(listening) {
+      voiceListening = Boolean(listening);
+      const btn = $("btnVoiceListen");
+      if (btn) {
+        btn.classList.toggle("listening", voiceListening);
+        btn.textContent = voiceListening ? "กำลังฟัง..." : "เริ่มฟังเสียง";
+        btn.setAttribute("aria-pressed", voiceListening ? "true" : "false");
+      }
+
+      const toggle = $("btnVoiceToggle");
+      const toggleText = $("voiceToggleText");
+      if (toggle) {
+        toggle.classList.toggle("listening", voiceListening);
+        toggle.setAttribute("aria-pressed", voiceListening ? "true" : "false");
+        toggle.title = voiceListening ? "กดเพื่อหยุดฟังเสียง" : "กดเพื่อเริ่มสั่งด้วยเสียง";
+      }
+      if (toggleText) toggleText.textContent = voiceListening ? "กำลังฟัง..." : "สั่งด้วยเสียง";
+    }
+
+    function normalizeVoiceNumbers(value) {
+      const digitMap = {
+        "๐": "0", "๑": "1", "๒": "2", "๓": "3", "๔": "4",
+        "๕": "5", "๖": "6", "๗": "7", "๘": "8", "๙": "9"
+      };
+      let text = clean(value).replace(/[๐-๙]/g, (digit) => digitMap[digit] || digit);
+      const words = [
+        ["ยี่สิบ", "20"], ["สิบเก้า", "19"], ["สิบแปด", "18"], ["สิบเจ็ด", "17"],
+        ["สิบหก", "16"], ["สิบห้า", "15"], ["สิบสี่", "14"], ["สิบสาม", "13"],
+        ["สิบสอง", "12"], ["สิบเอ็ด", "11"], ["สิบ", "10"], ["เก้า", "9"],
+        ["แปด", "8"], ["เจ็ด", "7"], ["หก", "6"], ["ห้า", "5"],
+        ["สี่", "4"], ["สาม", "3"], ["สอง", "2"], ["หนึ่ง", "1"],
+        ["นึง", "1"], ["แรก", "1"]
+      ];
+
+      words.forEach(([word, number]) => {
+        text = text.replace(new RegExp(word, "g"), number);
+      });
+      return text;
+    }
+
+    function compactVoiceText(value) {
+      return normalizeVoiceNumbers(value)
+        .toLowerCase()
+        .replace(/ครับ|ค่ะ|คะ|นะ|หน่อย|ช่วย|ให้/g, "")
+        .replace(/[^\u0E00-\u0E7Fa-z0-9]/g, "");
+    }
+
+    function getVoiceNumberAfter(text, keywords) {
+      const compact = compactVoiceText(text);
+      for (const keyword of keywords) {
+        const compactKeyword = compactVoiceText(keyword);
+        const afterMatch = compact.match(new RegExp(`${compactKeyword}(\\d+)`));
+        if (afterMatch) return Number(afterMatch[1]);
+
+        const beforeMatch = compact.match(new RegExp(`(\\d+)${compactKeyword}`));
+        if (beforeMatch) return Number(beforeMatch[1]);
+      }
+      return null;
+    }
+
+    function normalizeVoiceName(value) {
+      return compactVoiceText(value).replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|หน้า|ไป/g, "");
+    }
+
+    function normalizeVoiceAlias(value) {
+      return compactVoiceText(value).replace(/ไป/g, "");
+    }
+
+    function uniqueVoiceAliases(values) {
+      return [...new Set((values || [])
+        .map(normalizeVoiceAlias)
+        .filter(Boolean))];
+    }
+
+    function voiceTextHasAlias(text, aliases) {
+      const compact = compactVoiceText(text);
+      return uniqueVoiceAliases(aliases).some((alias) => compact.includes(alias));
+    }
+
+    function getVoicePages() {
+      return meta && Array.isArray(meta.pages) ? meta.pages : [];
+    }
+
+    function getSubCategoriesForPage(page) {
+      return Array.isArray(page?.subCategories) ? page.subCategories : [];
+    }
+
+    function findPageByAliases(aliases) {
+      const pages = getVoicePages();
+      const normalizedAliases = uniqueVoiceAliases(aliases);
+      if (!pages.length || !normalizedAliases.length) return null;
+
+      const exact = pages.find((page) => {
+        const name = normalizeVoiceAlias(page?.name || "");
+        return normalizedAliases.includes(name);
+      });
+      if (exact) return exact;
+
+      const partialMatches = pages.filter((page) => {
+        const name = normalizeVoiceAlias(page?.name || "");
+        return name && normalizedAliases.some((alias) => name.includes(alias) || alias.includes(name));
+      });
+      partialMatches.sort((a, b) => normalizeVoiceAlias(b?.name || "").length - normalizeVoiceAlias(a?.name || "").length);
+      return partialMatches[0] || null;
+    }
+
+    function findSubCategoryTargetByAliases(subAliases, pageAliases = []) {
+      const pages = getVoicePages();
+      const normalizedSubAliases = uniqueVoiceAliases(subAliases);
+      if (!pages.length || !normalizedSubAliases.length) return null;
+
+      const preferredPage = findPageByAliases(pageAliases);
+      const searchPages = preferredPage
+        ? [preferredPage, ...pages.filter((page) => page.index !== preferredPage.index)]
+        : pages;
+
+      for (const page of searchPages) {
+        const exact = getSubCategoriesForPage(page).find((subCategory) => {
+          const name = normalizeVoiceAlias(subCategory?.name || "");
+          return normalizedSubAliases.includes(name);
+        });
+        if (exact) return { page, subCategory: exact };
+      }
+
+      const partialTargets = [];
+      for (const page of searchPages) {
+        getSubCategoriesForPage(page).forEach((subCategory) => {
+          const name = normalizeVoiceAlias(subCategory?.name || "");
+          if (name && normalizedSubAliases.some((alias) => name.includes(alias) || alias.includes(name))) {
+            partialTargets.push({ page, subCategory });
+          }
+        });
+      }
+      partialTargets.sort((a, b) => {
+        return normalizeVoiceAlias(b.subCategory?.name || "").length - normalizeVoiceAlias(a.subCategory?.name || "").length;
+      });
+      if (partialTargets[0]) return partialTargets[0];
+
+      return null;
+    }
+
+    function findVoiceShortcutTarget(text) {
+      for (const shortcut of VOICE_NAVIGATION_SHORTCUTS) {
+        if (!voiceTextHasAlias(text, shortcut.phrases)) continue;
+
+        if (shortcut.subAliases) {
+          const subTarget = findSubCategoryTargetByAliases(shortcut.subAliases, shortcut.pageAliases);
+          if (subTarget) {
+            return {
+              type: "sub",
+              page: subTarget.page,
+              subCategory: subTarget.subCategory
+            };
+          }
+        }
+
+        if (shortcut.pageAliases) {
+          const page = findPageByAliases(shortcut.pageAliases);
+          if (page) return { type: "page", page };
+        }
+      }
+
+      return null;
+    }
+
+    function findVoiceNavigationTarget(text) {
+      const shortcutTarget = findVoiceShortcutTarget(text);
+      if (shortcutTarget) return shortcutTarget;
+
+      const page = findMainPageByVoice(text);
+      if (page) return { type: "page", page };
+
+      const subTarget = findSubCategoryTargetByAliases([text]);
+      if (subTarget) {
+        return {
+          type: "sub",
+          page: subTarget.page,
+          subCategory: subTarget.subCategory
+        };
+      }
+
+      return null;
+    }
+
+    function sendVoiceNavigationTarget(target) {
+      if (!target) return false;
+
+      if (target.type === "sub" && target.page && target.subCategory) {
+        sendCommand("goSub", {
+          pageIndex: target.page.index,
+          subIndex: target.subCategory.index
+        });
+        const message = `คำสั่งเสียง: ${target.page.name} / ${target.subCategory.name}`;
+        setHint(message);
+        setVoiceStatus(message);
+        return true;
+      }
+
+      if (target.type === "page" && target.page) {
+        sendCommand("goMain", { pageIndex: target.page.index });
+        const message = `คำสั่งเสียง: ${target.page.name}`;
+        setHint(message);
+        setVoiceStatus(message);
+        return true;
+      }
+
+      return false;
+    }
+
+    function findMainPageByVoice(text) {
+      if (!meta || !Array.isArray(meta.pages)) return null;
+
+      const number = getVoiceNumberAfter(text, ["หมวดหลัก", "หมวด"]);
+      if (number && number >= 1 && number <= meta.pages.length) {
+        return meta.pages[number - 1];
+      }
+
+      const normalized = normalizeVoiceName(text);
+      if (!normalized) return null;
+
+      return findPageByAliases([text]);
+    }
+
+    function findSubCategoryByVoice(text) {
+      const page = getMainPage();
+      const subCategories = Array.isArray(page?.subCategories) ? page.subCategories : [];
+      if (!subCategories.length) return null;
+
+      const number = getVoiceNumberAfter(text, ["หมวดย่อย", "กลุ่ม", "ย่อย"]);
+      if (number && number >= 1 && number <= subCategories.length) {
+        return subCategories[number - 1];
+      }
+
+      const normalized = normalizeVoiceName(text);
+      if (!normalized) return null;
+
+      const exact = subCategories.find((subCategory) => {
+        const name = normalizeVoiceName(subCategory?.name || "");
+        return name && name === normalized;
+      });
+      if (exact) return exact;
+
+      return subCategories.find((subCategory) => {
+        const name = normalizeVoiceName(subCategory?.name || "");
+        return name && name.length >= 2 && (normalized.includes(name) || name.includes(normalized));
+      }) || null;
+    }
+
+    function sendVoiceAutoPlay(enabled) {
+      const normalized = storeAutoPlayPreference(enabled);
+      setPendingAutoPlay(normalized);
+      renderAutoPlayButtons();
+      sendCommand("setAutoPlay", { enabled: normalized });
+      const message = normalized ? "คำสั่งเสียง: เปิดสลับหน้าอัตโนมัติ" : "คำสั่งเสียง: หยุดสลับหน้าอัตโนมัติ";
+      setHint(message);
+      setVoiceStatus(message);
+      return true;
+    }
+
+    function sendVoiceWallMode(mode) {
+      const normalized = storeWallModePreference(mode);
+      renderModeButtons();
+      sendCommand("setWallMode", { mode: normalized });
+      const message = normalized === "wall" ? "คำสั่งเสียง: แสดง2จอ" : "คำสั่งเสียง: แสดง1จอ";
+      setHint(message);
+      setVoiceStatus(message);
+      return true;
+    }
+
+    function sendVoiceSubPage(number) {
+      if (!meta) return false;
+      const total = Math.max(1, Number(meta.totalSubPages || 1));
+      if (!number || number < 1 || number > total) return false;
+
+      const page = getMainPage();
+      sendCommand("goSubPage", {
+        pageIndex: page ? page.index : 0,
+        subIndex: Number(meta.currentMotherSubIndex || 0),
+        subPageIndex: number - 1
+      });
+      const message = `คำสั่งเสียง: ไปหน้า ${number}`;
+      setHint(message);
+      setVoiceStatus(message);
+      return true;
+    }
+
+    function handleVoiceCommand(rawText) {
+      const text = clean(rawText);
+      if (!text) return;
+
+      const now = Date.now();
+      const compact = compactVoiceText(text);
+      if (compact && compact === lastVoiceCommandText && now - lastVoiceCommandAt < 1800) return;
+
+      lastVoiceCommandText = compact;
+      lastVoiceCommandAt = now;
+      setVoiceTranscript(text);
+
+      if (/รีเฟรช|refresh|โหลดใหม่|อัปเดต|อัพเดต/.test(compact)) {
+        sendCommand("refresh");
+        setHint("คำสั่งเสียง: รีเฟรชหน้าจอหลัก");
+        setVoiceStatus("คำสั่งเสียง: รีเฟรชหน้าจอหลัก");
+        return;
+      }
+
+      if (/หยุดอัตโนมัติ|ปิดอัตโนมัติ|หยุดสลับ|ปิดสลับ|หยุดเล่น|พัก/.test(compact)) {
+        sendVoiceAutoPlay(false);
+        return;
+      }
+
+      if (/เปิดอัตโนมัติ|เล่นอัตโนมัติ|เริ่มอัตโนมัติ|เปิดสลับ|เริ่มสลับ/.test(compact)) {
+        sendVoiceAutoPlay(true);
+        return;
+      }
+
+      if (/แสดง2จอ|สองจอ|2จอ|วอลล์|wall/.test(compact)) {
+        sendVoiceWallMode("wall");
+        return;
+      }
+
+      if (/แสดง1จอ|หนึ่งจอ|1จอ|จอเดียว|เดี่ยว/.test(compact)) {
+        sendVoiceWallMode("single");
+        return;
+      }
+
+      if (/ถัดไป|ต่อไป|หน้าถัดไป|หน้าต่อไป|ไปต่อ|next/.test(compact)) {
+        sendCommand("next");
+        setHint("คำสั่งเสียง: ถัดไป");
+        setVoiceStatus("คำสั่งเสียง: ถัดไป");
+        return;
+      }
+
+      if (/ก่อนหน้า|ย้อนกลับ|กลับหน้า|ถอย|prev|previous/.test(compact)) {
+        sendCommand("prev");
+        setHint("คำสั่งเสียง: ก่อนหน้า");
+        setVoiceStatus("คำสั่งเสียง: ก่อนหน้า");
+        return;
+      }
+
+      if (/หมวดย่อย|กลุ่ม|ย่อย/.test(compact)) {
+        const subCategory = findSubCategoryByVoice(text);
+        const page = getMainPage();
+        if (subCategory && page) {
+          sendCommand("goSub", { pageIndex: page.index, subIndex: subCategory.index });
+          const message = `คำสั่งเสียง: หมวดย่อย ${subCategory.index + 1}`;
+          setHint(message);
+          setVoiceStatus(message);
+          return;
+        }
+      }
+
+      if (/หมวดหลัก|หมวด/.test(compact)) {
+        const page = findMainPageByVoice(text);
+        if (page) {
+          sendCommand("goMain", { pageIndex: page.index });
+          const message = `คำสั่งเสียง: หมวด ${page.index + 1}`;
+          setHint(message);
+          setVoiceStatus(message);
+          return;
+        }
+      }
+
+      const pageNumber = getVoiceNumberAfter(text, ["หน้าย่อย", "หน้า"]);
+      if (pageNumber && sendVoiceSubPage(pageNumber)) return;
+
+      if (sendVoiceNavigationTarget(findVoiceNavigationTarget(text))) return;
+
+      setVoiceStatus(`ยังไม่รู้จักคำสั่ง: ${text}`);
+    }
+
+    function ensureVoiceRecognition() {
+      const Recognition = getSpeechRecognitionConstructor();
+      if (!Recognition) return null;
+      if (voiceRecognition) return voiceRecognition;
+
+      const recognition = new Recognition();
+      recognition.lang = "th-TH";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setVoiceListeningState(true);
+        setVoiceStatus("กำลังฟังคำสั่งเสียง...");
+      };
+
+      recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = clean(result[0]?.transcript || "");
+          if (!transcript) continue;
+
+          if (result.isFinal) {
+            handleVoiceCommand(transcript);
+          } else {
+            setVoiceTranscript(transcript);
+          }
+        }
+      };
+
+      recognition.onerror = (event) => {
+        const error = clean(event?.error || "");
+        if (error === "not-allowed" || error === "service-not-allowed") {
+          setVoiceListeningState(false);
+          setVoiceStatus("เปิดไมค์ไม่ได้ กรุณาอนุญาตไมโครโฟนในเบราว์เซอร์");
+          return;
+        }
+        if (error === "no-speech") {
+          setVoiceStatus("ยังไม่ได้ยินเสียง ลองพูดใหม่อีกครั้ง");
+          return;
+        }
+        setVoiceStatus(error ? `ระบบฟังเสียงมีปัญหา: ${error}` : "ระบบฟังเสียงมีปัญหา");
+      };
+
+      recognition.onend = () => {
+        if (!voiceListening) {
+          setVoiceListeningState(false);
+          return;
+        }
+
+        clearTimeout(voiceRestartTimer);
+        voiceRestartTimer = setTimeout(() => {
+          try {
+            recognition.start();
+          } catch {}
+        }, 450);
+      };
+
+      voiceRecognition = recognition;
+      return voiceRecognition;
+    }
+
+    function startVoiceListening() {
+      setVoicePanelOpen(true);
+      const recognition = ensureVoiceRecognition();
+      if (!recognition) {
+        setVoiceListeningState(false);
+        setVoiceStatus("เบราว์เซอร์นี้ยังไม่รองรับสั่งด้วยเสียง ให้เปิด control.html ด้วย Chrome หรือ Edge");
+        return;
+      }
+
+      setVoiceListeningState(true);
+      try {
+        recognition.start();
+      } catch {
+        setVoiceStatus("ระบบฟังเสียงกำลังเริ่มอยู่");
+      }
+    }
+
+    function stopVoiceListening() {
+      clearTimeout(voiceRestartTimer);
+      setVoiceListeningState(false);
+      if (!voiceRecognition) {
+        setVoiceStatus("หยุดฟังเสียงแล้ว");
+        return;
+      }
+
+      try {
+        voiceRecognition.stop();
+      } catch {}
+      setVoiceStatus("หยุดฟังเสียงแล้ว");
+    }
+
+    function initVoiceControls() {
+      const btn = $("btnVoiceListen");
+      const clearBtn = $("btnVoiceClear");
+      const closeBtn = $("btnVoiceClose");
+      const toggleBtn = $("btnVoiceToggle");
+      if (!btn || !clearBtn) return;
+
+      if (!getSpeechRecognitionConstructor()) {
+        btn.disabled = true;
+        btn.textContent = "ไม่รองรับเสียง";
+        setVoiceStatus("เบราว์เซอร์นี้ยังไม่รองรับสั่งด้วยเสียง ให้ใช้ Chrome หรือ Edge");
+      }
+
+      if (toggleBtn) {
+        toggleBtn.onclick = () => {
+          setVoicePanelOpen(true);
+          if (voiceListening) {
+            stopVoiceListening();
+          } else {
+            startVoiceListening();
+          }
+        };
+      }
+
+      btn.onclick = () => {
+        if (voiceListening) {
+          stopVoiceListening();
+        } else {
+          startVoiceListening();
+        }
+      };
+
+      clearBtn.onclick = () => {
+        setVoiceTranscript("");
+        setVoiceStatus(voiceListening ? "กำลังฟังคำสั่งเสียง..." : "กดปุ่มสั่งด้วยเสียง แล้วพูดคำสั่ง");
+      };
+
+      if (closeBtn) {
+        closeBtn.onclick = () => setVoicePanelOpen(false);
+      }
+    }
+
     function readMetaLocal() {
       try {
         const raw = localStorage.getItem(CONTROL_META_KEY);
@@ -1331,6 +2050,7 @@
 
     (function init() {
       applyHealthCollapsed(readHealthCollapsedPreference());
+      initVoiceControls();
       const saved = getWebAppUrl();
       if (saved) $("gasUrlInput").value = saved;
       restartRemoteMetaPolling();
