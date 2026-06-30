@@ -1127,8 +1127,8 @@
     ];
     const VOICE_NAVIGATION_SHORTCUTS = [
       { phrases: ["แม่ปุ๋ย", "แม่พุย", "เมปุ๋ย"], pageAliases: ["แม่ปุ๋ย"] },
-      { phrases: ["21-0-0 เกล็ด", "21-0-0 เกร็ด", "21-0-0 ผง", "2100เกล็ด", "2100เกร็ด", "2100ผง"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เกร็ด/ผง", "21-0-0เกล็ด", "21-0-0เกร็ด", "21-0-0ผง"] },
-      { phrases: ["21-0-0 เม็ด", "2100เม็ด", "21-0-0เม็ด"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เม็ด"] },
+      { phrases: ["21-0-0 เกล็ด", "21-0-0 เกร็ด", "21-0-0 ผง", "2100เกล็ด", "2100เกร็ด", "2100ผง", "2100 ผง"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เกร็ด/ผง", "21-0-0เกล็ด", "21-0-0เกร็ด", "21-0-0ผง", "21-0-0 ผง"] },
+      { phrases: ["21-0-0 เม็ด", "2100เม็ด", "21-0-0เม็ด", "2100 เม็ด"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เม็ด", "21-0-0 เม็ด"] },
       { phrases: ["18-46-0", "18460"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "18-46-0"] },
       { phrases: ["0-0-60", "0060"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["0-0-60"] },
       { phrases: ["46-0-0", "4600"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "46-0-0"] },
@@ -1925,7 +1925,10 @@
         return false;
       }
 
-      setVoiceTranscript(text);
+      // Only show transcript if it has trigger word
+      if (hasVoiceCommandTrigger(text)) {
+        setVoiceTranscript(text);
+      }
 
       const finish = (ok) => {
         if (ok) {
@@ -2045,16 +2048,21 @@
       recognition.onresult = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
+          const transcript = clean(result[0]?.transcript || "");
+          
           if (!result.isFinal) {
-            setVoiceTranscript(clean(result[0]?.transcript || ""));
+            // Only show interim transcript if it has trigger word
+            if (hasVoiceCommandTrigger(transcript)) {
+              setVoiceTranscript(transcript);
+            }
             continue;
           }
 
           let handled = false;
           for (let j = 0; j < result.length; j++) {
-            const transcript = clean(result[j]?.transcript || "");
-            if (!transcript) continue;
-            if (handleVoiceCommand(transcript, { ignoreDedupe: j > 0 })) {
+            const finalTranscript = clean(result[j]?.transcript || "");
+            if (!finalTranscript) continue;
+            if (handleVoiceCommand(finalTranscript, { ignoreDedupe: j > 0 })) {
               handled = true;
               break;
             }
