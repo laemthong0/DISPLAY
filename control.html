@@ -1638,7 +1638,8 @@
 
     function normalizeVoiceName(value) {
       return stripVoiceTriggerPrefix(value)
-        .replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|หน้า/g, "");
+        .replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|หน้า/g, "")
+        .trim();
     }
 
     function normalizeVoiceAlias(value) {
@@ -1745,7 +1746,7 @@
       for (const page of searchPages) {
         getSubCategoriesForPage(page).forEach((subCategory) => {
           const name = normalizeVoiceAlias(subCategory?.name || "");
-          if (name && normalizedSubAliases.some((alias) => name.includes(alias))) {
+          if (name && normalizedSubAliases.some((alias) => name.includes(alias) || alias.includes(name))) {
             partialTargets.push({ page, subCategory });
           }
         });
@@ -1863,9 +1864,16 @@
       });
       if (exact) return exact;
 
+      // Try partial match with more flexible conditions
       return subCategories.find((subCategory) => {
         const name = normalizeVoiceName(subCategory?.name || "");
-        return name && name.length >= 2 && (normalized.includes(name) || name.includes(normalized));
+        if (!name) return false;
+        // Allow 1 character names if they match exactly
+        if (name.length < 2) {
+          return normalized === name;
+        }
+        // For longer names, check if either contains the other
+        return normalized.includes(name) || name.includes(normalized);
       }) || null;
     }
 
@@ -1979,10 +1987,15 @@
         const page = getMainPage();
         if (subCategory && page) {
           sendCommand("goSub", { pageIndex: page.index, subIndex: subCategory.index });
-          const message = `คำสั่งเสียง: หมวดย่อย ${subCategory.index + 1}`;
+          const message = `คำสั่งเสียง: ${subCategory.name}`;
           setHint(message);
           setVoiceStatus(message);
           return finish(true);
+        }
+        // If subcategory not found, try navigation target
+        const navTarget = findVoiceNavigationTarget(text);
+        if (navTarget && navTarget.type === "sub") {
+          return finish(sendVoiceNavigationTarget(navTarget));
         }
       }
 
