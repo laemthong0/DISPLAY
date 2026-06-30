@@ -1110,25 +1110,38 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-control-voice-trigger-fix-20260630";
+    const APP_VERSION = "display-control-voice-fix-20260630b";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
+    const VOICE_TRIGGER_PREFIXES = [
+      "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
+      "สั่ง", "สัง", "ไป"
+    ];
+    const VOICE_ACTION_ALIASES = [
+      ["รีเฟรช", "refresh", "โหลดใหม่", "อัปเดต", "อัพเดต"],
+      ["เปิดอัตโนมัติ", "เล่นอัตโนมัติ", "เริ่มอัตโนมัติ", "เปิดสลับ", "เริ่มสลับ", "สลับอัตโนมัติ"],
+      ["หยุดอัตโนมัติ", "ปิดอัตโนมัติ", "หยุดสลับ", "ปิดสลับ", "หยุดเล่น", "พัก", "เปิดหยุดอัตโนมัติ"],
+      ["แสดง2จอ", "สองจอ", "2จอ", "วอลล์", "wall"],
+      ["แสดง1จอ", "หนึ่งจอ", "1จอ", "จอเดียว", "เดี่ยว"],
+      ["ถัดไป", "ต่อไป", "หน้าถัดไป", "หน้าต่อไป", "ไปต่อ", "ทัดไป", "ที่ไป", "next"],
+      ["ก่อนหน้า", "ย้อนกลับ", "กลับหน้า", "ถอย", "prev", "previous"]
+    ];
     const VOICE_NAVIGATION_SHORTCUTS = [
-      { phrases: ["แม่ปุ๋ย"], pageAliases: ["แม่ปุ๋ย"] },
-      { phrases: ["21-0-0 เกล็ด", "21-0-0 เกร็ด", "21-0-0 ผง"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เกร็ด/ผง", "21-0-0เกล็ด", "21-0-0เกร็ด", "21-0-0ผง"] },
-      { phrases: ["21-0-0 เม็ด"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เม็ด"] },
-      { phrases: ["18-46-0"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "18-46-0"] },
-      { phrases: ["0-0-60"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["0-0-60"] },
-      { phrases: ["46-0-0"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "46-0-0"] },
-      { phrases: ["ปาล์มใหญ่"], pageAliases: ["ปาล์มใหญ่"] },
-      { phrases: ["ปาล์มเล็ก"], pageAliases: ["ปาล์มเล็ก"] },
-      { phrases: ["ยางกรีด"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางกรีด", "ยางกรีด"] },
+      { phrases: ["แม่ปุ๋ย", "แม่พุย", "เมปุ๋ย"], pageAliases: ["แม่ปุ๋ย"] },
+      { phrases: ["21-0-0 เกล็ด", "21-0-0 เกร็ด", "21-0-0 ผง", "2100เกล็ด", "2100เกร็ด", "2100ผง"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เกร็ด/ผง", "21-0-0เกล็ด", "21-0-0เกร็ด", "21-0-0ผง"] },
+      { phrases: ["21-0-0 เม็ด", "2100เม็ด", "21-0-0เม็ด"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["21-0-0เม็ด"] },
+      { phrases: ["18-46-0", "18460"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "18-46-0"] },
+      { phrases: ["0-0-60", "0060"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["0-0-60"] },
+      { phrases: ["46-0-0", "4600"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "46-0-0"] },
+      { phrases: ["ปาล์มใหญ่", "ปลามใหญ่", "ปามใหญ่", "ปาล์มใหญ"], pageAliases: ["ปาล์มใหญ่"] },
+      { phrases: ["ปาล์มเล็ก", "ปลามเล็ก", "ปามเล็ก"], pageAliases: ["ปาล์มเล็ก"] },
+      { phrases: ["ยางกรีด", "ยางเกรด", "ยางกรี", "ยางกรีต"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางกรีด", "ยางกรีด"] },
       { phrases: ["ยางเล็ก"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางเล็ก", "ยางเล็ก"] },
       { phrases: ["ปุ๋ยทุเรียน", "ทุเรียน"], pageAliases: ["ปุ๋ยทุเรียน", "ทุเรียน"] },
-      { phrases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี"], pageAliases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี"] },
-      { phrases: ["ปุ๋ยอินทรีย์"], pageAliases: ["ปุ๋ยอินทรีย์"] },
+      { phrases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี", "อินทรียเคมี"], pageAliases: ["ปุ๋ยอินทรีย์เคมี", "อินทรีย์เคมี"] },
+      { phrases: ["ปุ๋ยอินทรีย์", "อินทรีย์", "อินทรีย"], pageAliases: ["ปุ๋ยอินทรีย์"] },
       { phrases: ["ปุ๋ยเสมอ", "เสมอ"], pageAliases: ["ปุ๋ยเสมอ", "เสมอ"] },
       { phrases: ["แมกนีเซียม"], pageAliases: ["แมกนีเซียม"], subAliases: ["แมกนีเซียม"] },
-      { phrases: ["โดโลไมต์-โบรอน", "โดโลไมต์ โบรอน", "โดโลไมต์", "โบรอน"], pageAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน"], subAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน", "โดโลไมต์", "โบรอน"] }
+      { phrases: ["โดโลไมต์-โบรอน", "โดโลไมต์ โบรอน", "โดโลไมต์", "โบรอน", "โดโลไมท์"], pageAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน"], subAliases: ["โดโลไมต์-โบรอน", "โดโลไมต์โบรอน", "โดโลไมต์", "โบรอน"] }
     ];
 
     const $ = (id) => document.getElementById(id);
@@ -1566,16 +1579,48 @@
       return text;
     }
 
+    function applyVoiceMishearingFixes(value) {
+      let text = clean(value);
+      if (/^(โปรด|พบ|เปด|เผิด|เพิ่ม)/i.test(text)) {
+        text = text.replace(/^(โปรด|พบ|เปด|เผิด|เพิ่ม)/i, "เปิด");
+      }
+      return text
+        .replace(/สัง/gi, "สั่ง")
+        .replace(/ปลาม/gi, "ปาล์ม")
+        .replace(/ปาม/gi, "ปาล์ม")
+        .replace(/แม่พุย|เมปุ๋ย|แม่ภูย/gi, "แม่ปุ๋ย")
+        .replace(/ยางเกรด|ยางกรีต/gi, "ยางกรีด")
+        .replace(/ทัดไป|ที่ไป/gi, "ถัดไป")
+        .replace(/รีเฟส|รีเฟช/gi, "รีเฟรช")
+        .replace(/อัตโนมัด/gi, "อัตโนมัติ");
+    }
+
     function compactVoiceText(value) {
-      return normalizeVoiceNumbers(value)
+      return normalizeVoiceNumbers(applyVoiceMishearingFixes(value))
         .normalize("NFC")
         .toLowerCase()
         .replace(/ครับ|ค่ะ|คะ|นะ|หน่อย|ช่วย|ให้/g, "")
         .replace(/[\u0E47-\u0E4E]/g, "")
-        .replace(/เกลด|เกรด/g, "เกรด")
-        .replace(/อินทรีย/g, "อินทรี")
-        .replace(/โดโลไม[ตท]?/g, "โดโลไม")
+        .replace(/เกลด|เกรด/g, "เกร็ด")
+        .replace(/อินทรีย(?!์)/g, "อินทรีย์")
+        .replace(/โดโลไม[ตท]?/g, "โดโลไมต์")
         .replace(/[^\u0E00-\u0E7Fa-z0-9]/g, "");
+    }
+
+    function stripVoiceTriggerPrefix(value) {
+      let compact = compactVoiceText(value);
+      const sortedPrefixes = [...VOICE_TRIGGER_PREFIXES].sort((a, b) => b.length - a.length);
+      for (const prefix of sortedPrefixes) {
+        if (compact.startsWith(prefix)) {
+          compact = compact.slice(prefix.length);
+          break;
+        }
+      }
+      return compact;
+    }
+
+    function getVoiceCommandRemainder(value) {
+      return stripVoiceCommandScaffold(value);
     }
 
     function getVoiceNumberAfter(text, keywords) {
@@ -1592,16 +1637,17 @@
     }
 
     function normalizeVoiceName(value) {
-      return compactVoiceText(value).replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|หน้า|เปิด/g, "");
+      return stripVoiceTriggerPrefix(value)
+        .replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|หน้า/g, "");
     }
 
     function normalizeVoiceAlias(value) {
-      return compactVoiceText(value).replace(/เปิด/g, "");
+      return stripVoiceTriggerPrefix(value);
     }
 
     function stripVoiceCommandScaffold(value) {
-      return compactVoiceText(value)
-        .replace(/กรุณา|ขอ|ดู|เปิดหนา|เปิดหน้า|เปิด|ไปที|ไปที่|ไป|เลือก|เปลียนเปน|เปลี่ยนเป็น|เปลียน|เปลี่ยน|แสดง|โชว|โชว์|สัง|สั่ง|เอา|เปน|เป็น|ให้เป็น/g, "")
+      return stripVoiceTriggerPrefix(value)
+        .replace(/กรุณา|ขอ|ดู|เปิดหนา|เปิดหน้า|ไปที|ไปที่|ไป|เลือก|เปลียนเปน|เปลี่ยนเป็น|เปลียน|เปลี่ยน|แสดง|โชว|โชว์|สัง|สั่ง|เอา|เปน|เป็น|ให้เป็น/g, "")
         .replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|ย่อย|รายการ|สินค้า/g, "");
     }
 
@@ -1609,7 +1655,7 @@
       const compact = compactVoiceText(value);
       if (!compact) return true;
       return !compact
-        .replace(/หนาจอ|หนา|จอ|ทีวี|หลัก|อัตโนมัติ|ออโต|เลย|เดยวนี/g, "");
+        .replace(/หนาจอ|หนา|จอ|ทีวี|หลัก|อัตโนมัติ|ออโต|เลย|เดยวนี|เปิด|พบ|เปด|สั่ง|สัง|ไป/g, "");
     }
 
     function isBlockedVoiceText(value) {
@@ -1618,8 +1664,15 @@
       return /อย่า|ห้าม|ไม่ต้อง|ไม่เอา|ยังไม่|ไม่ใช่|ยกเลิก|คืออะไร|อะไร|ไหม|มั้ย|หรือเปล่า|เท่าไร|เท่าไหร่|ราคา|ขาย|ทดสอบ|ลองพูด|พูดว่า|คำว่า/i.test(text);
     }
 
+    function matchesKnownVoiceAction(text) {
+      return VOICE_ACTION_ALIASES.some((aliases) => voiceTextHasAlias(text, aliases));
+    }
+
     function hasVoiceCommandTrigger(value) {
-      return /^เปิด/.test(compactVoiceText(value));
+      const compact = compactVoiceText(value);
+      if (VOICE_TRIGGER_PREFIXES.some((prefix) => compact.startsWith(prefix))) return true;
+      if (findVoiceShortcutTarget(value)) return true;
+      return matchesKnownVoiceAction(value);
     }
 
     function uniqueVoiceAliases(values) {
@@ -1733,10 +1786,14 @@
       const shortcutTarget = findVoiceShortcutTarget(text);
       if (shortcutTarget) return shortcutTarget;
 
-      const page = findMainPageByVoice(text);
+      const remainder = getVoiceCommandRemainder(text);
+      const page = findPageByAliases(remainder ? [remainder] : [text]);
       if (page) return { type: "page", page };
 
-      const subTarget = findSubCategoryTargetByAliases([text]);
+      const subTarget = findSubCategoryTargetByAliases(
+        remainder ? [remainder] : [text],
+        page ? [page.name] : []
+      );
       if (subTarget) {
         return {
           type: "sub",
@@ -1781,10 +1838,10 @@
         return meta.pages[number - 1];
       }
 
-      const normalized = normalizeVoiceName(text);
-      if (!normalized) return null;
+      const remainder = getVoiceCommandRemainder(text);
+      if (!remainder) return null;
 
-      return findPageByAliases([text]);
+      return findPageByAliases([remainder]);
     }
 
     function findSubCategoryByVoice(text) {
@@ -1850,67 +1907,71 @@
       return true;
     }
 
-    function handleVoiceCommand(rawText) {
+    function handleVoiceCommand(rawText, options = {}) {
       const text = clean(rawText);
-      if (!text) return;
+      if (!text) return false;
 
       const now = Date.now();
       const compact = compactVoiceText(text);
-      if (compact && compact === lastVoiceCommandText && now - lastVoiceCommandAt < 1800) return;
+      if (!options.ignoreDedupe && compact && compact === lastVoiceCommandText && now - lastVoiceCommandAt < 1800) {
+        return false;
+      }
 
-      lastVoiceCommandText = compact;
-      lastVoiceCommandAt = now;
       setVoiceTranscript(text);
+
+      const finish = (ok) => {
+        if (ok) {
+          lastVoiceCommandText = compact;
+          lastVoiceCommandAt = now;
+        }
+        return ok;
+      };
 
       if (isBlockedVoiceText(text)) {
         setVoiceStatus(`ยังไม่สั่ง เพราะเหมือนประโยคคุยหรือคำถาม: ${text}`);
-        return;
+        return false;
       }
 
       if (!hasVoiceCommandTrigger(text)) {
         setVoiceStatus("ยังไม่สั่ง: ให้เริ่มด้วยคำว่า เปิด เช่น เปิดปาล์มใหญ่");
-        return;
+        return false;
       }
 
-      if (voiceTextHasAlias(text, ["รีเฟรช", "refresh", "โหลดใหม่", "อัปเดต", "อัพเดต"])) {
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[0])) {
         sendCommand("refresh");
         setHint("คำสั่งเสียง: รีเฟรชหน้าจอหลัก");
         setVoiceStatus("คำสั่งเสียง: รีเฟรชหน้าจอหลัก");
-        return;
+        return finish(true);
       }
 
-      if (voiceTextHasAlias(text, ["เปิดอัตโนมัติ", "เล่นอัตโนมัติ", "เริ่มอัตโนมัติ", "เปิดสลับ", "เริ่มสลับ", "สลับ", "อัตโนมัติ"])) {
-        sendVoiceAutoPlay(true);
-        return;
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[1])) {
+        return finish(sendVoiceAutoPlay(true));
       }
 
-      if (voiceTextHasAlias(text, ["หยุดอัตโนมัติ", "ปิดอัตโนมัติ", "หยุดสลับ", "ปิดสลับ", "หยุดเล่น", "พัก"])) {
-        sendVoiceAutoPlay(false);
-        return;
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[2])) {
+        return finish(sendVoiceAutoPlay(false));
       }
 
-      if (voiceTextHasAlias(text, ["แสดง2จอ", "สองจอ", "2จอ", "วอลล์", "wall"])) {
-        sendVoiceWallMode("wall");
-        return;
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[3])) {
+        return finish(sendVoiceWallMode("wall"));
       }
 
-      if (voiceTextHasAlias(text, ["แสดง1จอ", "หนึ่งจอ", "1จอ", "จอเดียว", "เดี่ยว"])) {
-        sendVoiceWallMode("single");
-        return;
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[4])) {
+        return finish(sendVoiceWallMode("single"));
       }
 
-      if (voiceTextHasAlias(text, ["ถัดไป", "ต่อไป", "หน้าถัดไป", "หน้าต่อไป", "ไปต่อ", "next"])) {
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[5])) {
         sendCommand("next");
         setHint("คำสั่งเสียง: ถัดไป");
         setVoiceStatus("คำสั่งเสียง: ถัดไป");
-        return;
+        return finish(true);
       }
 
-      if (voiceTextHasAlias(text, ["ก่อนหน้า", "ย้อนกลับ", "กลับหน้า", "ถอย", "prev", "previous"])) {
+      if (voiceTextHasAlias(text, VOICE_ACTION_ALIASES[6])) {
         sendCommand("prev");
         setHint("คำสั่งเสียง: ก่อนหน้า");
         setVoiceStatus("คำสั่งเสียง: ก่อนหน้า");
-        return;
+        return finish(true);
       }
 
       if (/หมวดย่อย|กลุ่ม|ย่อย/.test(compact)) {
@@ -1921,7 +1982,7 @@
           const message = `คำสั่งเสียง: หมวดย่อย ${subCategory.index + 1}`;
           setHint(message);
           setVoiceStatus(message);
-          return;
+          return finish(true);
         }
       }
 
@@ -1932,16 +1993,24 @@
           const message = `คำสั่งเสียง: หมวด ${page.index + 1}`;
           setHint(message);
           setVoiceStatus(message);
-          return;
+          return finish(true);
         }
       }
 
       const pageNumber = getVoiceNumberAfter(text, ["หน้าย่อย", "หน้า"]);
-      if (pageNumber && sendVoiceSubPage(pageNumber)) return;
+      if (pageNumber && sendVoiceSubPage(pageNumber)) {
+        return finish(true);
+      }
 
-      if (sendVoiceNavigationTarget(findVoiceNavigationTarget(text))) return;
+      if (sendVoiceNavigationTarget(findVoiceNavigationTarget(text))) {
+        return finish(true);
+      }
 
-      setVoiceStatus(`ยังไม่รู้จักคำสั่ง: ${text}`);
+      const remainder = getVoiceCommandRemainder(text);
+      setVoiceStatus(remainder
+        ? `ยังไม่รู้จักคำสั่ง: ${text} (เข้าใจเป็น: ${remainder})`
+        : `ยังไม่รู้จักคำสั่ง: ${text}`);
+      return false;
     }
 
     function ensureVoiceRecognition() {
@@ -1953,7 +2022,7 @@
       recognition.lang = "th-TH";
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
+      recognition.maxAlternatives = 5;
 
       recognition.onstart = () => {
         setVoiceListeningState(true);
@@ -1963,13 +2032,24 @@
       recognition.onresult = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
-          const transcript = clean(result[0]?.transcript || "");
-          if (!transcript) continue;
+          if (!result.isFinal) {
+            setVoiceTranscript(clean(result[0]?.transcript || ""));
+            continue;
+          }
 
-          if (result.isFinal) {
-            handleVoiceCommand(transcript);
-          } else {
-            setVoiceTranscript(transcript);
+          let handled = false;
+          for (let j = 0; j < result.length; j++) {
+            const transcript = clean(result[j]?.transcript || "");
+            if (!transcript) continue;
+            if (handleVoiceCommand(transcript, { ignoreDedupe: j > 0 })) {
+              handled = true;
+              break;
+            }
+          }
+
+          if (!handled) {
+            const fallback = clean(result[0]?.transcript || "");
+            if (fallback) handleVoiceCommand(fallback, { ignoreDedupe: true });
           }
         }
       };
