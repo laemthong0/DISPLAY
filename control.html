@@ -1074,6 +1074,7 @@
         <b>พูดชื่อหมวดหรือคำสั่ง</b>
         <button class="mini-btn" id="btnVoiceClose" type="button">ปิด</button>
       </div>
+      <div class="muted" style="font-size: 0.8rem; margin-bottom: 8px;">รองรับภาษาไทยมาตรฐาน • สำเนียงใต้อาจจับคำไม่ครบ</div>
       <div class="voice-actions">
         <button class="btn" id="btnVoiceListen" type="button">เริ่มฟังเสียง</button>
         <button class="btn secondary" id="btnVoiceClear" type="button">ล้าง</button>
@@ -1581,18 +1582,30 @@
 
     function applyVoiceMishearingFixes(value) {
       let text = clean(value);
-      if (/^(โปรด|พบ|เปด|เผิด|เพิ่ม)/i.test(text)) {
-        text = text.replace(/^(โปรด|พบ|เปด|เผิด|เพิ่ม)/i, "เปิด");
+      if (/^(โปรด|พบ|เปด|เผิด|เพิ่ม|โปด|พด|เผด)/i.test(text)) {
+        text = text.replace(/^(โปรด|พบ|เปด|เผิด|เพิ่ม|โปด|พด|เผด)/i, "เปิด");
       }
       return text
-        .replace(/สัง/gi, "สั่ง")
-        .replace(/ปลาม/gi, "ปาล์ม")
-        .replace(/ปาม/gi, "ปาล์ม")
-        .replace(/แม่พุย|เมปุ๋ย|แม่ภูย/gi, "แม่ปุ๋ย")
-        .replace(/ยางเกรด|ยางกรีต/gi, "ยางกรีด")
-        .replace(/ทัดไป|ที่ไป/gi, "ถัดไป")
-        .replace(/รีเฟส|รีเฟช/gi, "รีเฟรช")
-        .replace(/อัตโนมัด/gi, "อัตโนมัติ");
+        .replace(/สัง|สั่ง/gi, "สั่ง")
+        .replace(/ปลาม|ปาม|ปาลม/gi, "ปาล์ม")
+        .replace(/แม่พุย|เมปุ๋ย|แม่ภูย|แม่ภุย|แม่ภุย/gi, "แม่ปุ๋ย")
+        .replace(/ยางเกรด|ยางกรีต|ยางกริด|ยางกริต/gi, "ยางกรีด")
+        .replace(/ทัดไป|ที่ไป|ทัดไป|ที่ไป/gi, "ถัดไป")
+        .replace(/รีเฟส|รีเฟช|รีเฟร|รีเฟร/gi, "รีเฟรช")
+        .replace(/อัตโนมัด|อัตโนมัต|อัตโนมั/gi, "อัตโนมัติ")
+        .replace(/ก่อนหน้า|ก่อนน้า|ก่อนหนา/gi, "ก่อนหน้า")
+        .replace(/ถัดไป|ถัดไป|ต่อไป|ตอไป/gi, "ถัดไป")
+        .replace(/หมวดหลัก|หมวดหลั|หมวดหลั/gi, "หมวดหลัก")
+        .replace(/หมวดย่อย|หมวดยอย|หมวดยอ/gi, "หมวดย่อย")
+        .replace(/อินทรีย์|อินทรีย|อินทรเย|อินทรเย/gi, "อินทรีย์")
+        .replace(/โดโลไมต์|โดโลไมท|โดโลไม/gi, "โดโลไมต์")
+        .replace(/โบรอน|โบรอ|โบร/gi, "โบรอน")
+        .replace(/แมกนีเซียม|แมกนีเซีย|แมกนีเซ/gi, "แมกนีเซียม")
+        .replace(/เสมอ|เสมอ|เสม/gi, "เสมอ")
+        .replace(/ทุเรียน|ทุเรีย|ทุเร/gi, "ทุเรียน")
+        .replace(/ปุ๋ยยาง|ปุ๋ยยา|ปุ๋ยย/gi, "ปุ๋ยยาง")
+        .replace(/ปุ๋ยอินทรีย์|ปุ๋ยอินทรีย|ปุ๋ยอินทร/gi, "ปุ๋ยอินทรีย์")
+        .replace(/ปุ๋ยอินทรีย์เคมี|ปุ๋ยอินทรีย์เคม|ปุ๋ยอินทรีย์เค/gi, "ปุ๋ยอินทรีย์เคมี");
     }
 
     function compactVoiceText(value) {
@@ -2038,11 +2051,11 @@
       recognition.lang = "th-TH";
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.maxAlternatives = 5;
+      recognition.maxAlternatives = 10;
 
       recognition.onstart = () => {
         setVoiceListeningState(true);
-        setVoiceStatus("กำลังฟังคำสั่งเสียง...");
+        setVoiceStatus("กำลังฟังคำสั่งเสียง... (รองรับภาษาไทยมาตรฐาน สำเนียงใต้อาจจับคำไม่ครบ)");
       };
 
       recognition.onresult = (event) => {
