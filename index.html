@@ -25,24 +25,28 @@
 
   <style>
     :root {
-      --brand: #033d20;
-      --brand-light: #0d7843;
-      --brand-accent: #198754;
-      --gold: #FFB703;
-      --gold-light: #FFD166;
-      --bg: #E4EBE6;
-      --card-bg: rgba(255, 255, 255, 0.75);
-      --text-main: #0c1510;
-      --text-muted: #42574a;
+      --brand: #0a4d2e;
+      --brand-light: #1a7d4f;
+      --brand-accent: #2d9f6a;
+      --gold: #FFA500;
+      --gold-light: #FFD700;
+      --gold-dark: #CC8400;
+      --bg: #d4e0d6;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --text-main: #0a1a12;
+      --text-muted: #3a5a4a;
       --danger: #E63946;
-      --glass-border: rgba(255, 255, 255, 0.5);
-      --glass-highlight: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-highlight: rgba(255, 255, 255, 0.9);
+      --shadow-soft: rgba(0, 0, 0, 0.08);
+      --shadow-medium: rgba(0, 0, 0, 0.12);
+      --shadow-strong: rgba(0, 0, 0, 0.18);
 
-      --tv-title: clamp(2rem, 3.5vw, 4rem);
-      --tv-sub: clamp(1.2rem, 1.5vw, 2rem);
-      --tv-card-name: clamp(1.1rem, 1.6vw, 2.2rem);
-      --tv-card-price: clamp(2rem, 3.2vw, 4.2rem);
-      --tv-unit: clamp(1rem, 1.2vw, 1.6rem);
+      --tv-title: clamp(1.8rem, 3.2vw, 3.6rem);
+      --tv-sub: clamp(1.1rem, 1.4vw, 1.8rem);
+      --tv-card-name: clamp(1rem, 1.5vw, 2rem);
+      --tv-card-price: clamp(1.8rem, 3vw, 4rem);
+      --tv-unit: clamp(0.9rem, 1.1vw, 1.5rem);
 
       --cols: 4;
       --rows: 2;
@@ -58,12 +62,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: #cdd9d1;
-      background-image:
-        radial-gradient(at 0% 0%, #e2eee6 0px, transparent 50%),
-        radial-gradient(at 100% 0%, #c4e0d0 0px, transparent 50%),
-        radial-gradient(at 100% 100%, #b8d4c3 0px, transparent 50%),
-        radial-gradient(at 0% 100%, #d5e6db 0px, transparent 50%);
+      background: linear-gradient(135deg, #c5d8c8 0%, #a8c8b8 50%, #9ab8a8 100%);
       color: var(--text-main);
       font-family: "Anuphan", "Bai Jamjuree", system-ui, sans-serif;
     }
@@ -71,36 +70,36 @@
     .bg-shape {
       position: absolute;
       border-radius: 50%;
-      filter: blur(80px);
+      filter: blur(100px);
       z-index: 0;
-      opacity: 0.6;
-      animation: float 20s infinite alternate ease-in-out;
+      opacity: 0.25;
+      animation: float 25s infinite alternate ease-in-out;
     }
 
     .shape-1 {
-      top: -10%;
-      left: -10%;
-      width: 40vw;
-      height: 40vw;
-      background: #a8d5ba;
+      top: -15%;
+      left: -15%;
+      width: 45vw;
+      height: 45vw;
+      background: #b8e0c8;
     }
 
     .shape-2 {
-      bottom: -10%;
-      right: -5%;
-      width: 50vw;
-      height: 50vw;
-      background: #e6f0e9;
-      animation-delay: -5s;
+      bottom: -15%;
+      right: -10%;
+      width: 55vw;
+      height: 55vw;
+      background: #d0f0e0;
+      animation-delay: -8s;
     }
 
     .shape-3 {
-      top: 30%;
-      left: 40%;
-      width: 30vw;
-      height: 30vw;
-      background: #b1d8c1;
-      animation-delay: -10s;
+      top: 25%;
+      left: 35%;
+      width: 35vw;
+      height: 35vw;
+      background: #c8e8d8;
+      animation-delay: -12s;
     }
 
     @keyframes float {
@@ -124,17 +123,17 @@
     }
 
     .header {
-      background: rgba(3, 61, 32, 0.85);
+      background: linear-gradient(135deg, rgba(10, 77, 46, 0.7) 0%, rgba(26, 125, 79, 0.6) 100%);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
-      color: white;
+      color: rgba(255,255,255,0.9);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 2vw;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 0 2.5vw;
+      box-shadow: 0 4px 20px var(--shadow-medium);
       z-index: 10;
-      height: clamp(60px, 8vh, 90px);
+      height: clamp(50px, 6.5vh, 75px);
       border-bottom: 1px solid rgba(255,255,255,0.15);
     }
 
@@ -164,15 +163,16 @@
     }
 
     .shop-name {
-      font-size: clamp(1.5rem, 2vw, 2.5rem);
-      font-weight: 800;
+      font-size: clamp(1.2rem, 1.6vw, 2rem);
+      font-weight: 600;
       line-height: 1.3;
       padding-bottom: 2px;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      letter-spacing: 0.3px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.25);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      opacity: 0.95;
     }
 
     .shop-sub {
@@ -192,31 +192,32 @@
     .cat-title {
       font-family: "Bai Jamjuree", sans-serif;
       font-size: var(--tv-title);
-      font-weight: 800;
-      background: linear-gradient(135deg, #FFF 0%, var(--gold-light) 100%);
+      font-weight: 600;
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, var(--gold-light) 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       line-height: 1.2;
       padding-bottom: 4px;
       text-shadow: 0 4px 15px rgba(255, 183, 3, 0.2);
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
+      opacity: 0.9;
     }
 
     .cat-count {
-      font-size: clamp(1.2rem, 1.5vw, 1.8rem);
-      color: #FFF;
-      font-weight: 600;
-      background: rgba(255,255,255,0.15);
-      padding: 4px 16px;
-      border-radius: 20px;
+      font-size: clamp(1rem, 1.2vw, 1.4rem);
+      color: rgba(255,255,255,0.95);
+      font-weight: 500;
+      background: rgba(255,255,255,0.12);
+      padding: 2px 10px;
+      border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.2);
-      box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
-      transform: translateY(-5px);
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.05);
+      transform: translateY(-4px);
       white-space: nowrap;
     }
 
@@ -231,17 +232,17 @@
     }
 
     .live-badge {
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.85);
       color: var(--danger);
-      padding: 4px 16px;
-      border-radius: 20px;
-      font-size: clamp(1rem, 1.2vw, 1.5rem);
-      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 18px;
+      font-size: clamp(0.85rem, 1vw, 1.2rem);
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
-      letter-spacing: 0.5px;
+      gap: 5px;
+      box-shadow: 0 2px 8px rgba(230, 57, 70, 0.12);
+      letter-spacing: 0.3px;
       white-space: nowrap;
     }
 
@@ -256,10 +257,10 @@
     }
 
     .clock {
-      font-size: clamp(1.2rem, 1.5vw, 1.8rem);
-      font-weight: 600;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: clamp(1rem, 1.2vw, 1.4rem);
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
       white-space: nowrap;
     }
 
@@ -280,14 +281,14 @@
     }
 
     .tabs-container {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.25);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       display: flex;
-      gap: 12px;
-      padding: 1.5vh 2vw;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-      border-bottom: 1px solid rgba(255,255,255,0.4);
+      gap: 10px;
+      padding: 1vh 2.2vw;
+      box-shadow: 0 2px 12px var(--shadow-soft);
+      border-bottom: 1px solid rgba(255,255,255,0.35);
       z-index: 9;
     }
 
@@ -295,12 +296,12 @@
 
     .subtabs-container {
       display: none;
-      gap: 10px;
-      padding: 0.8vh 2vw;
-      background: rgba(255, 255, 255, 0.22);
+      gap: 8px;
+      padding: 0.5vh 2.2vw;
+      background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(255,255,255,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.3);
       z-index: 8;
       flex: none;
     }
@@ -311,65 +312,68 @@
 
     .subtab {
       flex: 1;
-      border: 1px solid rgba(255,255,255,0.65);
-      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.65);
       color: var(--brand);
       font-family: inherit;
-      font-size: clamp(0.78rem, 0.92vw, 1.12rem);
-      font-weight: 800;
-      padding: 0.6vh 0.6vw;
+      font-size: clamp(0.75rem, 0.88vw, 1.08rem);
+      font-weight: 600;
+      padding: 0.5vh 0.5vw;
       border-radius: 999px;
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-      transition: all 0.25s ease;
+      box-shadow: 0 2px 8px var(--shadow-soft);
+      transition: all 0.2s ease;
     }
 
     .subtab:hover {
-      background: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.85);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--shadow-medium);
     }
 
     .subtab.active {
       background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
       color: #182015;
       border-color: rgba(255,255,255,0.9);
-      box-shadow: 0 8px 20px rgba(255,183,3,0.25);
+      box-shadow: 0 4px 16px rgba(255,165,0,0.3);
       transform: translateY(-2px);
+      font-weight: 700;
     }
 
     .tab {
       flex: 1;
-      background: rgba(255,255,255,0.5);
-      border: 1px solid var(--glass-highlight);
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.65);
       color: var(--text-muted);
       font-family: inherit;
-      font-size: clamp(0.85rem, 1vw, 1.2rem);
-      font-weight: 700;
-      padding: 0.8vh 0.5vw;
-      border-radius: 12px;
+      font-size: clamp(0.78rem, 0.92vw, 1.12rem);
+      font-weight: 600;
+      padding: 0.7vh 0.6vw;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      box-shadow: 0 2px 6px var(--shadow-soft);
     }
 
     .tab:hover {
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.75);
       transform: translateY(-2px);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 12px var(--shadow-medium);
     }
 
     .tab.active {
       background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
-      color: white;
-      border-color: rgba(255,255,255,0.2);
-      box-shadow: 0 8px 20px rgba(3, 61, 32, 0.3);
+      color: #fff;
+      border-color: var(--brand-accent);
+      box-shadow: 0 4px 16px rgba(10, 77, 46, 0.25);
       transform: translateY(-3px);
+      font-weight: 700;
     }
 
     .board {
@@ -410,29 +414,32 @@
 
     .product-card {
       background: var(--card-bg);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       box-shadow:
-        0 15px 35px rgba(0,0,0,0.05),
+        0 8px 32px var(--shadow-medium),
+        0 2px 8px var(--shadow-soft),
         inset 0 1px 0 rgba(255,255,255,1),
-        inset 1px 0 0 rgba(255,255,255,0.5);
-      border: 1px solid var(--glass-border);
+        inset 1px 0 0 rgba(255,255,255,0.6);
+      border: 1.5px solid var(--glass-border);
       height: 100%;
       min-height: 0;
-      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-      animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      animation: fadeInUp 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) backwards;
     }
 
     .product-card:hover {
       transform: translateY(-8px) scale(1.02);
       box-shadow:
-        0 25px 50px rgba(0,0,0,0.1),
+        0 16px 48px var(--shadow-strong),
+        0 6px 16px var(--shadow-medium),
         inset 0 1px 0 rgba(255,255,255,1);
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.98);
+      border-color: var(--gold);
     }
 
     .product-card:nth-child(1) { animation-delay: 0.05s; }
@@ -455,8 +462,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 1.3vh;
-      background: radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
+      padding: 1.5vh 1.2vw;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.1) 100%);
       min-height: 0;
       overflow: hidden;
     }
@@ -464,61 +471,61 @@
     .image-box::before {
       content: "";
       position: absolute;
-      width: 60%;
-      height: 60%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
+      width: 55%;
+      height: 55%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%);
       border-radius: 50%;
       z-index: 0;
-      opacity: 0.5;
-      animation: pulseGlow 4s ease-in-out infinite;
+      opacity: 0.4;
+      animation: pulseGlow 5s ease-in-out infinite;
     }
 
     .product-img {
-      max-width: 95%;
-      max-height: 95%;
+      max-width: 82%;
+      max-height: 82%;
       object-fit: contain;
-      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
-      transform: scale(1.05);
-      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.6s ease;
-      animation: floatProduct 4s ease-in-out infinite;
+      filter: drop-shadow(0 12px 20px var(--shadow-medium));
+      transform: scale(1.0);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
+      animation: floatProduct 5s ease-in-out infinite;
       position: relative;
       z-index: 1;
     }
 
     .product-card:hover .product-img {
-      transform: scale(1.18) translateY(-10px);
-      filter: drop-shadow(0 25px 40px rgba(0,0,0,0.25));
+      transform: scale(1.12) translateY(-8px);
+      filter: drop-shadow(0 20px 32px var(--shadow-strong));
       animation-play-state: paused;
     }
 
     @keyframes floatProduct {
       0% {
-        transform: scale(1.05) translateY(0px);
+        transform: scale(1.0) translateY(0px);
       }
 
       50% {
-        transform: scale(1.05) translateY(-8px);
+        transform: scale(1.0) translateY(-6px);
       }
 
       100% {
-        transform: scale(1.05) translateY(0px);
+        transform: scale(1.0) translateY(0px);
       }
     }
 
     @keyframes pulseGlow {
       0% {
         transform: scale(1);
-        opacity: 0.4;
+        opacity: 0.35;
       }
 
       50% {
-        transform: scale(1.2);
-        opacity: 0.8;
+        transform: scale(1.15);
+        opacity: 0.7;
       }
 
       100% {
         transform: scale(1);
-        opacity: 0.4;
+        opacity: 0.35;
       }
     }
 
@@ -538,13 +545,13 @@
       flex-direction: row;
       align-items: stretch;
       flex: none;
-      border-top: 1px solid rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.9);
+      border-top: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.88);
     }
 
     .name-wrap {
       flex: 1;
-      padding: 1.6vh 1.6vw;
+      padding: 1.4vh 1.4vw;
       text-align: left;
       display: flex;
       flex-direction: column;
@@ -554,15 +561,15 @@
 
     .product-name {
       font-size: var(--tv-card-name);
-      font-weight: 800;
+      font-weight: 700;
       color: var(--text-main);
-      line-height: 1.2;
+      line-height: 1.25;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
     }
 
     .product-detail {
@@ -577,15 +584,15 @@
 
     .price-wrap {
       background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
-      padding: 1.4vh 2.3vw;
+      padding: 1.4vh 2.2vw;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       min-width: max-content;
       position: relative;
       overflow: hidden;
-      box-shadow: inset 2px 0 10px rgba(0,0,0,0.2);
+      box-shadow: inset 1px 0 12px rgba(0,0,0,0.3), 0 3px 12px var(--shadow-medium);
     }
 
     .price-wrap::after {
@@ -595,8 +602,8 @@
       top: 0;
       bottom: 0;
       width: 6px;
-      background: var(--gold);
-      box-shadow: 0 0 10px var(--gold);
+      background: linear-gradient(180deg, var(--gold) 0%, var(--gold-light) 100%);
+      box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(255,165,0,0.4);
     }
 
     .price-wrap::before {
@@ -614,21 +621,22 @@
     .price-val {
       font-family: "Bai Jamjuree", sans-serif;
       font-size: var(--tv-card-price);
-      font-weight: 800;
+      font-weight: 700;
       color: var(--gold-light);
-      line-height: 0.9;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      line-height: 0.95;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 16px rgba(255,215,0,0.25);
       position: relative;
       z-index: 1;
     }
 
     .price-unit {
       font-size: var(--tv-unit);
-      color: rgba(255,255,255,0.95);
+      color: rgba(255,255,255,0.9);
       font-weight: 600;
-      margin-top: 0.5em;
+      margin-top: 0.4em;
       position: relative;
       z-index: 1;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
 
     .product-grid[data-density="many"] .name-wrap {
@@ -4108,11 +4116,11 @@
     .product-grid[data-density="nine"] .product-card.auto-hover .product-img {
       width: auto !important;
       height: auto !important;
-      max-width: 98% !important;
-      max-height: 98% !important;
+      max-width: 80% !important;
+      max-height: 80% !important;
       object-fit: contain !important;
       object-position: center center !important;
-      transform: scale(1.06) !important;
+      transform: scale(1.0) !important;
       transform-origin: center center !important;
       filter: drop-shadow(0 11px 14px rgba(0, 0, 0, 0.22)) !important;
     }
