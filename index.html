@@ -131,10 +131,11 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 2.5vw;
-      box-shadow: 0 4px 20px var(--shadow-medium);
+      box-shadow: 0 -4px 20px var(--shadow-medium);
       z-index: 10;
       height: clamp(50px, 6.5vh, 75px);
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      border-top: 1px solid rgba(255,255,255,0.15);
+      order: 3;
     }
 
     .header-left {
@@ -287,9 +288,10 @@
       display: flex;
       gap: 10px;
       padding: 1vh 2.2vw;
-      box-shadow: 0 2px 12px var(--shadow-soft);
-      border-bottom: 1px solid rgba(255,255,255,0.35);
+      box-shadow: 0 -2px 12px var(--shadow-soft);
+      border-top: 1px solid rgba(255,255,255,0.35);
       z-index: 9;
+      order: 2;
     }
 
 
@@ -301,9 +303,10 @@
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(255,255,255,0.3);
+      border-top: 1px solid rgba(255,255,255,0.3);
       z-index: 8;
       flex: none;
+      order: 1;
     }
 
     .subtabs-container.active {
@@ -378,7 +381,7 @@
 
     .board {
       flex: 1;
-      padding: 2.2vw 2.2vw 1.5vw;
+      padding: 1.5vw 2.2vw 2.2vw;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -656,20 +659,7 @@
     }
 
     .status-line {
-      position: absolute;
-      bottom: 8px;
-      left: 2vw;
-      color: var(--text-main);
-      font-size: clamp(0.6rem, 0.8vw, 1rem);
-      font-weight: 500;
-      z-index: 5;
-      background: rgba(255,255,255,0.4);
-      padding: 2px 8px;
-      border-radius: 8px;
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      border: 1px solid rgba(255,255,255,0.3);
-      opacity: 0.6;
+      display: none;
     }
 
     .status-line.error {
@@ -1100,10 +1090,10 @@
       background: linear-gradient(180deg, #ffe884 0%, #ffc21f 48%, #ffae00 100%);
       color: #083d82;
       padding: 0.7vh 2.3vw 0.9vh;
-      box-shadow: 0 7px 0 rgba(136, 69, 0, 0.62), 0 15px 28px rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.7);
+      box-shadow: 0 -7px 0 rgba(136, 69, 0, 0.62), 0 -15px 28px rgba(0,0,0,0.18), inset 0 4px 0 rgba(255,255,255,0.7);
       height: clamp(86px, 12vh, 132px);
       width: min(76vw, 1220px);
-      margin: 1.1vh auto 0;
+      margin: 0 auto 1.1vh;
       border: 3px solid #a65d00;
       border-radius: 24px;
       position: relative;
@@ -1167,6 +1157,7 @@
       padding: 1.3vh 2vw 0.5vh;
       box-shadow: none;
       border-bottom: 0;
+      border-top: 0;
     }
 
     .tab {
@@ -1186,6 +1177,7 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       border-bottom: 0;
+      border-top: 0;
     }
 
     .subtab {
@@ -1313,13 +1305,13 @@
       -webkit-backdrop-filter: blur(25px);
       color: white;
       padding: 0 2vw;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
       height: clamp(60px, 8vh, 90px);
       width: 100%;
       margin: 0;
       border: 0;
       border-radius: 0;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
+      border-top: 1px solid rgba(255,255,255,0.15);
     }
 
     .logo,
@@ -5035,6 +5027,22 @@
   <div class="bg-shape shape-3"></div>
 
   <main class="screen" id="mainScreen">
+    <section class="board">
+      <div class="product-grid" id="productGrid" data-density="few">
+        <div class="image-empty">กำลังเชื่อมต่อข้อมูล...</div>
+      </div>
+
+      <p class="status-line" id="sheetStatus">ใช้แท็บ/สไลด์หน้าจอ หรือหน้าเว็บควบคุมแยก (control.html)</p>
+    </section>
+
+    <div class="progress">
+      <div class="progress-bar" id="progressFill"></div>
+    </div>
+
+    <nav class="subtabs-container" id="subTabs"></nav>
+
+    <nav class="tabs-container" id="pageTabs"></nav>
+
     <header class="header">
       <div class="header-left">
         <img
@@ -5062,30 +5070,6 @@
         <div class="clock" id="pageCounter" style="font-size: 1rem; opacity: 0.8; font-weight: 500;">1 / 7</div>
       </div>
     </header>
-
-    <nav class="tabs-container" id="pageTabs"></nav>
-
-    <nav class="subtabs-container" id="subTabs"></nav>
-
-    <section class="board">
-      <div class="product-grid" id="productGrid" data-density="few">
-        <div class="image-empty">กำลังเชื่อมต่อข้อมูล...</div>
-      </div>
-
-      <p class="status-line" id="sheetStatus">ใช้แท็บ/สไลด์หน้าจอ หรือหน้าเว็บควบคุมแยก (control.html)</p>
-    </section>
-
-    <div class="progress">
-      <div class="progress-bar" id="progressFill"></div>
-    </div>
-
-    <div class="ticker">
-      <div class="ticker-wrapper">
-        <span class="ticker-text" id="tickerText">
-          แหลมทองกิจเกษตร • ราคาสินค้าอัปเดตประจำวัน • สินค้าคุณภาพสำหรับเกษตรกร • สอบถาม/สั่งซื้อผ่านหน้าร้าน หรือสแกน QR ด้านขวา
-        </span>
-      </div>
-    </div>
 
     <img
       class="watermark-logo top-qr-logo"
