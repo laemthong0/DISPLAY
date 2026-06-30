@@ -194,6 +194,7 @@
       font-size: var(--tv-title);
       font-weight: 800;
       background: linear-gradient(135deg, #FFF 0%, var(--gold-light) 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       line-height: 1.2;
@@ -558,6 +559,7 @@
       line-height: 1.2;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       letter-spacing: -0.5px;
@@ -1351,6 +1353,7 @@
     .cat-title {
       font-size: var(--tv-title);
       background: linear-gradient(135deg, #FFF 0%, var(--gold-light) 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       line-height: 1.2;
@@ -1715,7 +1718,10 @@
       line-height: 1.18;
       color: #17331f;
       letter-spacing: 0;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       overflow: hidden;
       text-overflow: ellipsis;
       word-break: break-word;
@@ -2124,7 +2130,13 @@
     .product-name {
       font-size: clamp(0.36rem, 0.5vw, 0.68rem) !important;
       line-height: 1.12;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
     }
 
 
@@ -2158,7 +2170,14 @@
     .product-name {
       font-size: clamp(0.32rem, 0.44vw, 0.58rem) !important;
       line-height: 1.08;
-    }
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+      }
 
     .product-grid[data-density="few"] .price-val,
     .product-grid[data-density="mid"] .price-val {
@@ -3127,6 +3146,7 @@
       font-size: clamp(0.34rem, 0.44vw, 0.58rem) !important;
       line-height: 1.08 !important;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       text-align: center;
     }
 
@@ -3439,6 +3459,7 @@
       font-size: clamp(0.36rem, 0.5vw, 0.68rem) !important;
       line-height: 1.08 !important;
       text-align: center;
+      line-clamp: 2;
       -webkit-line-clamp: 2;
     }
 
@@ -3569,6 +3590,7 @@
       font-size: clamp(0.34rem, 0.5vw, 0.76rem) !important;
       line-height: 1.08 !important;
       text-align: center !important;
+      line-clamp: 2;
       -webkit-line-clamp: 2;
       word-break: break-word;
     }
@@ -3869,7 +3891,13 @@
       font-size: clamp(0.36rem, 0.5vw, 0.7rem) !important;
       line-height: 1.08 !important;
       text-align: center !important;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
     }
 
     .product-grid[data-density="zigzag"] .price-wrap {
@@ -4121,7 +4149,11 @@
       font-size: clamp(0.48rem, 0.68vw, 0.86rem) !important;
       line-height: 1.08 !important;
       text-align: center !important;
+      display: -webkit-box !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
     }
 
     .product-grid[data-density="nine"] .price-wrap {
@@ -5181,7 +5213,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-logo-favicon-png-20260626";
+    const APP_VERSION = "display-kiosk-wakelock-20260629";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5205,11 +5237,39 @@
       }
     }
 
+    let displayWakeLock = null;
+
+    async function requestDisplayWakeLock() {
+      if (!("wakeLock" in navigator) || document.visibilityState !== "visible") return;
+
+      try {
+        if (displayWakeLock && !displayWakeLock.released) return;
+
+        displayWakeLock = await navigator.wakeLock.request("screen");
+        displayWakeLock.addEventListener("release", () => {
+          displayWakeLock = null;
+        });
+      } catch {
+        displayWakeLock = null;
+      }
+    }
+
     function bindDisplayFullscreenTriggers() {
-      const triggerFullscreen = () => requestDisplayFullscreen();
-      document.addEventListener("click", triggerFullscreen, { passive: true });
-      document.addEventListener("touchend", triggerFullscreen, { passive: true });
-      document.addEventListener("keydown", triggerFullscreen);
+      const triggerKioskMode = () => {
+        requestDisplayFullscreen();
+        requestDisplayWakeLock();
+      };
+
+      document.addEventListener("click", triggerKioskMode, { passive: true });
+      document.addEventListener("touchend", triggerKioskMode, { passive: true });
+      document.addEventListener("keydown", triggerKioskMode);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") triggerKioskMode();
+      });
+      window.addEventListener("pageshow", triggerKioskMode);
+      setInterval(() => {
+        if (document.visibilityState === "visible") requestDisplayWakeLock();
+      }, 60000);
     }
 
     function registerDisplayServiceWorker() {
