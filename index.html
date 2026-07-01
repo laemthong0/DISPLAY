@@ -4985,6 +4985,142 @@
       min-height: clamp(58px, 7vh, 92px);
     }
 
+    /* mobile-header-stability */
+    @media (max-width: 900px) {
+      .header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        align-content: center;
+        align-items: center;
+        gap: 1px !important;
+        height: auto !important;
+        min-height: 72px !important;
+        padding: 6px 82px 6px 8px !important;
+      }
+
+      .header-left,
+      .header-center {
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .header-left {
+        gap: 6px !important;
+      }
+
+      .header-center {
+        justify-content: flex-start !important;
+        gap: 4px !important;
+      }
+
+      .header-right,
+      .control-link,
+      .clock,
+      #pageCounter,
+      .live-badge,
+      .cat-count {
+        display: none !important;
+      }
+
+      .logo {
+        width: 36px !important;
+        height: 36px !important;
+        flex: 0 0 36px;
+      }
+
+      .shop-info {
+        max-width: none !important;
+      }
+
+      .shop-name {
+        max-width: calc(100vw - 132px);
+        font-size: 0.86rem !important;
+        line-height: 1.12 !important;
+      }
+
+      .cat-title {
+        max-width: calc(100vw - 96px);
+        font-size: 1rem !important;
+        line-height: 1.14 !important;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .header {
+        min-height: 62px !important;
+        padding: 5px 58px 5px 8px !important;
+      }
+
+      .watermark-logo.top-qr-logo {
+        width: 44px !important;
+        height: 44px !important;
+        top: 6px !important;
+        right: 6px !important;
+      }
+
+      .logo {
+        width: 32px !important;
+        height: 32px !important;
+        flex-basis: 32px;
+      }
+
+      .shop-name {
+        max-width: calc(100vw - 104px);
+        font-size: 0.76rem !important;
+      }
+
+      .cat-title {
+        max-width: calc(100vw - 72px);
+        font-size: 0.9rem !important;
+      }
+    }
+
+    /* move-top-bar-to-bottom */
+    .screen {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      order: 20;
+      flex: none;
+      border-top: 1px solid rgba(255,255,255,0.15) !important;
+      border-bottom: 0 !important;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.15) !important;
+    }
+
+    .tabs-container {
+      order: 1;
+    }
+
+    .subtabs-container {
+      order: 2;
+    }
+
+    .board {
+      order: 3;
+    }
+
+    .progress {
+      order: 4;
+    }
+
+    .ticker {
+      display: none !important;
+    }
+
+    .watermark-logo.top-qr-logo {
+      top: clamp(8px, 1.2vh, 18px) !important;
+      bottom: auto !important;
+    }
+
+    body.wall-mode .header {
+      border-top: 3px solid #ffd957 !important;
+      border-bottom: 0 !important;
+      box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.22) !important;
+    }
   </style>
 </head>
 
@@ -5181,7 +5317,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-logo-favicon-png-20260626";
+    const APP_VERSION = "display-bottom-header-20260701";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5401,6 +5537,10 @@
       return Math.max(5000, Math.round((Number(data?.pageSeconds) || DEFAULT_DATA.pageSeconds) * 1000));
     }
 
+    function getSheetRefreshMs() {
+      return Math.max(10000, Math.round((Number(data?.refreshSeconds) || DEFAULT_DATA.refreshSeconds) * 1000));
+    }
+
     function getWallSyncElapsedMs(now = Date.now()) {
       const duration = getPageDurationMs();
       const syncNow = now + (Number(WALL_CONFIG.syncOffsetMs) || 0);
@@ -5505,6 +5645,8 @@
         const parsed = saved ? JSON.parse(saved) : {};
         const merged = { ...DEFAULT_DATA, ...parsed };
         merged.sheetPages = filterDisplaySheetPages(merged.sheetPages);
+        merged.refreshSeconds = clampNum(merged.refreshSeconds, 10, 3600, DEFAULT_DATA.refreshSeconds);
+        merged.pageSeconds = clampNum(merged.pageSeconds, 5, 600, DEFAULT_DATA.pageSeconds);
         if (!merged.sheetPages.some((name) => normalizeSheetName(name) === normalizeSheetName(PRIMARY_SHEET_NAME))) {
           merged.sheetPages = [PRIMARY_SHEET_NAME, ...merged.sheetPages];
         }
@@ -7105,7 +7247,7 @@ function render() {
         data.sheetPages.forEach((_, i) => {
           if (i !== currentPageIndex) loadSheetData(i);
         });
-      }, data.refreshSeconds * 1000);
+      }, getSheetRefreshMs());
 
       restartPageTimer();
       restartRemoteControlPolling();
