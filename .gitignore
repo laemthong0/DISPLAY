@@ -1,4 +1,6 @@
 chrome-control-preview-profile/
 android-tv/.gradle/
 android-tv/local.properties
+android-tv/keystore.properties
+android-tv/release-keystore.jks
 android-tv/**/build/

@@ -1,5 +1,11 @@
 apply plugin: "com.android.application"
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace "com.laemthong.displaytv"
     compileSdk 35
@@ -16,6 +22,25 @@ android {
         versionName "1.0.0"
         buildConfigField "String", "DISPLAY_BASE_URL", "\"https://laemthong0.github.io/DISPLAY/\""
         buildConfigField "String", "DISPLAY_VERSION", "\"display-solid-green-no-card-shadow-20260803\""
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+        }
     }
 
     flavorDimensions "screen"

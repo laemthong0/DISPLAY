@@ -29,16 +29,38 @@ public class MainActivity extends Activity {
     private static final String KEY_SCREEN = "screen";
     private static final int TOTAL_SCREENS = 2;
     private static final long RETRY_DELAY_MS = 10000L;
+    private static final long PERIODIC_REFRESH_MS = 30L * 60L * 1000L;
+    private static final long WATCHDOG_INTERVAL_MS = 60L * 1000L;
+    private static final long STUCK_LOAD_MS = 2L * 60L * 1000L;
+    private static final long STALE_PAGE_MS = 45L * 60L * 1000L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private WebView webView;
     private TextView statusView;
     private int screen;
+    private long lastLoadStartedAt = 0L;
+    private long lastPageFinishedAt = 0L;
 
     private final Runnable retryLoad = new Runnable() {
         @Override
         public void run() {
             loadDisplay();
+        }
+    };
+
+    private final Runnable periodicRefresh = new Runnable() {
+        @Override
+        public void run() {
+            loadDisplay();
+            schedulePeriodicRefresh();
+        }
+    };
+
+    private final Runnable watchdogCheck = new Runnable() {
+        @Override
+        public void run() {
+            checkDisplayHealth();
+            handler.postDelayed(this, WATCHDOG_INTERVAL_MS);
         }
     };
 
@@ -49,6 +71,8 @@ public class MainActivity extends Activity {
         screen = readScreen();
         buildUi();
         loadDisplay();
+        schedulePeriodicRefresh();
+        handler.postDelayed(watchdogCheck, WATCHDOG_INTERVAL_MS);
     }
 
     @Override
@@ -124,7 +148,14 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                lastLoadStartedAt = System.currentTimeMillis();
+                enterImmersiveMode();
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
+                lastPageFinishedAt = System.currentTimeMillis();
                 showStatus("");
                 enterImmersiveMode();
             }
@@ -176,6 +207,7 @@ public class MainActivity extends Activity {
             return;
         }
 
+        lastLoadStartedAt = System.currentTimeMillis();
         showStatus("กำลังเปิดจอ " + screen);
         webView.loadUrl(buildDisplayUrl());
     }
@@ -202,6 +234,33 @@ public class MainActivity extends Activity {
         showStatus(message + "\nจอ " + screen + " จะลองใหม่อัตโนมัติ");
         handler.removeCallbacks(retryLoad);
         handler.postDelayed(retryLoad, RETRY_DELAY_MS);
+    }
+
+    private void schedulePeriodicRefresh() {
+        handler.removeCallbacks(periodicRefresh);
+        handler.postDelayed(periodicRefresh, PERIODIC_REFRESH_MS);
+    }
+
+    private void checkDisplayHealth() {
+        if (webView == null) return;
+
+        if (!isOnline()) {
+            scheduleRetry("รออินเทอร์เน็ต");
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        boolean loadingTooLong = lastLoadStartedAt > lastPageFinishedAt
+            && now - lastLoadStartedAt > STUCK_LOAD_MS;
+        boolean pageTooOld = lastPageFinishedAt > 0L
+            && now - lastPageFinishedAt > STALE_PAGE_MS;
+        boolean pageLooksEmpty = webView.getProgress() >= 100
+            && lastPageFinishedAt > 0L
+            && webView.getTitle() == null;
+
+        if (loadingTooLong || pageTooOld || pageLooksEmpty) {
+            loadDisplay();
+        }
     }
 
     private void showStatus(String message) {
