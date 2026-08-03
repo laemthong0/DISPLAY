@@ -465,6 +465,41 @@
       text-decoration: none;
     }
 
+    .product-filter-card {
+      border-color: #b7d6c5;
+      background: linear-gradient(180deg, #ffffff 0%, #f3fbf6 100%);
+    }
+
+    .product-filter-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .product-filter-input {
+      width: 100%;
+      min-height: 56px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: clamp(1.05rem, 3.8vw, 1.22rem);
+      font-weight: 800;
+      outline: none;
+    }
+
+    .product-filter-input:focus {
+      border-color: var(--brand-2);
+      box-shadow: 0 0 0 3px var(--brand-glow);
+    }
+
+    .product-filter-form .btn {
+      min-height: 56px;
+      border-radius: var(--radius-md);
+    }
+
     .category-panel {
       border-color: #cfe0d7;
     }
@@ -1109,6 +1144,10 @@
       .control-board .sub-card .grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       }
+
+      .product-filter-form {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
 
     @media (max-width: 420px) {
@@ -1179,6 +1218,18 @@
             <button class="btn transport-btn" id="btnNext" type="button">ถัดไป <span class="transport-icon" aria-hidden="true">›</span></button>
           </div>
           <button class="btn secondary" id="btnRefresh" type="button">↻ รีเฟรช</button>
+        </section>
+
+        <section class="card product-filter-card" aria-label="เรียกสินค้าเฉพาะสูตร">
+          <div class="section-title">
+            <b>เรียกสินค้า</b>
+            <span class="muted" id="productFilterLabel">แสดงทุกสินค้า</span>
+          </div>
+          <div class="product-filter-form">
+            <input id="productFilterInput" class="product-filter-input" type="text" inputmode="text" autocomplete="off" placeholder="เช่น 15-10-30 หรือชื่อสินค้า">
+            <button class="btn primary" id="btnProductFilter" type="button">แสดงเฉพาะ</button>
+            <button class="btn secondary" id="btnClearProductFilter" type="button">ล้าง</button>
+          </div>
         </section>
 
         <section class="card subpage-card category-panel">
@@ -1299,11 +1350,11 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-easy-control-20260803";
+    const APP_VERSION = "display-product-filter-control-20260803";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
-      "สั่ง", "สัง", "ไป"
+      "สั่ง", "สัง", "ไป", "ค้น", "หา", "สูตร", "ล้าง", "ยกเลิก"
     ];
     const VOICE_ACTION_ALIASES = [
       ["รีเฟรช", "refresh", "โหลดใหม่", "อัปเดต", "อัพเดต"],
@@ -1870,6 +1921,29 @@
         .replace(/หมวดหลัก|หมวดย่อย|หมวด|กลุ่ม|ย่อย|รายการ|สินค้า/g, "");
     }
 
+    function extractFormulaFromVoice(value) {
+      const normalized = normalizeVoiceNumbers(applyVoiceMishearingFixes(value));
+      const match = normalized.match(/([0-9๐-๙]{1,2})\s*[-–]\s*([0-9๐-๙]{1,2})\s*[-–]\s*([0-9๐-๙]{1,2})/);
+      if (!match) return "";
+      return [match[1], match[2], match[3]]
+        .map((part) => normalizeVoiceNumbers(part).replace(/[^\d]/g, ""))
+        .filter(Boolean)
+        .join("-");
+    }
+
+    function getProductFilterQueryFromVoice(value) {
+      const formula = extractFormulaFromVoice(value);
+      if (formula) return formula;
+
+      const remainder = getVoiceCommandRemainder(value)
+        .replace(/แสดงเฉพาะ|เฉพาะ|ค้นหา|ค้น|หา|สูตร|ปุ๋ยสูตร|ปุ๋ย/g, "")
+        .trim();
+
+      if (!remainder || remainder.length < 2) return "";
+      if (/^(หลัก|ย่อย|หน้า|จอ|ทีวี|อัตโนมัติ|ถัดไป|ก่อนหน้า)$/i.test(remainder)) return "";
+      return remainder;
+    }
+
     function isSafeVoiceRemainder(value) {
       const compact = compactVoiceText(value);
       if (!compact) return true;
@@ -1889,6 +1963,7 @@
 
     function hasVoiceCommandTrigger(value) {
       const compact = compactVoiceText(value);
+      if (extractFormulaFromVoice(value)) return true;
       if (VOICE_TRIGGER_PREFIXES.some((prefix) => compact.startsWith(prefix))) return true;
       if (findVoiceShortcutTarget(value)) return true;
       return matchesKnownVoiceAction(value);
@@ -2203,6 +2278,12 @@
         return finish(true);
       }
 
+      if (/ล้าง|ยกเลิกกรอง|แสดงทั้งหมด|ทุกสินค้า/.test(compact)) {
+        clearProductFilterCommand();
+        setVoiceStatus("คำสั่งเสียง: ล้างการกรองสินค้า");
+        return finish(true);
+      }
+
       if (/หมวดย่อย|กลุ่ม|ย่อย/.test(compact)) {
         const subCategory = findSubCategoryByVoice(text);
         const page = getMainPage();
@@ -2236,7 +2317,19 @@
         return finish(true);
       }
 
+      const formulaQuery = extractFormulaFromVoice(text);
+      if (formulaQuery && sendProductFilter(formulaQuery)) {
+        setVoiceStatus(`คำสั่งเสียง: แสดงเฉพาะ ${formulaQuery}`);
+        return finish(true);
+      }
+
       if (sendVoiceNavigationTarget(findVoiceNavigationTarget(text))) {
+        return finish(true);
+      }
+
+      const productQuery = getProductFilterQueryFromVoice(text);
+      if (productQuery && sendProductFilter(productQuery)) {
+        setVoiceStatus(`คำสั่งเสียง: แสดงเฉพาะ ${productQuery}`);
         return finish(true);
       }
 
@@ -2515,6 +2608,39 @@
       return fromMeta === null ? readAutoPlayPreference() : fromMeta;
     }
 
+    function getProductFilterQueryFromMeta() {
+      return clean(meta?.productFilter?.query || "");
+    }
+
+    function renderProductFilterControls() {
+      const label = $("productFilterLabel");
+      const input = $("productFilterInput");
+      const query = getProductFilterQueryFromMeta();
+
+      if (label) label.textContent = query ? `กรอง: ${query}` : "แสดงทุกสินค้า";
+      if (input && document.activeElement !== input) input.value = query;
+    }
+
+    function sendProductFilter(query) {
+      const normalized = clean(query);
+      if (!normalized) {
+        setHint("พิมพ์สูตรหรือชื่อสินค้าก่อน เช่น 15-10-30");
+        return false;
+      }
+
+      sendCommand("filterProduct", { query: normalized });
+      setHint(`แสดงเฉพาะสินค้า: ${normalized}`);
+      return true;
+    }
+
+    function clearProductFilterCommand() {
+      const input = $("productFilterInput");
+      if (input) input.value = "";
+      sendCommand("clearProductFilter");
+      setHint("ล้างการกรองสินค้าแล้ว");
+      renderProductFilterControls();
+    }
+
     function renderModeButtons() {
       refreshWallOpenLinks();
 
@@ -2622,6 +2748,7 @@
     function render() {
       renderState();
       renderHealth();
+      renderProductFilterControls();
       renderModeButtons();
       renderAutoPlayButtons();
       renderMainButtons();
@@ -2677,6 +2804,13 @@
       sendCommand("refresh");
       setHint("ส่งคำสั่งรีเฟรชแล้ว");
     };
+    $("btnProductFilter").onclick = () => sendProductFilter($("productFilterInput").value);
+    $("btnClearProductFilter").onclick = clearProductFilterCommand;
+    $("productFilterInput").addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      sendProductFilter(event.currentTarget.value);
+    });
     $("btnReloadMeta").onclick = reloadMeta;
     $("btnToggleHealth").onclick = toggleHealthCollapsed;
     $("btnModeSingle").onclick = () => {

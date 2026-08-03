@@ -5364,7 +5364,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-easy-control-20260803";
+    const APP_VERSION = "display-product-filter-control-20260803";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5431,6 +5431,7 @@
     let lastPublishedTotalSubPages = 1;
     let lastDisplayedProductCount = 0;
     let lastDisplayedSpecialCount = 0;
+    let productFilterQuery = "";
 
     function clean(value) {
       return String(value ?? "").trim();
@@ -5438,6 +5439,62 @@
 
     function normalizeSheetName(value) {
       return clean(value).toLowerCase();
+    }
+
+    function normalizeProductSearchText(value) {
+      return clean(value)
+        .normalize("NFC")
+        .toLowerCase()
+        .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)))
+        .replace(/[\u0E47-\u0E4E]/g, "")
+        .replace(/[\s_/]+/g, "")
+        .replace(/[(){}\[\]"'.,:;|\\]/g, "");
+    }
+
+    function getProductSearchHaystack(item) {
+      return [
+        item?.name,
+        item?.detail,
+        item?.price,
+        item?.unit,
+        item?.status,
+        item?.subCategory,
+        item?.specialBadge
+      ].map(normalizeProductSearchText).filter(Boolean).join(" ");
+    }
+
+    function productMatchesFilter(item, query) {
+      const normalizedQuery = normalizeProductSearchText(query);
+      if (!normalizedQuery) return true;
+
+      const compactQuery = normalizedQuery.replace(/-/g, "");
+      const haystack = getProductSearchHaystack(item);
+      const compactHaystack = haystack.replace(/-/g, "");
+
+      return haystack.includes(normalizedQuery) || Boolean(compactQuery && compactHaystack.includes(compactQuery));
+    }
+
+    function applyProductFilter(products) {
+      const query = clean(productFilterQuery);
+      if (!query) return products;
+      return products.filter((item) => productMatchesFilter(item, query));
+    }
+
+    function setProductFilter(query) {
+      productFilterQuery = clean(query);
+      currentSubPageIndex = 0;
+      holdWallSync(getPageDurationMs() * 2);
+      setAutoPlay(false);
+      render();
+      restartPageTimer();
+    }
+
+    function clearProductFilter() {
+      if (!productFilterQuery) return;
+      productFilterQuery = "";
+      currentSubPageIndex = 0;
+      render();
+      restartPageTimer();
     }
 
     function isDisplaySheetName(name) {
@@ -5928,6 +5985,10 @@
         autoPlay: {
           enabled: autoPlayEnabled
         },
+        productFilter: {
+          query: productFilterQuery,
+          active: Boolean(clean(productFilterQuery))
+        },
         wall: {
           mode: WALL_CONFIG.mode,
           enabled: WALL_CONFIG.enabled,
@@ -6014,7 +6075,9 @@ function render() {
       const hasLoadedSheet = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
       const hasLoadError = Boolean(sheetLoadErrors[sheetName]) && !hasLoadedSheet;
       const allProducts = productsCache[sheetName] || [];
-      const viewProducts = getVisibleProducts(sheetName, allProducts);
+      const baseViewProducts = getVisibleProducts(sheetName, allProducts);
+      const viewProducts = applyProductFilter(baseViewProducts);
+      const filterActive = Boolean(clean(productFilterQuery));
       const productGrid = $("productGrid");
 
       const itemsPerPage = getItemsPerPage(viewProducts.length);
@@ -6037,7 +6100,9 @@ function render() {
           ? "โหลดข้อมูลไม่สำเร็จ"
           : wallEmptyKind === "wall-idle"
             ? "รายการนี้แสดงที่จอ 1"
-            : "ไม่มีสินค้าในหมวดหมู่นี้";
+            : filterActive
+              ? `ไม่พบสินค้า: ${productFilterQuery}`
+              : "ไม่มีสินค้าในหมวดหมู่นี้";
 
       lastRenderAt = Date.now();
       lastDisplayedProductCount = displayProducts.length;
@@ -6059,15 +6124,19 @@ function render() {
       $("shopName").textContent = data.shopName;
       $("shopSub").textContent = data.shopSub || DEFAULT_DATA.shopSub;
 
-      $("heroTitle").textContent = getSubCategoriesForSheet(sheetName).length
-        ? `${sheetName} • ${getSubCategoryName(sheetName)}`
-        : sheetName;
+      $("heroTitle").textContent = filterActive
+        ? `ค้นสินค้า: ${productFilterQuery}`
+        : getSubCategoriesForSheet(sheetName).length
+          ? `${sheetName} • ${getSubCategoryName(sheetName)}`
+          : sheetName;
 
       $("heroDesc").textContent = WALL_CONFIG.enabled
         ? (wallSlice.singleScreen && WALL_CONFIG.screenIndex > 0
           ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • พร้อมประชาสัมพันธ์`
           : `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
-        : `${viewProducts.length} รายการ`;
+        : filterActive
+          ? `${viewProducts.length}/${baseViewProducts.length} รายการ`
+          : `${viewProducts.length} รายการ`;
 
       const pageText = `หมวด ${currentPageIndex + 1}/${data.sheetPages.length}`;
       const subPageText = totalSubPages > 1 ? ` (หน้า ${currentSubPageIndex + 1}/${totalSubPages})` : "";
@@ -6079,7 +6148,8 @@ function render() {
           : ` • จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
         : "";
 
-      $("pageCounter").textContent = pageText + motherText + subPageText + wallText;
+      const filterText = filterActive ? ` • กรอง ${productFilterQuery}` : "";
+      $("pageCounter").textContent = pageText + motherText + subPageText + wallText + filterText;
       $("tickerText").textContent = data.tickerText || DEFAULT_DATA.tickerText;
 
       const logoEl = $("headerLogo");
@@ -7189,7 +7259,7 @@ function render() {
       holdWallSync();
       const sheetName = getSheetName();
       const allProducts = getProductsForSheetState(sheetName) || [];
-      const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
+      const viewProducts = applyProductFilter(getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex));
       const itemsPerPage = getItemsPerPage(viewProducts.length);
       const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
 
@@ -7210,7 +7280,7 @@ function render() {
       holdWallSync();
       const sheetName = getSheetName();
       const allProducts = getProductsForSheetState(sheetName) || [];
-      const viewProducts = getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex);
+      const viewProducts = applyProductFilter(getVisibleProductsForState(sheetName, allProducts, currentMotherSubIndex));
       const itemsPerPage = getItemsPerPage(viewProducts.length);
       const totalSubPages = Math.max(1, Math.ceil(viewProducts.length / itemsPerPage));
 
@@ -7270,13 +7340,21 @@ function render() {
           prev();
           return;
         case "goMain":
+          clearProductFilter();
           goToMainAndSub(Number(command.pageIndex) || 0, 0, 0);
           return;
         case "goSub":
+          clearProductFilter();
           goToMainAndSub(Number(command.pageIndex) || 0, Number(command.subIndex) || 0, 0);
           return;
         case "goSubPage":
           goToMainAndSub(Number(command.pageIndex) || 0, Number(command.subIndex) || 0, Number(command.subPageIndex) || 0);
+          return;
+        case "filterProduct":
+          setProductFilter(command.query || command.productQuery || command.text || "");
+          return;
+        case "clearProductFilter":
+          clearProductFilter();
           return;
         case "setWallMode":
           setWallMode(command.mode);
