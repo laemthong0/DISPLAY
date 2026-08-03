@@ -15,7 +15,7 @@ android {
         versionCode 1
         versionName "1.0.0"
         buildConfigField "String", "DISPLAY_BASE_URL", "\"https://laemthong0.github.io/DISPLAY/\""
-        buildConfigField "String", "DISPLAY_VERSION", "\"display-price-sort-stable-20260803\""
+        buildConfigField "String", "DISPLAY_VERSION", "\"display-solid-green-bg-20260803\""
     }
 
     flavorDimensions "screen"
