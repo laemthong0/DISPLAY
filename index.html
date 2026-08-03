@@ -5317,7 +5317,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-bottom-header-20260701";
+    const APP_VERSION = "display-two-screen-split-20260803";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5437,6 +5437,14 @@
       return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
     }
 
+    function getFirstParam(params, names) {
+      for (const name of names) {
+        if (params.has(name)) return params.get(name);
+      }
+
+      return null;
+    }
+
     function readWallModeOverride() {
       try {
         const mode = clean(localStorage.getItem(WALL_MODE_KEY)).toLowerCase();
@@ -5473,13 +5481,15 @@
       const syncScope = syncScopeParam === "all" || syncScopeParam === "page"
         ? syncScopeParam
         : "auto";
-      const rawScreens = params.has("screens")
-        ? clampNum(params.get("screens"), 1, 4, 1)
+      const screensParam = getFirstParam(params, ["screens", "wallScreens", "totalScreens"]);
+      const screenParam = getFirstParam(params, ["screen", "wallScreen", "displayScreen", "display", "tv"]);
+      const rawScreens = screensParam !== null
+        ? clampNum(screensParam, 1, 4, 1)
         : (wallRequested || forceWall ? 2 : 1);
       const screens = wallRequested || forceWall ? Math.max(2, rawScreens) : rawScreens;
       const enabled = !forceSingle && (forceWall || wallRequested || screens > 1);
       const effectiveScreens = enabled ? Math.max(2, screens) : 1;
-      const screen = enabled ? clampNum(params.get("screen"), 1, effectiveScreens, 1) : 1;
+      const screen = enabled ? clampNum(screenParam, 1, effectiveScreens, 1) : 1;
       const itemsPerWallPage = params.has("wallItems")
         ? clampNum(params.get("wallItems"), 2, 42, 21)
         : 21;
