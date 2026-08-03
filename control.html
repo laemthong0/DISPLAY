@@ -638,13 +638,15 @@
     }
 
     .gas-config {
-      display: none !important;
+      display: flex;
+      flex-wrap: wrap;
       margin-top: 8px;
+      gap: 8px;
     }
 
     .gas-url-input {
       flex: 1;
-      min-width: 320px;
+      min-width: 240px;
       padding: 8px 10px;
       border: 1px solid var(--line);
       border-radius: var(--radius-sm);
@@ -980,7 +982,8 @@
       <button class="btn utility" id="btnReloadMeta" type="button">↻ รีโหลด</button>
       <div class="row gas-config">
         <input id="gasUrlInput" class="gas-url-input" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)">
-        <button class="btn" id="btnSaveGasUrl" type="button">บันทึก URL</button>
+        <input id="gasTokenInput" class="gas-url-input" type="password" autocomplete="off" placeholder="รหัสควบคุม">
+        <button class="btn" id="btnSaveGasUrl" type="button">บันทึก URL/รหัส</button>
       </div>
     </header>
 
@@ -1103,15 +1106,16 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
+    const CONTROL_AUTH_TOKEN_KEY = "tv-display-control-auth-token-v1";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const CONTROL_CLIENT_ID_KEY = "tv-display-control-client-id-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
-    const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
+    const DEFAULT_WEBAPP_URL = "";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-control-voice-fix-20260630b";
+    const APP_VERSION = "display-bottom-header-20260701";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1213,6 +1217,17 @@
       if (validWebAppUrl(DEFAULT_WEBAPP_URL)) return DEFAULT_WEBAPP_URL;
 
       return "";
+    }
+
+    function getControlAuthToken() {
+      const fromInput = clean($("gasTokenInput")?.value || "");
+      if (fromInput) return fromInput;
+
+      try {
+        return clean(localStorage.getItem(CONTROL_AUTH_TOKEN_KEY) || "");
+      } catch {
+        return "";
+      }
     }
 
     function setHint(text) {
@@ -1462,6 +1477,7 @@
       const payload = JSON.stringify({
         mode: "push_command",
         source: "control",
+        token: getControlAuthToken(),
         command: cmd
       });
 
@@ -2206,7 +2222,10 @@
       const endpoint = getWebAppUrl();
       if (!endpoint) return Promise.resolve(null);
 
-      return runJsonp(endpoint, { mode: "pull_meta" }, 5000)
+      return runJsonp(endpoint, {
+        mode: "pull_meta",
+        token: getControlAuthToken()
+      }, 5000)
         .then((res) => {
           if (res && res.ok && res.meta) return res.meta;
           return null;
@@ -2507,12 +2526,20 @@
         localStorage.setItem(CONTROL_WEBAPP_KEY, url);
       } catch {}
       try {
+        const authToken = clean($("gasTokenInput").value);
+        if (authToken) {
+          localStorage.setItem(CONTROL_AUTH_TOKEN_KEY, authToken);
+        } else {
+          localStorage.removeItem(CONTROL_AUTH_TOKEN_KEY);
+        }
+      } catch {}
+      try {
         const rawMain = localStorage.getItem(STORAGE_KEY);
         const parsed = rawMain ? JSON.parse(rawMain) : {};
         parsed.controlWebAppUrl = url;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
       } catch {}
-      setHint("บันทึก GAS URL แล้ว");
+      setHint("บันทึก GAS URL/รหัสแล้ว");
       restartRemoteMetaPolling();
       reloadMeta();
     };
@@ -2527,6 +2554,7 @@
       initVoiceControls();
       const saved = getWebAppUrl();
       if (saved) $("gasUrlInput").value = saved;
+      $("gasTokenInput").value = getControlAuthToken();
       restartRemoteMetaPolling();
       reloadMeta();
       startVersionCheck();
