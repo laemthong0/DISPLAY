@@ -973,6 +973,172 @@
       }
     }
 
+    /* easy-touch-control */
+    .control-header {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .control-header .btn.utility {
+      width: 100%;
+      min-height: 54px;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+    }
+
+    .control-board {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .nav-stack {
+      order: 1;
+    }
+
+    .category-stack {
+      order: 2;
+    }
+
+    .transport-card {
+      border-width: 2px;
+      border-color: #9fc9b4;
+      padding: 16px;
+    }
+
+    .transport-grid,
+    .control-board .transport-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .transport-btn,
+    .control-board .transport-btn {
+      min-height: clamp(76px, 19vw, 104px);
+      border-radius: var(--radius-md);
+      font-size: clamp(1.18rem, 5.2vw, 1.72rem);
+    }
+
+    #btnRefresh,
+    .control-board #btnRefresh {
+      min-height: 58px;
+      border-radius: var(--radius-md);
+      font-size: clamp(1.05rem, 3.8vw, 1.22rem);
+      margin-top: 12px;
+    }
+
+    .section-title {
+      margin-bottom: 12px;
+      font-size: clamp(1.08rem, 3.8vw, 1.28rem);
+    }
+
+    .grid,
+    .control-board .main-card .grid,
+    .control-board .sub-card .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .grid .btn,
+    .control-board #mainGrid .btn,
+    .control-board #subGrid .btn {
+      min-height: 64px;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: clamp(1.02rem, 3.8vw, 1.2rem);
+      line-height: 1.16;
+    }
+
+    #mainGrid .btn {
+      min-height: 70px;
+    }
+
+    #subPageGrid,
+    .control-board .subpage-card .grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    #subPageGrid .btn,
+    .control-board #subPageGrid .btn {
+      min-height: 54px;
+      border-radius: var(--radius-md);
+    }
+
+    .settings-deck {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .mode-actions {
+      border-radius: var(--radius-md);
+      padding: 6px;
+      gap: 6px;
+    }
+
+    .mode-actions .btn {
+      min-height: 62px;
+      border-radius: 12px;
+      font-size: clamp(1.08rem, 4vw, 1.24rem);
+    }
+
+    .state,
+    .health-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .voice-float-button {
+      min-height: 62px;
+      border-radius: var(--radius-md);
+    }
+
+    @media (min-width: 720px) {
+      .control-header {
+        grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
+      }
+
+      .control-board {
+        grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+      }
+
+      .settings-deck {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid,
+      .control-board .main-card .grid,
+      .control-board .sub-card .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding-inline: 10px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .transport-grid,
+      .control-board .transport-grid,
+      .grid,
+      .control-board .main-card .grid,
+      .control-board .sub-card .grid {
+        grid-template-columns: 1fr;
+      }
+
+      #subPageGrid,
+      .control-board .subpage-card .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .state,
+      .health-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .btn,
       .mini-btn {
@@ -1133,7 +1299,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-solid-green-no-card-shadow-20260803";
+    const APP_VERSION = "display-easy-control-20260803";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
