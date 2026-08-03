@@ -1,0 +1,36 @@
+apply plugin: "com.android.application"
+
+android {
+    namespace "com.laemthong.displaytv"
+    compileSdk 35
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    defaultConfig {
+        applicationId "com.laemthong.displaytv"
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0"
+        buildConfigField "String", "DISPLAY_BASE_URL", "\"https://laemthong0.github.io/DISPLAY/\""
+        buildConfigField "String", "DISPLAY_VERSION", "\"display-price-sort-stable-20260803\""
+    }
+
+    flavorDimensions "screen"
+    productFlavors {
+        screen1 {
+            dimension "screen"
+            applicationIdSuffix ".screen1"
+            resValue "string", "app_name", "DISPLAY จอ 1"
+            buildConfigField "int", "DEFAULT_SCREEN", "1"
+        }
+        screen2 {
+            dimension "screen"
+            applicationIdSuffix ".screen2"
+            resValue "string", "app_name", "DISPLAY จอ 2"
+            buildConfigField "int", "DEFAULT_SCREEN", "2"
+        }
+    }
+}
