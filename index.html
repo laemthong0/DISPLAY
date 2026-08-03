@@ -5154,11 +5154,14 @@
     }
 
     .product-card,
-    body.wall-mode .product-card {
-      box-shadow:
-        0 18px 34px rgba(0, 0, 0, 0.36),
-        0 0 0 1px rgba(255, 255, 255, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+    .product-card:hover,
+    body.wall-mode .product-card,
+    body.wall-mode .product-card:hover,
+    body.wall-mode .product-card.auto-hover,
+    body.wall-mode .product-grid[data-density="few"] .product-card,
+    body.wall-mode .product-grid[data-density="five"] .product-card {
+      box-shadow: none !important;
+      filter: none !important;
     }
   </style>
 </head>
@@ -5358,7 +5361,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-solid-green-bg-20260803";
+    const APP_VERSION = "display-solid-green-no-card-shadow-20260803";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
