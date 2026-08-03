@@ -5309,6 +5309,8 @@
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
+    const WALL_SCREEN_KEY = "tv-display-wall-screen-v1";
+    const WALL_SCREENS_KEY = "tv-display-wall-screens-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HIDDEN_SHEET_NAMES = new Set(["price"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
@@ -5317,7 +5319,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-two-screen-split-20260803";
+    const APP_VERSION = "display-wall-screen-memory-20260803";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5454,6 +5456,24 @@
       }
     }
 
+    function readStoredWallNumber(key, min, max, fallback) {
+      try {
+        return clampNum(localStorage.getItem(key), min, max, fallback);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function rememberWallConfig(mode, screen, screens) {
+      try {
+        if (mode === "single" || mode === "wall") localStorage.setItem(WALL_MODE_KEY, mode);
+        if (Number.isFinite(screen)) localStorage.setItem(WALL_SCREEN_KEY, String(screen));
+        if (Number.isFinite(screens)) localStorage.setItem(WALL_SCREENS_KEY, String(screens));
+      } catch {
+        // ignore storage failures on locked-down TV browsers
+      }
+    }
+
     function readAutoPlayPreference() {
       try {
         const mode = clean(localStorage.getItem(AUTO_PLAY_KEY)).toLowerCase();
@@ -5483,19 +5503,26 @@
         : "auto";
       const screensParam = getFirstParam(params, ["screens", "wallScreens", "totalScreens"]);
       const screenParam = getFirstParam(params, ["screen", "wallScreen", "displayScreen", "display", "tv"]);
+      const savedScreens = readStoredWallNumber(WALL_SCREENS_KEY, 1, 4, 2);
+      const wallIdentityRequested = screensParam !== null || screenParam !== null;
       const rawScreens = screensParam !== null
         ? clampNum(screensParam, 1, 4, 1)
-        : (wallRequested || forceWall ? 2 : 1);
-      const screens = wallRequested || forceWall ? Math.max(2, rawScreens) : rawScreens;
-      const enabled = !forceSingle && (forceWall || wallRequested || screens > 1);
+        : (wallRequested || forceWall || wallIdentityRequested ? savedScreens : 1);
+      const screens = wallRequested || forceWall || wallIdentityRequested ? Math.max(2, rawScreens) : rawScreens;
+      const enabled = !forceSingle && (forceWall || wallRequested || wallIdentityRequested || screens > 1);
       const effectiveScreens = enabled ? Math.max(2, screens) : 1;
-      const screen = enabled ? clampNum(screenParam, 1, effectiveScreens, 1) : 1;
+      const savedScreen = readStoredWallNumber(WALL_SCREEN_KEY, 1, effectiveScreens, 1);
+      const screen = enabled ? clampNum(screenParam ?? savedScreen, 1, effectiveScreens, 1) : 1;
       const itemsPerWallPage = params.has("wallItems")
         ? clampNum(params.get("wallItems"), 2, 42, 21)
         : 21;
       const syncOffsetMs = params.has("syncOffset")
         ? clampNum(params.get("syncOffset"), -60000, 60000, 0)
         : 0;
+
+      if (urlMode === "single" || urlMode === "wall" || wallIdentityRequested) {
+        rememberWallConfig(enabled ? "wall" : "single", screen, effectiveScreens);
+      }
 
       return {
         enabled,
