@@ -99,14 +99,6 @@
       min-width: 0;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
     .brand-mark {
       flex: 0 0 auto;
       width: 44px;
@@ -946,10 +938,6 @@
         width: 100%;
       }
 
-      .header-actions {
-        width: 100%;
-      }
-
       .transport-grid,
       .mode-actions,
       .voice-actions,
@@ -991,15 +979,7 @@
           <p class="conn-pill muted" id="connHint">ใช้ควบคุมข้ามอุปกรณ์ผ่าน Google Apps Script Web App</p>
         </div>
       </div>
-      <div class="header-actions">
-        <a
-          class="btn utility"
-          href="https://docs.google.com/spreadsheets/d/166Ija7H3Dal4qA4ZokEJVEBXGY1BhW1DWb1pIXw_OgI/edit?gid=0#gid=0"
-          target="_blank"
-          rel="noopener"
-        >เปิด Google Sheet</a>
-        <button class="btn utility" id="btnReloadMeta" type="button">↻ รีโหลด</button>
-      </div>
+      <button class="btn utility" id="btnReloadMeta" type="button">↻ รีโหลด</button>
       <div class="row gas-config">
         <input id="gasUrlInput" class="gas-url-input" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)">
         <input id="gasTokenInput" class="gas-url-input" type="password" autocomplete="off" placeholder="รหัสควบคุม">
@@ -1132,7 +1112,7 @@
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
-    const DEFAULT_WEBAPP_URL = "";
+    const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 900;
     const AUTO_PLAY_PENDING_MS = 7000;
     const APP_VERSION = "display-bottom-header-20260701";

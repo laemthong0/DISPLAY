@@ -3,7 +3,7 @@ const KEY_CMD = 'TV_DISPLAY_CMD_V1';
 const KEY_SHEET_ID = 'TV_DISPLAY_SHEET_ID';
 const KEY_AUTH_TOKEN = 'TV_DISPLAY_AUTH_TOKEN';
 const KEY_ALLOWED_SHEET_IDS = 'TV_DISPLAY_ALLOWED_SHEET_IDS';
-const DEFAULT_SPREADSHEET_ID = '';
+const DEFAULT_SPREADSHEET_ID = '166Ija7H3Dal4qA4ZokEJVEBXGY1BhW1DWb1pIXw_OgI';
 const HIDDEN_SHEET_NAMES = ['price'];
 
 function doGet(e) {
@@ -205,7 +205,7 @@ function getConfiguredAuthToken_() {
 
 function isAuthorized_(token) {
   const expected = getConfiguredAuthToken_();
-  return Boolean(expected) && String(token || '').trim() === expected;
+  return !expected || String(token || '').trim() === expected;
 }
 
 function getAllowedSpreadsheetIds_() {
