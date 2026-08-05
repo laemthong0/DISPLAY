@@ -1348,9 +1348,9 @@
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
-    const REMOTE_META_POLL_MS = 900;
+    const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260803";
+    const APP_VERSION = "display-product-filter-control-20260805-fixed";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1453,7 +1453,8 @@
     }
 
     function getWebAppUrl() {
-      const fromInput = clean($("gasUrlInput").value);
+      const gasUrlInput = $("gasUrlInput");
+      const fromInput = clean(gasUrlInput ? gasUrlInput.value : "");
       if (validWebAppUrl(fromInput)) return fromInput;
 
       const fromLocal = clean(localStorage.getItem(CONTROL_WEBAPP_KEY) || "");
@@ -1711,61 +1712,41 @@
         ...extra
       };
 
+      // ส่งในเครื่องทันที เพื่อให้จอที่อยู่ browser เดียวกันตอบสนองเร็ว
       postLocalCommand(cmd);
 
       const endpoint = getWebAppUrl();
       if (!endpoint) return;
+
       const payload = JSON.stringify({
         mode: "push_command",
         source: "control",
         command: cmd
       });
 
-      const isCurrentCommand = () => createdAt >= lastIssuedCommandAt;
-
-      const sendOnce = () => {
-        if (!isCurrentCommand()) return;
-
-        try {
-          if (navigator.sendBeacon) {
+      // เดิมยิงคำสั่งเดิม 5-7 รอบ ทำให้ next/prev มีโอกาสข้ามหลายหน้า
+      // เปลี่ยนเป็นส่งครั้งเดียวด้วย fetch และใช้ beacon เฉพาะตอน fetch เริ่มไม่ได้
+      try {
+        fetch(endpoint, {
+          method: "POST",
+          mode: "no-cors",
+          cache: "no-store",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: payload
+        }).catch(() => {
+          try {
+            if (!navigator.sendBeacon) return;
             const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
-            if (navigator.sendBeacon(endpoint, blob)) return;
-          }
-        } catch {}
-
-        try {
-          fetch(endpoint, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: payload
-          }).catch(() => {});
-        } catch {}
-      };
-
-      // Retry short bursts to reduce dropped commands over remote network.
-      const highReliabilityAction = action === "refresh";
-      const retryDelays = highReliabilityAction
-        ? [0, 120, 300, 700, 1200, 2000, 3200]
-        : [0, 120, 260, 700, 1200];
-
-      retryDelays.forEach((delay) => {
-        if (delay === 0) {
-          sendOnce();
-        } else {
-          setTimeout(sendOnce, delay);
-        }
-      });
-
-      if (highReliabilityAction) {
-        // Some locked-down TV browsers miss one storage event; repeat local delivery with a fresh wrapper.
-        [180, 520, 1100].forEach((delay) => {
-          setTimeout(() => {
-            if (isCurrentCommand()) {
-              postLocalCommand({ ...cmd, id: `${cmd.id}-local-${delay}` });
-            }
-          }, delay);
+            navigator.sendBeacon(endpoint, blob);
+          } catch {}
         });
+      } catch {
+        try {
+          if (!navigator.sendBeacon) return;
+          const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
+          navigator.sendBeacon(endpoint, blob);
+        } catch {}
       }
     }
 
@@ -1923,12 +1904,18 @@
 
     function extractFormulaFromVoice(value) {
       const normalized = normalizeVoiceNumbers(applyVoiceMishearingFixes(value));
-      const match = normalized.match(/([0-9๐-๙]{1,2})\s*[-–]\s*([0-9๐-๙]{1,2})\s*[-–]\s*([0-9๐-๙]{1,2})/);
-      if (!match) return "";
-      return [match[1], match[2], match[3]]
-        .map((part) => normalizeVoiceNumbers(part).replace(/[^\d]/g, ""))
-        .filter(Boolean)
-        .join("-");
+      const separated = normalized.match(/(\d{1,2})\s*(?:[-–—/]|\s+)\s*(\d{1,2})\s*(?:[-–—/]|\s+)\s*(\d{1,2})/);
+      if (separated) {
+        return [separated[1], separated[2], separated[3]].join("-");
+      }
+
+      // รองรับผลจาก Speech Recognition ที่คืนค่าเป็น 151030 หรือ 210000
+      const compactDigits = normalized.replace(/\D/g, "");
+      if (/^\d{6}$/.test(compactDigits)) {
+        return `${compactDigits.slice(0, 2)}-${compactDigits.slice(2, 4)}-${compactDigits.slice(4, 6)}`;
+      }
+
+      return "";
     }
 
     function getProductFilterQueryFromVoice(value) {
@@ -2397,6 +2384,7 @@
           setVoiceStatus("ยังไม่ได้ยินเสียง ลองพูดใหม่อีกครั้ง");
           return;
         }
+        if (error === "aborted" && !voiceListening) return;
         setVoiceStatus(error ? `ระบบฟังเสียงมีปัญหา: ${error}` : "ระบบฟังเสียงมีปัญหา");
       };
 
@@ -2487,7 +2475,10 @@
       };
 
       if (closeBtn) {
-        closeBtn.onclick = () => setVoicePanelOpen(false);
+        closeBtn.onclick = () => {
+          if (voiceListening) stopVoiceListening();
+          setVoicePanelOpen(false);
+        };
       }
     }
 
@@ -2516,7 +2507,14 @@
 
     function getMainPage() {
       if (!meta || !Array.isArray(meta.pages) || !meta.pages.length) return null;
-      return meta.pages[meta.currentPageIndex] || meta.pages[0];
+      const currentIndex = Number(meta.currentPageIndex || 0);
+      return meta.pages.find((page) => Number(page?.index) === currentIndex) || meta.pages[0];
+    }
+
+    function getCurrentSubCategory(page = getMainPage()) {
+      const subCategories = Array.isArray(page?.subCategories) ? page.subCategories : [];
+      const currentIndex = Number(meta?.currentMotherSubIndex || 0);
+      return subCategories.find((item) => Number(item?.index) === currentIndex) || subCategories[0] || null;
     }
 
     function renderState() {
@@ -2527,9 +2525,8 @@
       }
       const page = getMainPage();
       const pageName = page ? page.name : "-";
-      const subName = (page && page.subCategories && page.subCategories[meta.currentMotherSubIndex])
-        ? page.subCategories[meta.currentMotherSubIndex].name
-        : "-";
+      const currentSubCategory = getCurrentSubCategory(page);
+      const subName = currentSubCategory ? currentSubCategory.name : "-";
       const subPageText = `${(meta.currentSubPageIndex || 0) + 1}/${Math.max(1, meta.totalSubPages || 1)}`;
       const wallModeText = meta.wall
         ? (meta.wall.mode === "wall" || meta.wall.enabled
@@ -2869,7 +2866,8 @@
       applyHealthCollapsed(readHealthCollapsedPreference());
       initVoiceControls();
       const saved = getWebAppUrl();
-      if (saved) $("gasUrlInput").value = saved;
+      const gasUrlInput = $("gasUrlInput");
+      if (saved && gasUrlInput) gasUrlInput.value = saved;
       restartRemoteMetaPolling();
       reloadMeta();
       startVersionCheck();
