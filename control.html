@@ -1350,7 +1350,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260812-navigation-fix";
+    const APP_VERSION = "display-product-filter-control-20260812-wall-sync-fix";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1416,6 +1416,8 @@
     function buildDisplayWallUrl(screen) {
       const url = new URL("index.html", window.location.href);
       url.searchParams.set("wallMode", "wall");
+      url.searchParams.set("sync", "1");
+      url.searchParams.set("syncScope", "all");
       url.searchParams.set("screens", "2");
       url.searchParams.set("screen", String(screen));
       url.searchParams.set("_fresh", APP_VERSION);
@@ -1701,11 +1703,13 @@
       const createdAt = Date.now();
       const sourceId = getControlClientId();
       const commandId = `${createdAt}-${sourceId}-${Math.random().toString(16).slice(2, 8)}`;
+      const navigationAction = ["next", "prev", "goMain", "goSub", "goSubPage"].includes(action);
       lastIssuedCommandAt = createdAt;
       const cmd = {
         id: commandId,
         dedupeKey: commandId,
         createdAt,
+        applyAt: navigationAction ? createdAt + 2500 : 0,
         sourceId,
         source: "control",
         action,
