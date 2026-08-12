@@ -1,10 +1,12 @@
 const KEY_META = 'TV_DISPLAY_META_V1';
 const KEY_CMD = 'TV_DISPLAY_CMD_V1';
+const KEY_CMD_HISTORY = 'TV_DISPLAY_CMD_HISTORY_V1';
 const KEY_SHEET_ID = 'TV_DISPLAY_SHEET_ID';
 const KEY_AUTH_TOKEN = 'TV_DISPLAY_AUTH_TOKEN';
 const KEY_ALLOWED_SHEET_IDS = 'TV_DISPLAY_ALLOWED_SHEET_IDS';
 const DEFAULT_SPREADSHEET_ID = '166Ija7H3Dal4qA4ZokEJVEBXGY1BhW1DWb1pIXw_OgI';
 const HIDDEN_SHEET_NAMES = ['price'];
+const GAS_CACHE_TTL_SECONDS = 30;
 
 function doGet(e) {
   const mode = ((e && e.parameter && e.parameter.mode) || '').trim();
@@ -18,7 +20,10 @@ function doGet(e) {
   if (mode === 'pull_meta') {
     const metaRaw = PropertiesService.getScriptProperties().getProperty(KEY_META);
     const meta = safeParseJson_(metaRaw, null);
-    return asJsonp(callback, { ok: true, meta: withLiveSheetPages_(meta, sheetId) });
+    // Keep the control heartbeat fast. The display already publishes the
+    // current page list in meta; scanning the spreadsheet here can block the
+    // request long enough for the control page's JSONP timeout to expire.
+    return asJsonp(callback, { ok: true, meta: meta });
   }
 
   if (mode === 'pull_sheet_pages') {
@@ -40,13 +45,14 @@ function doGet(e) {
 
   if (mode === 'pull_command') {
     const lastId = ((e && e.parameter && e.parameter.lastId) || '').trim();
-    const cmdRaw = PropertiesService.getScriptProperties().getProperty(KEY_CMD);
-    const cmd = safeParseJson_(cmdRaw, null);
-
-    if (!cmd || !cmd.id || cmd.id === lastId) {
+    const properties = PropertiesService.getScriptProperties();
+    const current = safeParseJson_(properties.getProperty(KEY_CMD), null);
+    // Multi-device controls must always receive the newest command.
+    // Replaying history makes the display process stale commands one by one.
+    if (!current || !current.id || current.id === lastId) {
       return asJsonp(callback, { ok: true, command: null });
     }
-    return asJsonp(callback, { ok: true, command: cmd });
+    return asJsonp(callback, { ok: true, command: current });
   }
 
   return asJsonp(callback, { ok: false, error: 'invalid mode' });
@@ -62,36 +68,74 @@ function doPost(e) {
     }
 
     if (mode === 'push_meta') {
-      if (body.sheetId) {
+      const lock = LockService.getScriptLock();
+      if (!lock.tryLock(3000)) {
+        return asJson({ ok: false, error: 'busy' });
+      }
+
+      try {
+        if (body.sheetId) {
+          const nextSheetId = normalizeSpreadsheetId_(body.sheetId);
+          if (!isAllowedSpreadsheetId_(nextSheetId)) {
+            return asJson({ ok: false, error: 'sheet id not allowed' });
+          }
+          PropertiesService.getScriptProperties().setProperty(KEY_SHEET_ID, nextSheetId);
+        }
+        PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(body.meta || null));
+        return asJson({ ok: true });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
+    if (mode === 'push_command') {
+      const lock = LockService.getScriptLock();
+      if (!lock.tryLock(3000)) {
+        return asJson({ ok: false, error: 'busy' });
+      }
+
+      try {
+        const nextCommand = body.command || null;
+        const properties = PropertiesService.getScriptProperties();
+        const currentCommand = safeParseJson_(properties.getProperty(KEY_CMD), null);
+        const history = safeParseJson_(properties.getProperty(KEY_CMD_HISTORY), []);
+
+        // Retries from an older control device must never overwrite a newer
+        // command that arrived after it. Command id is the retry identity.
+        if (nextCommand && nextCommand.id && Array.isArray(history) && history.some(function(item) {
+          return item && item.id === nextCommand.id;
+        })) {
+          return asJson({ ok: true, ignored: true, reason: 'duplicate command' });
+        }
+
+        if (!shouldStoreCommand_(currentCommand, nextCommand)) {
+          return asJson({ ok: true, ignored: true, reason: 'duplicate or older command' });
+        }
+
+        properties.setProperty(KEY_CMD, JSON.stringify(nextCommand));
+        appendCommandHistory_(properties, nextCommand);
+        return asJson({ ok: true, ignored: false });
+      } finally {
+        lock.releaseLock();
+      }
+    }
+
+    if (mode === 'set_sheet_id') {
+      const lock = LockService.getScriptLock();
+      if (!lock.tryLock(3000)) {
+        return asJson({ ok: false, error: 'busy' });
+      }
+
+      try {
         const nextSheetId = normalizeSpreadsheetId_(body.sheetId);
         if (!isAllowedSpreadsheetId_(nextSheetId)) {
           return asJson({ ok: false, error: 'sheet id not allowed' });
         }
         PropertiesService.getScriptProperties().setProperty(KEY_SHEET_ID, nextSheetId);
+        return asJson({ ok: true });
+      } finally {
+        lock.releaseLock();
       }
-      PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(body.meta || null));
-      return asJson({ ok: true });
-    }
-
-    if (mode === 'push_command') {
-      const nextCommand = body.command || null;
-      const currentCommand = safeParseJson_(PropertiesService.getScriptProperties().getProperty(KEY_CMD), null);
-
-      if (!shouldStoreCommand_(currentCommand, nextCommand)) {
-        return asJson({ ok: true, ignored: true, reason: 'older command' });
-      }
-
-      PropertiesService.getScriptProperties().setProperty(KEY_CMD, JSON.stringify(nextCommand));
-      return asJson({ ok: true, ignored: false });
-    }
-
-    if (mode === 'set_sheet_id') {
-      const nextSheetId = normalizeSpreadsheetId_(body.sheetId);
-      if (!isAllowedSpreadsheetId_(nextSheetId)) {
-        return asJson({ ok: false, error: 'sheet id not allowed' });
-      }
-      PropertiesService.getScriptProperties().setProperty(KEY_SHEET_ID, nextSheetId);
-      return asJson({ ok: true });
     }
 
     return asJson({ ok: false, error: 'invalid mode' });
@@ -145,12 +189,24 @@ function getLiveSheetPages_(sheetId) {
   const spreadsheetId = getSpreadsheetId_(sheetId);
   if (!spreadsheetId) return [];
 
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'pages:' + spreadsheetId;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    const cachedPages = safeParseJson_(cached, null);
+    if (Array.isArray(cachedPages)) return cachedPages;
+  }
+
   try {
-    return SpreadsheetApp
+    const pages = SpreadsheetApp
       .openById(spreadsheetId)
       .getSheets()
       .map(function(sheet) { return sheet.getName(); })
       .filter(function(name) { return isDisplaySheetName_(name); });
+    try {
+      cache.put(cacheKey, JSON.stringify(pages), GAS_CACHE_TTL_SECONDS);
+    } catch (cacheErr) {}
+    return pages;
   } catch (err) {
     return [];
   }
@@ -161,6 +217,14 @@ function getSheetRows_(sheetId, sheetName) {
   if (!spreadsheetId) return { ok: false, rows: [], error: 'missing spreadsheet id' };
   if (!sheetName) return { ok: false, rows: [], error: 'missing sheet name' };
 
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'rows:' + spreadsheetId + ':' + encodeURIComponent(sheetName);
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    const cachedRows = safeParseJson_(cached, null);
+    if (Array.isArray(cachedRows)) return { ok: true, rows: cachedRows, error: '' };
+  }
+
   try {
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
     const sheet = spreadsheet.getSheetByName(sheetName);
@@ -170,11 +234,15 @@ function getSheetRows_(sheetId, sheetName) {
     if (!lastRow) return { ok: true, rows: [], error: '' };
 
     const maxCols = Math.min(Math.max(sheet.getLastColumn(), 1), 8);
-    return {
+    const result = {
       ok: true,
       rows: sheet.getRange(1, 1, lastRow, maxCols).getDisplayValues(),
       error: ''
     };
+    try {
+      cache.put(cacheKey, JSON.stringify(result.rows), GAS_CACHE_TTL_SECONDS);
+    } catch (cacheErr) {}
+    return result;
   } catch (err) {
     return { ok: false, rows: [], error: String(err) };
   }
@@ -192,7 +260,9 @@ function getSpreadsheetId_(sheetId) {
 }
 
 function normalizeSpreadsheetId_(value) {
-  return String(value || '').trim();
+  const raw = String(value || '').trim();
+  const match = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : raw;
 }
 
 function getRequestToken_(e) {
@@ -248,16 +318,31 @@ function getCommandCreatedAt_(command) {
 }
 
 function shouldStoreCommand_(currentCommand, nextCommand) {
-  if (!nextCommand) return true;
+  if (!nextCommand || !nextCommand.action) return false;
 
-  const currentCreatedAt = getCommandCreatedAt_(currentCommand);
-  const nextCreatedAt = getCommandCreatedAt_(nextCommand);
-
-  if (currentCreatedAt && nextCreatedAt && nextCreatedAt < currentCreatedAt) {
+  if (currentCommand && currentCommand.id && nextCommand.id && currentCommand.id === nextCommand.id) {
     return false;
   }
-
+  // Arrival order on the server is authoritative. Client clocks can differ
+  // across phones, PCs, and TVs, so createdAt must not reject a real click.
   return true;
+}
+
+function appendCommandHistory_(properties, command) {
+  if (!command || !command.id) return;
+
+  const history = safeParseJson_(
+    properties.getProperty(KEY_CMD_HISTORY),
+    []
+  );
+  const nextHistory = Array.isArray(history) ? history : [];
+
+  if (!nextHistory.some(function(item) { return item && item.id === command.id; })) {
+    nextHistory.push(command);
+  }
+
+  while (nextHistory.length > 30) nextHistory.shift();
+  properties.setProperty(KEY_CMD_HISTORY, JSON.stringify(nextHistory));
 }
 
 function isDisplaySheetName_(name) {
