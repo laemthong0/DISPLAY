@@ -5360,11 +5360,11 @@
     const HIDDEN_SHEET_NAMES = new Set(["price", "ปาล์มใหญ่"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const WALL_MULTI_SCREEN_MIN_ITEMS = 4;
-    const REMOTE_CONTROL_POLL_MS = 500;
+    const REMOTE_CONTROL_POLL_MS = 300;
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-  const APP_VERSION = "display-product-filter-control-20260812-hide-palm-large";
+  const APP_VERSION = "display-product-filter-control-20260812-latest-command-fast-sync-v2";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5987,13 +5987,20 @@
         const callbackName = `tvJsonp_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
         const script = document.createElement("script");
         const timer = setTimeout(() => {
-          cleanup();
+          cleanup(true);
           reject(new Error("jsonp timeout"));
         }, timeoutMs);
 
-        const cleanup = () => {
+        const cleanup = (lateResponseSafe = false) => {
           clearTimeout(timer);
-          if (window[callbackName]) delete window[callbackName];
+          if (lateResponseSafe) {
+            window[callbackName] = () => {};
+            setTimeout(() => {
+              if (window[callbackName]) delete window[callbackName];
+            }, 10000);
+          } else if (window[callbackName]) {
+            delete window[callbackName];
+          }
           if (script.parentNode) script.parentNode.removeChild(script);
         };
 
@@ -7529,21 +7536,11 @@ function render() {
       if (!command || !commandKey) return false;
 
       const now = Date.now();
-      const commandCreatedAt = getRemoteCommandCreatedAt(command);
-
-      if (
-        commandCreatedAt > 0 &&
-        lastAcceptedRemoteCommandAt > 0 &&
-        commandCreatedAt + REMOTE_COMMAND_STALE_GRACE_MS < lastAcceptedRemoteCommandAt
-      ) {
-        return false;
-      }
-
       pruneRemoteCommandKeys(now);
       if (seenRemoteCommandKeys.has(commandKey)) return false;
 
       seenRemoteCommandKeys.set(commandKey, now);
-      lastAcceptedRemoteCommandAt = Math.max(lastAcceptedRemoteCommandAt, commandCreatedAt || now);
+      lastAcceptedRemoteCommandAt = now;
       lastRemoteCommandId = clean(command.id) || commandKey;
       handleRemoteCommand(command);
       return true;
@@ -7587,7 +7584,7 @@ function render() {
         mode: "pull_command",
         screen: "display",
         lastId: lastRemoteCommandId || ""
-      }, 4500).then((res) => {
+      }, 1600).then((res) => {
         if (!res || !res.ok || !res.command) return;
         acceptRemoteCommand(res.command);
       }).catch(() => {
