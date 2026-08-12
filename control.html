@@ -1348,10 +1348,9 @@
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
-    const REMOTE_META_POLL_MS = 1000;
+    const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const NAVIGATION_PENDING_MS = 2500;
-    const APP_VERSION = "display-navigation-fast-control-20260805";
+    const APP_VERSION = "display-product-filter-control-20260812-navigation-fix";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1393,8 +1392,6 @@
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
     let autoPlayAckTimer = null;
-    let pendingNavigation = null;
-    let navigationAckTimer = null;
     let lastIssuedCommandAt = 0;
     let voiceRecognition = null;
     let voiceListening = false;
@@ -1625,113 +1622,8 @@
       scheduleAutoPlayAckCheck();
     }
 
-    function normalizeCommandIndex(value, fallback = 0) {
-      const number = Number(value);
-      return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : fallback;
-    }
-
-    function isPendingNavigationActive() {
-      return pendingNavigation && Date.now() - pendingNavigation.at < NAVIGATION_PENDING_MS;
-    }
-
-    function clearNavigationAckTimer() {
-      if (navigationAckTimer) {
-        clearTimeout(navigationAckTimer);
-        navigationAckTimer = null;
-      }
-    }
-
-    function navigationMatchesMeta(metaPayload, pending = pendingNavigation) {
-      if (!metaPayload || !pending) return false;
-      if (Number(metaPayload.currentPageIndex) !== pending.pageIndex) return false;
-      if (pending.subIndex !== null && Number(metaPayload.currentMotherSubIndex) !== pending.subIndex) return false;
-      if (pending.subPageIndex !== null && Number(metaPayload.currentSubPageIndex) !== pending.subPageIndex) return false;
-      return true;
-    }
-
-    function scheduleNavigationAckCheck() {
-      clearNavigationAckTimer();
-      navigationAckTimer = setTimeout(() => {
-        navigationAckTimer = null;
-        if (!isPendingNavigationActive()) {
-          pendingNavigation = null;
-          reloadMeta();
-        }
-      }, NAVIGATION_PENDING_MS + 150);
-    }
-
-    function setPendingNavigation(pageIndex, subIndex = null, subPageIndex = null, options = {}) {
-      const normalizedPageIndex = normalizeCommandIndex(pageIndex, 0);
-      const normalizedSubIndex = subIndex === null ? null : normalizeCommandIndex(subIndex, 0);
-      const normalizedSubPageIndex = subPageIndex === null ? null : normalizeCommandIndex(subPageIndex, 0);
-
-      pendingNavigation = {
-        pageIndex: normalizedPageIndex,
-        subIndex: normalizedSubIndex,
-        subPageIndex: normalizedSubPageIndex,
-        at: Date.now()
-      };
-
-      if (meta) {
-        meta = {
-          ...meta,
-          currentPageIndex: normalizedPageIndex,
-          currentMotherSubIndex: normalizedSubIndex === null
-            ? Number(meta.currentMotherSubIndex || 0)
-            : normalizedSubIndex,
-          currentSubPageIndex: normalizedSubPageIndex === null
-            ? Number(meta.currentSubPageIndex || 0)
-            : normalizedSubPageIndex,
-          totalSubPages: options.resetSubPages ? 1 : Math.max(1, Number(meta.totalSubPages || 1))
-        };
-      }
-
-      render();
-      scheduleNavigationAckCheck();
-    }
-
-    function sendNavigationCommand(action, pageIndex, subIndex = null, subPageIndex = null, extra = {}, options = {}) {
-      const normalizedPageIndex = normalizeCommandIndex(pageIndex, 0);
-      const normalizedSubIndex = subIndex === null ? null : normalizeCommandIndex(subIndex, 0);
-      const normalizedSubPageIndex = subPageIndex === null ? null : normalizeCommandIndex(subPageIndex, 0);
-
-      setPendingNavigation(
-        normalizedPageIndex,
-        normalizedSubIndex,
-        normalizedSubPageIndex,
-        options
-      );
-
-      sendCommand(action, {
-        pageIndex: normalizedPageIndex,
-        ...(normalizedSubIndex === null ? {} : { subIndex: normalizedSubIndex }),
-        ...(normalizedSubPageIndex === null ? {} : { subPageIndex: normalizedSubPageIndex }),
-        ...extra
-      });
-    }
-
     function applyMeta(nextMeta) {
       if (!nextMeta) return;
-
-      if (pendingNavigation) {
-        if (navigationMatchesMeta(nextMeta)) {
-          pendingNavigation = null;
-          clearNavigationAckTimer();
-        } else if (isPendingNavigationActive() && meta) {
-          meta = {
-            ...nextMeta,
-            currentPageIndex: meta.currentPageIndex,
-            currentMotherSubIndex: meta.currentMotherSubIndex,
-            currentSubPageIndex: meta.currentSubPageIndex,
-            totalSubPages: meta.totalSubPages
-          };
-          render();
-          return;
-        } else {
-          pendingNavigation = null;
-          clearNavigationAckTimer();
-        }
-      }
 
       const currentUpdatedAt = Number(meta?.updatedAt || 0);
       const nextUpdatedAt = Number(nextMeta.updatedAt || 0);
@@ -1832,29 +1724,44 @@
         command: cmd
       });
 
-      // เดิมยิงคำสั่งเดิม 5-7 รอบ ทำให้ next/prev มีโอกาสข้ามหลายหน้า
-      // เปลี่ยนเป็นส่งครั้งเดียวด้วย fetch และใช้ beacon เฉพาะตอน fetch เริ่มไม่ได้
-      try {
-        fetch(endpoint, {
-          method: "POST",
-          mode: "no-cors",
-          cache: "no-store",
-          keepalive: true,
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: payload
-        }).catch(() => {
-          try {
-            if (!navigator.sendBeacon) return;
-            const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
-            navigator.sendBeacon(endpoint, blob);
-          } catch {}
-        });
-      } catch {
+      // ส่งซ้ำช่วงสั้น ๆ เพื่อกันคำสั่งหลุดบน WebView/เครือข่ายทีวี
+      // ทุกครั้งใช้ command id เดิม จอจึง dedupe และไม่ข้ามหลายหน้า
+      const isCurrentCommand = () => createdAt >= lastIssuedCommandAt;
+      const sendOnce = () => {
+        if (!isCurrentCommand()) return;
+
         try {
-          if (!navigator.sendBeacon) return;
-          const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
-          navigator.sendBeacon(endpoint, blob);
+          if (navigator.sendBeacon) {
+            const blob = new Blob([payload], { type: "text/plain;charset=utf-8" });
+            if (navigator.sendBeacon(endpoint, blob)) return;
+          }
         } catch {}
+
+        try {
+          fetch(endpoint, {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-store",
+            keepalive: true,
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: payload
+          }).catch(() => {});
+        } catch {}
+      };
+
+      [0, 120, 260, 700, 1200].forEach((delay) => {
+        if (delay === 0) sendOnce();
+        else setTimeout(sendOnce, delay);
+      });
+
+      if (action === "refresh") {
+        [180, 520, 1100].forEach((delay) => {
+          setTimeout(() => {
+            if (isCurrentCommand()) {
+              postLocalCommand({ ...cmd, id: `${cmd.id}-local-${delay}` });
+            }
+          }, delay);
+        });
       }
     }
 
@@ -2198,14 +2105,10 @@
       if (!target) return false;
 
       if (target.type === "sub" && target.page && target.subCategory) {
-        sendNavigationCommand(
-          "goSub",
-          target.page.index,
-          target.subCategory.index,
-          0,
-          { pageName: target.page.name, subName: target.subCategory.name },
-          { resetSubPages: true }
-        );
+        sendCommand("goSub", {
+          pageIndex: target.page.index,
+          subIndex: target.subCategory.index
+        });
         const message = `คำสั่งเสียง: ${target.page.name} / ${target.subCategory.name}`;
         setHint(message);
         setVoiceStatus(message);
@@ -2213,14 +2116,7 @@
       }
 
       if (target.type === "page" && target.page) {
-        sendNavigationCommand(
-          "goMain",
-          target.page.index,
-          0,
-          0,
-          { pageName: target.page.name },
-          { resetSubPages: true }
-        );
+        sendCommand("goMain", { pageIndex: target.page.index });
         const message = `คำสั่งเสียง: ${target.page.name}`;
         setHint(message);
         setVoiceStatus(message);
@@ -2303,12 +2199,11 @@
       if (!number || number < 1 || number > total) return false;
 
       const page = getMainPage();
-      sendNavigationCommand(
-        "goSubPage",
-        page ? page.index : 0,
-        Number(meta.currentMotherSubIndex || 0),
-        number - 1
-      );
+      sendCommand("goSubPage", {
+        pageIndex: page ? page.index : 0,
+        subIndex: Number(meta.currentMotherSubIndex || 0),
+        subPageIndex: number - 1
+      });
       const message = `คำสั่งเสียง: ไปหน้า ${number}`;
       setHint(message);
       setVoiceStatus(message);
@@ -2395,14 +2290,7 @@
         const subCategory = findSubCategoryByVoice(text);
         const page = getMainPage();
         if (subCategory && page) {
-          sendNavigationCommand(
-            "goSub",
-            page.index,
-            subCategory.index,
-            0,
-            { pageName: page.name, subName: subCategory.name },
-            { resetSubPages: true }
-          );
+          sendCommand("goSub", { pageIndex: page.index, subIndex: subCategory.index });
           const message = `คำสั่งเสียง: ${subCategory.name}`;
           setHint(message);
           setVoiceStatus(message);
@@ -2418,15 +2306,8 @@
       if (/หมวดหลัก|หมวด/.test(compact)) {
         const page = findMainPageByVoice(text);
         if (page) {
-          sendNavigationCommand(
-            "goMain",
-            page.index,
-            0,
-            0,
-            { pageName: page.name },
-            { resetSubPages: true }
-          );
-          const message = `คำสั่งเสียง: หมวด ${Number(page.index) + 1}`;
+          sendCommand("goMain", { pageIndex: page.index });
+          const message = `คำสั่งเสียง: หมวด ${page.index + 1}`;
           setHint(message);
           setVoiceStatus(message);
           return finish(true);
@@ -2821,22 +2702,11 @@
       grid.innerHTML = "";
       if (!meta || !Array.isArray(meta.pages)) return;
 
-      meta.pages.forEach((p, position) => {
-        const pageIndex = normalizeCommandIndex(p?.index, position);
+      meta.pages.forEach((p) => {
         const btn = document.createElement("button");
-        btn.className = "btn" + (pageIndex === Number(meta.currentPageIndex) ? " active" : "");
-        btn.textContent = `${pageIndex + 1}. ${p.name}`;
-        btn.onclick = () => {
-          sendNavigationCommand(
-            "goMain",
-            pageIndex,
-            0,
-            0,
-            { pageName: p.name },
-            { resetSubPages: true }
-          );
-          setHint(`กำลังเปิดหมวด: ${p.name}`);
-        };
+        btn.className = "btn" + (p.index === meta.currentPageIndex ? " active" : "");
+        btn.textContent = `${p.index + 1}. ${p.name}`;
+        btn.onclick = () => sendCommand("goMain", { pageIndex: p.index });
         grid.appendChild(btn);
       });
     }
@@ -2856,23 +2726,11 @@
         return;
       }
 
-      subCategories.forEach((s, position) => {
-        const pageIndex = normalizeCommandIndex(page?.index, Number(meta.currentPageIndex || 0));
-        const subIndex = normalizeCommandIndex(s?.index, position);
+      subCategories.forEach((s) => {
         const btn = document.createElement("button");
-        btn.className = "btn" + (subIndex === Number(meta.currentMotherSubIndex) ? " active" : "");
-        btn.textContent = `${subIndex + 1}. ${s.name}`;
-        btn.onclick = () => {
-          sendNavigationCommand(
-            "goSub",
-            pageIndex,
-            subIndex,
-            0,
-            { pageName: page.name, subName: s.name },
-            { resetSubPages: true }
-          );
-          setHint(`กำลังเปิด: ${page.name} / ${s.name}`);
-        };
+        btn.className = "btn" + (s.index === meta.currentMotherSubIndex ? " active" : "");
+        btn.textContent = `${s.index + 1}. ${s.name}`;
+        btn.onclick = () => sendCommand("goSub", { pageIndex: page.index, subIndex: s.index });
         grid.appendChild(btn);
       });
     }
@@ -2890,10 +2748,11 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (i === Number(meta.currentSubPageIndex || 0) ? " active" : "");
         btn.textContent = `หน้า ${i + 1}`;
-        btn.onclick = () => {
-          sendNavigationCommand("goSubPage", pageIndex, subIndex, i);
-          setHint(`กำลังเปิดหน้าย่อย ${i + 1}`);
-        };
+        btn.onclick = () => sendCommand("goSubPage", {
+          pageIndex,
+          subIndex,
+          subPageIndex: i
+        });
         grid.appendChild(btn);
       }
     }
