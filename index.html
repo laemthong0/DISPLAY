@@ -5355,6 +5355,7 @@
     const WALL_SCREEN_KEY = "tv-display-wall-screen-v1";
     const WALL_SCREENS_KEY = "tv-display-wall-screens-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
+    const DISPLAY_STATE_KEY = "tv-display-current-state-v1";
     const SHEET_PRODUCTS_CACHE_KEY = "tv-display-sheet-products-cache-v1";
     const SHEET_FALLBACK_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
     const HIDDEN_SHEET_NAMES = new Set(["price"]);
@@ -5364,8 +5365,10 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-product-filter-control-20260812-manual-pages-only";
+    const APP_VERSION = "display-product-filter-control-20260812-stability-fix";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+    const GAS_RETRY_ATTEMPTS = 3;
+    const GAS_RETRY_DELAY_MS = 650;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
 
@@ -5402,8 +5405,10 @@
     }
 
     let data = loadData();
-    let currentPageIndex = getPrimarySheetPageIndex(data.sheetPages);
-    let currentSubPageIndex = 0;
+    const savedDisplayState = readSavedDisplayState(data.sheetPages);
+    let currentPageIndex = savedDisplayState?.pageIndex ?? getPrimarySheetPageIndex(data.sheetPages);
+    let currentSubPageIndex = savedDisplayState?.subPageIndex ?? 0;
+    currentMotherSubIndex = savedDisplayState?.motherSubIndex ?? currentMotherSubIndex;
     let productsCache = {};
     let sheetTimer = null;
     let pageTimer = null;
@@ -5432,9 +5437,56 @@
     let lastDisplayedProductCount = 0;
     let lastDisplayedSpecialCount = 0;
     let productFilterQuery = "";
+    const sheetLoadInFlight = new Map();
 
     function clean(value) {
       return String(value ?? "").trim();
+    }
+
+    function readSavedDisplayState(sheetPages) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DISPLAY_STATE_KEY) || "null");
+        if (!saved || !Array.isArray(sheetPages)) return null;
+        const pageIndex = sheetPages.findIndex((name) => normalizeSheetName(name) === normalizeSheetName(saved.pageName));
+        if (pageIndex < 0) return null;
+        return {
+          pageIndex,
+          subPageIndex: Math.max(0, Number(saved.subPageIndex) || 0),
+          motherSubIndex: Math.max(0, Number(saved.motherSubIndex) || 0)
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function saveDisplayState() {
+      try {
+        localStorage.setItem(DISPLAY_STATE_KEY, JSON.stringify({
+          pageName: data.sheetPages[currentPageIndex] || "",
+          subPageIndex: currentSubPageIndex,
+          motherSubIndex: currentMotherSubIndex,
+          savedAt: Date.now()
+        }));
+      } catch {
+        // State persistence is optional on locked-down TV browsers.
+      }
+    }
+
+    function waitMs(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function withRetry(task, attempts = GAS_RETRY_ATTEMPTS) {
+      let lastError = null;
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          return await task();
+        } catch (err) {
+          lastError = err;
+          if (attempt < attempts) await waitMs(GAS_RETRY_DELAY_MS * attempt);
+        }
+      }
+      throw lastError || new Error("request failed");
     }
 
     function normalizeSheetName(value) {
@@ -6450,7 +6502,9 @@ function render() {
     async function loadSheetData(pageIdx) {
       const sheetName = data.sheetPages[pageIdx];
       if (!data.sheetId) return;
-      const isCurrentPage = pageIdx === currentPageIndex;
+      if (!sheetName || sheetLoadInFlight.has(sheetName)) return;
+      sheetLoadInFlight.set(sheetName, true);
+      let isCurrentPage = pageIdx === currentPageIndex;
       let hadProductsCache = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
 
       if (!hadProductsCache) {
@@ -6482,7 +6536,9 @@ function render() {
           $("sheetStatus").classList.remove("error");
         }
 
+        isCurrentPage = pageIdx === currentPageIndex;
         const rows = await fetchSheetRows(data.sheetId, sheetName);
+        isCurrentPage = pageIdx === currentPageIndex;
         const nextProducts = parseRows(rows);
         const productsChanged = getProductsDataSignature(productsCache[sheetName]) !== getProductsDataSignature(nextProducts);
 
@@ -6511,6 +6567,7 @@ function render() {
         }
       } catch (err) {
         console.error(err);
+        isCurrentPage = pageIdx === currentPageIndex;
         sheetLoadErrors[sheetName] = true;
         lastSheetLoadAt = Date.now();
         lastSheetLoadOk = false;
@@ -6525,6 +6582,8 @@ function render() {
           $("sheetStatus").classList.toggle("error", !hadProductsCache);
           if (!hadProductsCache) render();
         }
+      } finally {
+        sheetLoadInFlight.delete(sheetName);
       }
     }
 
@@ -6533,13 +6592,16 @@ function render() {
       if (!endpoint || !sheetId || !sheetName) return null;
 
       try {
-        const res = await runJsonp(endpoint, {
+        const res = await withRetry(() => runJsonp(endpoint, {
           mode: "pull_sheet_rows",
           sheetId,
           sheetName
-        }, 8000);
+        }, 9000));
 
-        return res?.ok && Array.isArray(res.rows) ? res.rows : null;
+        if (!res?.ok || !Array.isArray(res.rows)) {
+          throw new Error(res?.error || "GAS returned no rows");
+        }
+        return res.rows;
       } catch (err) {
         return null;
       }
@@ -6593,7 +6655,7 @@ function render() {
     async function fetchSheetRows(sheetId, sheetName) {
       const remoteRows = await fetchRowsFromRemote(sheetId, sheetName);
       if (remoteRows) return remoteRows;
-      return fetchJsonp(sheetId, sheetName);
+      return withRetry(() => fetchJsonp(sheetId, sheetName), 2);
     }
 
     function parseRows(rows) {
@@ -7084,6 +7146,7 @@ function render() {
       const itemsPerPage = getItemsPerPage(count || 0);
       const totalSubPages = Math.max(1, Math.ceil((count || 0) / itemsPerPage));
       currentSubPageIndex = direction < 0 ? Math.max(0, totalSubPages - 1) : 0;
+      saveDisplayState();
 
       render();
       loadSheetData(currentPageIndex);
@@ -7220,6 +7283,7 @@ function render() {
           currentPageIndex = pendingNumericMainIndex;
           currentMotherSubIndex = idx;
           currentSubPageIndex = 0;
+          saveDisplayState();
           render();
           loadSheetData(currentPageIndex);
           restartPageTimer();
@@ -7238,6 +7302,8 @@ function render() {
       currentPageIndex = idx;
       currentSubPageIndex = 0;
       currentMotherSubIndex = 0;
+      saveDisplayState();
+      saveDisplayState();
 
       render();
       loadSheetData(currentPageIndex);
@@ -7322,6 +7388,7 @@ function render() {
       currentPageIndex = pageIndex;
       currentMotherSubIndex = safeMotherSub;
       currentSubPageIndex = safeSubPage;
+      saveDisplayState();
       render();
       loadSheetData(currentPageIndex);
       restartPageTimer();
@@ -7531,6 +7598,14 @@ function render() {
       remoteControlPollTimer = setInterval(pullRemoteCommand, REMOTE_CONTROL_POLL_MS);
     }
 
+    async function loadRemainingSheetsSequentially(loopId, currentIdx) {
+      for (let i = 0; i < data.sheetPages.length; i++) {
+        if (loopId !== startLoopsRunId) return;
+        if (i === currentIdx) continue;
+        await loadSheetData(i);
+      }
+    }
+
     async function startLoops() {
       const loopId = ++startLoopsRunId;
       if (sheetTimer) clearInterval(sheetTimer);
@@ -7539,18 +7614,12 @@ function render() {
       if (loopId !== startLoopsRunId) return;
       if (changedPages) render();
 
-      loadSheetData(currentPageIndex);
-
-      data.sheetPages.forEach((_, i) => {
-        if (i !== currentPageIndex) loadSheetData(i);
-      });
+      await loadSheetData(currentPageIndex);
+      if (loopId !== startLoopsRunId) return;
+      loadRemainingSheetsSequentially(loopId, currentPageIndex);
 
       sheetTimer = setInterval(() => {
         loadSheetData(currentPageIndex);
-
-        data.sheetPages.forEach((_, i) => {
-          if (i !== currentPageIndex) loadSheetData(i);
-        });
       }, getSheetRefreshMs());
 
       restartPageTimer();
