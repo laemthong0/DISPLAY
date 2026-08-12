@@ -1283,16 +1283,6 @@
         </div>
       </section>
 
-      <section class="card autoplay-card">
-        <div class="section-title">
-          <b>สลับหน้าอัตโนมัติ</b>
-          <span class="muted" id="autoPlayLabel">รอข้อมูลจอหลัก</span>
-        </div>
-        <div class="mode-actions">
-          <button class="btn" id="btnAutoPlayOn" type="button">เปิด</button>
-          <button class="btn" id="btnAutoPlayOff" type="button">ปิด</button>
-        </div>
-      </section>
     </div>
 
     <section class="card health-card" id="healthCard">
@@ -1350,7 +1340,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260812-wall-sync-fix";
+    const APP_VERSION = "display-product-filter-control-20260812-manual-pages-only";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2177,6 +2167,7 @@
     }
 
     function sendVoiceAutoPlay(enabled) {
+      return false;
       const normalized = storeAutoPlayPreference(enabled);
       setPendingAutoPlay(normalized);
       renderAutoPlayButtons();
@@ -2683,6 +2674,7 @@
     }
 
     function renderAutoPlayButtons() {
+      return;
       const enabled = getAutoPlayFromMeta();
       const onBtn = $("btnAutoPlayOn");
       const offBtn = $("btnAutoPlayOff");
@@ -2766,7 +2758,6 @@
       renderHealth();
       renderProductFilterControls();
       renderModeButtons();
-      renderAutoPlayButtons();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -2841,21 +2832,6 @@
       sendCommand("setWallMode", { mode: "wall" });
       setHint("สั่งแสดง2จอแล้ว");
     };
-    $("btnAutoPlayOn").onclick = () => {
-      const enabled = storeAutoPlayPreference(true);
-      setPendingAutoPlay(enabled);
-      renderAutoPlayButtons();
-      sendCommand("setAutoPlay", { enabled });
-      setHint("สั่งเปิดสลับหน้าอัตโนมัติแล้ว");
-    };
-    $("btnAutoPlayOff").onclick = () => {
-      const enabled = storeAutoPlayPreference(false);
-      setPendingAutoPlay(enabled);
-      renderAutoPlayButtons();
-      sendCommand("setAutoPlay", { enabled });
-      setHint("สั่งหยุดสลับหน้าอัตโนมัติแล้ว");
-    };
-
     $("btnSaveGasUrl").onclick = () => {
       const url = clean($("gasUrlInput").value);
       if (!validWebAppUrl(url)) {
@@ -2878,7 +2854,6 @@
 
     window.addEventListener("storage", (event) => {
       if (event.key === CONTROL_META_KEY) reloadMeta();
-      if (event.key === AUTO_PLAY_KEY) renderAutoPlayButtons();
     });
 
     (function init() {
