@@ -1290,9 +1290,9 @@
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
-    const REMOTE_META_POLL_MS = 2000;
+    const REMOTE_META_POLL_MS = 1000;
     const AUTO_PLAY_PENDING_MS = 7000;
-  const APP_VERSION = "display-product-filter-control-20260812-hide-palm-large";
+  const APP_VERSION = "display-product-filter-control-20260812-latest-command-fast-sync-v2";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1626,13 +1626,20 @@
         const callbackName = `ctrlJsonp_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
         const script = document.createElement("script");
         const timer = setTimeout(() => {
-          cleanup();
+          cleanup(true);
           reject(new Error("timeout"));
         }, timeoutMs);
 
-        const cleanup = () => {
+        const cleanup = (lateResponseSafe = false) => {
           clearTimeout(timer);
-          if (window[callbackName]) delete window[callbackName];
+          if (lateResponseSafe) {
+            window[callbackName] = () => {};
+            setTimeout(() => {
+              if (window[callbackName]) delete window[callbackName];
+            }, 10000);
+          } else if (window[callbackName]) {
+            delete window[callbackName];
+          }
           if (script.parentNode) script.parentNode.removeChild(script);
         };
 
@@ -1712,7 +1719,7 @@
         } catch {}
       };
 
-      [0, 250, 750, 1500, 3000, 6000].forEach((delay) => {
+      [0, 300, 900].forEach((delay) => {
         if (delay === 0) sendOnce();
         else setTimeout(sendOnce, delay);
       });
@@ -2476,7 +2483,7 @@
 
       return runJsonp(endpoint, {
         mode: "pull_meta"
-      }, 5000)
+      }, 1800)
         .then((res) => {
           if (res && res.ok && res.meta) return res.meta;
           return null;
@@ -2667,7 +2674,10 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (p.index === meta.currentPageIndex ? " active" : "");
         btn.textContent = `${p.index + 1}. ${p.name}`;
-        btn.onclick = () => sendCommand("goMain", { pageIndex: p.index });
+        btn.onclick = () => sendCommand("goMain", {
+          pageIndex: p.index,
+          pageName: p.name
+        });
         grid.appendChild(btn);
       });
     }
@@ -2691,7 +2701,12 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (s.index === meta.currentMotherSubIndex ? " active" : "");
         btn.textContent = `${s.index + 1}. ${s.name}`;
-        btn.onclick = () => sendCommand("goSub", { pageIndex: page.index, subIndex: s.index });
+        btn.onclick = () => sendCommand("goSub", {
+          pageIndex: page.index,
+          pageName: page.name,
+          subIndex: s.index,
+          subName: s.name
+        });
         grid.appendChild(btn);
       });
     }
@@ -2711,7 +2726,11 @@
         btn.textContent = `หน้า ${i + 1}`;
         btn.onclick = () => sendCommand("goSubPage", {
           pageIndex,
+          pageName: page ? page.name : "",
           subIndex,
+          subName: page && Array.isArray(page.subCategories)
+            ? page.subCategories[subIndex]?.name || ""
+            : "",
           subPageIndex: i
         });
         grid.appendChild(btn);
