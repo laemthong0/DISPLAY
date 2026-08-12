@@ -1297,36 +1297,6 @@
     </section>
   </div>
 
-  <div class="voice-widget" id="voiceWidget">
-    <div class="voice-panel" id="voicePanel" hidden>
-      <div class="section-title voice-panel-title">
-        <b>พูดชื่อหมวดหรือคำสั่ง</b>
-        <button class="mini-btn" id="btnVoiceClose" type="button">ปิด</button>
-      </div>
-      <div class="muted" style="font-size: 0.8rem; margin-bottom: 8px;">รองรับภาษาไทยมาตรฐาน • สำเนียงใต้อาจจับคำไม่ครบ</div>
-      <div class="voice-actions">
-        <button class="btn" id="btnVoiceListen" type="button">เริ่มฟังเสียง</button>
-        <button class="btn secondary" id="btnVoiceClear" type="button">ล้าง</button>
-      </div>
-      <div class="voice-status" id="voiceStatus">กดปุ่มควบคุมด้วยเสียง แล้วพูดคำสั่ง</div>
-      <div class="voice-transcript" id="voiceTranscript">ยังไม่มีคำสั่งเสียง</div>
-      <div class="voice-examples" aria-label="ตัวอย่างคำสั่งเสียง">
-        <span class="voice-chip">เปิดปาล์มใหญ่</span>
-        <span class="voice-chip">เปิดแม่ปุ๋ย</span>
-        <span class="voice-chip">เปิด 21-0-0 เม็ด</span>
-        <span class="voice-chip">เปิดยางกรีด</span>
-        <span class="voice-chip">เปิดถัดไป</span>
-        <span class="voice-chip">เปิดก่อนหน้า</span>
-        <span class="voice-chip">เปิดรีเฟรช</span>
-        <span class="voice-chip">เปิดอัตโนมัติ</span>
-        <span class="voice-chip">เปิดหยุดอัตโนมัติ</span>
-      </div>
-    </div>
-    <button class="btn voice-float-button" id="btnVoiceToggle" type="button" aria-expanded="false" aria-controls="voicePanel" aria-pressed="false">
-      <span id="voiceToggleText">🎤 ควบคุมด้วยเสียง</span>
-    </button>
-  </div>
-
   <script>
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
@@ -1340,7 +1310,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260812-manual-pages-only";
+    const APP_VERSION = "display-product-filter-control-20260812-no-voice-control";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2858,7 +2828,6 @@
 
     (function init() {
       applyHealthCollapsed(readHealthCollapsedPreference());
-      initVoiceControls();
       const saved = getWebAppUrl();
       const gasUrlInput = $("gasUrlInput");
       if (saved && gasUrlInput) gasUrlInput.value = saved;
