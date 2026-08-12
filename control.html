@@ -1267,24 +1267,6 @@
       <div class="state" id="stateLine"></div>
     </section>
 
-    <div class="settings-deck">
-      <section class="card mode-card">
-        <div class="section-title">
-          <b>โหมดแสดงจอ</b>
-          <span class="muted" id="wallModeLabel">รอข้อมูลจอหลัก</span>
-        </div>
-        <div class="mode-actions">
-          <button class="btn" id="btnModeSingle" type="button">1 จอ</button>
-          <button class="btn" id="btnModeWall" type="button">2 จอ</button>
-        </div>
-        <div class="wall-open-links" id="wallOpenLinks">
-          <a class="mini-btn" id="wallScreenOneLink" target="_blank" rel="noopener">เปิดจอ 1</a>
-          <a class="mini-btn" id="wallScreenTwoLink" target="_blank" rel="noopener">เปิดจอ 2</a>
-        </div>
-      </section>
-
-    </div>
-
     <section class="card health-card" id="healthCard">
       <div class="section-title">
         <b>สุขภาพระบบทีวี</b>
@@ -1310,7 +1292,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260812-no-voice-control";
+    const APP_VERSION = "display-product-filter-control-20260812-single-screen-only";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2508,11 +2490,7 @@
       const currentSubCategory = getCurrentSubCategory(page);
       const subName = currentSubCategory ? currentSubCategory.name : "-";
       const subPageText = `${(meta.currentSubPageIndex || 0) + 1}/${Math.max(1, meta.totalSubPages || 1)}`;
-      const wallModeText = meta.wall
-        ? (meta.wall.mode === "wall" || meta.wall.enabled
-          ? `2 จอ (${Number(meta.wall.screen || 1)}/${Number(meta.wall.screens || 2)})`
-          : "1 จอ")
-        : "-";
+      const wallModeText = "1 จอ";
       el.innerHTML = `
         <span class="state-item"><small>หมวด</small><b>${escapeHtml(pageName)}</b></span>
         <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
@@ -2727,7 +2705,6 @@
       renderState();
       renderHealth();
       renderProductFilterControls();
-      renderModeButtons();
       renderMainButtons();
       renderSubButtons();
       renderSubPageButtons();
@@ -2790,18 +2767,6 @@
     });
     $("btnReloadMeta").onclick = reloadMeta;
     $("btnToggleHealth").onclick = toggleHealthCollapsed;
-    $("btnModeSingle").onclick = () => {
-      storeWallModePreference("single");
-      renderModeButtons();
-      sendCommand("setWallMode", { mode: "single" });
-      setHint("สั่งแสดง1จอแล้ว");
-    };
-    $("btnModeWall").onclick = () => {
-      storeWallModePreference("wall");
-      renderModeButtons();
-      sendCommand("setWallMode", { mode: "wall" });
-      setHint("สั่งแสดง2จอแล้ว");
-    };
     $("btnSaveGasUrl").onclick = () => {
       const url = clean($("gasUrlInput").value);
       if (!validWebAppUrl(url)) {
