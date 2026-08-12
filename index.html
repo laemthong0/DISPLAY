@@ -5299,7 +5299,6 @@
 
   <script>
     const DEFAULT_SHEET_PAGES = [
-      "ปาล์มใหญ่",
       "แม่ปุ๋ย",
       "ปุ๋ยปาล์ม",
       "ปุ๋ยยาง",
@@ -5311,7 +5310,7 @@
     ];
 
     const MOTHER_SHEET_NAME = "แม่ปุ๋ย";
-    const PRIMARY_SHEET_NAME = "ปาล์มใหญ่";
+    const PRIMARY_SHEET_NAME = "แม่ปุ๋ย";
     const RUBBER_SHEET_NAME = "ปุ๋ยยาง";
 
     const MOTHER_SUBCATEGORIES = [
@@ -5358,14 +5357,14 @@
     const DISPLAY_STATE_KEY = "tv-display-current-state-v1";
     const SHEET_PRODUCTS_CACHE_KEY = "tv-display-sheet-products-cache-v1";
     const SHEET_FALLBACK_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-    const HIDDEN_SHEET_NAMES = new Set(["price"]);
+    const HIDDEN_SHEET_NAMES = new Set(["price", "ปาล์มใหญ่"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const WALL_MULTI_SCREEN_MIN_ITEMS = 4;
     const REMOTE_CONTROL_POLL_MS = 500;
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-product-filter-control-20260812-single-screen-only";
+  const APP_VERSION = "display-product-filter-control-20260812-hide-palm-large";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5569,8 +5568,7 @@
       const containsPrimaryIndex = sheetPages.findIndex((name) => normalizeSheetName(name).includes(primaryName));
       if (containsPrimaryIndex >= 0) return containsPrimaryIndex;
 
-      const palmIndex = sheetPages.findIndex((name) => normalizeSheetName(name).includes("ปาล์ม"));
-      return palmIndex >= 0 ? palmIndex : 0;
+      return 0;
     }
 
     function resetToPrimaryPage() {
@@ -7446,14 +7444,10 @@ function render() {
     function handleRemoteCommand(command, fromBarrier = false) {
       if (!command || !command.action) return;
 
-      const applyAt = Number(command.applyAt || 0);
-      if (!fromBarrier && isRemoteNavigationAction(command.action) && applyAt > Date.now() + 80) {
-        if (remoteNavigationTimer) clearTimeout(remoteNavigationTimer);
-        remoteNavigationTimer = setTimeout(() => {
-          remoteNavigationTimer = null;
-          handleRemoteCommand({ ...command, applyAt: 0 }, true);
-        }, Math.max(0, applyAt - Date.now()));
-        return;
+      // ระบบเหลือจอเดียวแล้ว ไม่ต้องรอ applyAt จากโหมดซิงค์สองจอ
+      if (remoteNavigationTimer) {
+        clearTimeout(remoteNavigationTimer);
+        remoteNavigationTimer = null;
       }
 
       markFastRender();
