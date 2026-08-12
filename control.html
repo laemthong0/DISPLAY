@@ -1713,7 +1713,7 @@
         } catch {}
       };
 
-      [0, 120, 260, 700, 1200].forEach((delay) => {
+      [0, 250, 750, 1500, 3000, 6000].forEach((delay) => {
         if (delay === 0) sendOnce();
         else setTimeout(sendOnce, delay);
       });
