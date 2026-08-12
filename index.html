@@ -5364,7 +5364,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-product-filter-control-20260812-wall-sync-fix";
+    const APP_VERSION = "display-product-filter-control-20260812-manual-pages-only";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const $ = (id) => document.getElementById(id);
     let WALL_CONFIG = getWallConfig();
@@ -5415,7 +5415,7 @@
     let lastAcceptedRemoteCommandAt = 0;
     let seenRemoteCommandKeys = new Map();
     let controlBroadcastChannel = null;
-    let autoPlayEnabled = readAutoPlayPreference();
+    let autoPlayEnabled = false;
     let fastRenderUntil = 0;
     let wallSyncHoldUntil = 0;
     let pendingNumericMainIndex = null;
@@ -5738,15 +5738,10 @@
       }
     }
 
-    function setAutoPlay(enabled) {
-      autoPlayEnabled = enabled !== false &&
-        clean(enabled).toLowerCase() !== "false" &&
-        clean(enabled).toLowerCase() !== "0" &&
-        clean(enabled).toLowerCase() !== "paused" &&
-        clean(enabled).toLowerCase() !== "off";
-
+    function setAutoPlay() {
+      autoPlayEnabled = false;
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, autoPlayEnabled ? "playing" : "paused");
+        localStorage.setItem(AUTO_PLAY_KEY, "paused");
       } catch {
         // ignore storage failures on locked-down TV browsers
       }
