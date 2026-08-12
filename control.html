@@ -1292,7 +1292,7 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 2000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-product-filter-control-20260812-single-screen-only";
+  const APP_VERSION = "display-product-filter-control-20260812-hide-palm-large";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1314,7 +1314,6 @@
       { phrases: ["18-46-0", "18460"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "18-46-0"] },
       { phrases: ["0-0-60", "0060"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["0-0-60"] },
       { phrases: ["46-0-0", "4600"], pageAliases: ["แม่ปุ๋ย"], subAliases: ["46-0-0 และ 18-46-0", "46-0-0"] },
-      { phrases: ["ปาล์มใหญ่", "ปลามใหญ่", "ปามใหญ่", "ปาล์มใหญ"], pageAliases: ["ปาล์มใหญ่"] },
       { phrases: ["ปาล์มเล็ก", "ปลามเล็ก", "ปามเล็ก"], pageAliases: ["ปาล์มเล็ก"] },
       { phrases: ["ยางกรีด", "ยางเกรด", "ยางกรี", "ยางกรีต"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางกรีด", "ยางกรีด"] },
       { phrases: ["ยางเล็ก"], pageAliases: ["ปุ๋ยยาง", "ยาง"], subAliases: ["ปุ๋ยยางเล็ก", "ยางเล็ก"] },
@@ -1569,6 +1568,23 @@
     function applyMeta(nextMeta) {
       if (!nextMeta) return;
 
+      const sourcePages = Array.isArray(nextMeta.pages) ? nextMeta.pages : [];
+      const currentIndex = Math.max(0, Number(nextMeta.currentPageIndex || 0));
+      const removedBefore = sourcePages
+        .slice(0, currentIndex)
+        .filter((page) => clean(page?.name).toLowerCase() === "ปาล์มใหญ่")
+        .length;
+      const filteredPages = sourcePages
+        .filter((page) => clean(page?.name).toLowerCase() !== "ปาล์มใหญ่")
+        .map((page, index) => ({ ...page, index }));
+      nextMeta = {
+        ...nextMeta,
+        currentPageIndex: filteredPages.length
+          ? Math.min(filteredPages.length - 1, Math.max(0, currentIndex - removedBefore))
+          : 0,
+        pages: filteredPages
+      };
+
       const currentUpdatedAt = Number(meta?.updatedAt || 0);
       const nextUpdatedAt = Number(nextMeta.updatedAt || 0);
       if (currentUpdatedAt && nextUpdatedAt && nextUpdatedAt < currentUpdatedAt) return;
@@ -1651,7 +1667,8 @@
         id: commandId,
         dedupeKey: commandId,
         createdAt,
-        applyAt: navigationAction ? createdAt + 2500 : 0,
+        // ระบบเหลือจอเดียวแล้ว จึงไม่ต้องหน่วงเวลาเพื่อรอซิงค์หลายจอ
+        applyAt: 0,
         sourceId,
         source: "control",
         action,
@@ -2186,7 +2203,7 @@
       }
 
       if (!hasVoiceCommandTrigger(text)) {
-        setVoiceStatus("ยังไม่สั่ง: ให้เริ่มด้วยคำว่า เปิด เช่น เปิดปาล์มใหญ่");
+        setVoiceStatus("ยังไม่สั่ง: ให้เริ่มด้วยคำว่า เปิด เช่น เปิดแม่ปุ๋ย");
         return false;
       }
 
