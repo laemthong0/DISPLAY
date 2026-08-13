@@ -722,6 +722,11 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
+    /* The two wall players must not run an independent long CSS shift. */
+    body.wall-mode .product-grid {
+      animation: none !important;
+    }
+
     .watermark-logo {
   position: absolute;
   right: clamp(12px, 1.4vw, 26px);
@@ -5639,18 +5644,6 @@
     }
 
     function getWallConfig() {
-      return {
-        enabled: false,
-        mode: "single",
-        modeOverride: "single",
-        syncEnabled: false,
-        syncScope: "page",
-        syncOffsetMs: 0,
-        screen: 1,
-        screenIndex: 0,
-        screens: 1,
-        itemsPerWallPage: 21
-      };
 
       const params = new URLSearchParams(window.location.search);
       const urlMode = clean(params.get("wallMode") || params.get("mode")).toLowerCase();
@@ -5667,7 +5660,13 @@
         ? syncScopeParam
         : "auto";
       const screensParam = getFirstParam(params, ["screens", "wallScreens", "totalScreens"]);
-      const screenParam = getFirstParam(params, ["screen", "wallScreen", "displayScreen", "display", "tv"]);
+      const requestedScreenParam = getFirstParam(params, ["screen", "wallScreen", "displayScreen", "display", "tv"]);
+      const screenAlias = clean(requestedScreenParam).toLowerCase();
+      const screenParam = screenAlias === "left" || screenAlias === "l"
+        ? "1"
+        : screenAlias === "right" || screenAlias === "r"
+          ? "2"
+          : requestedScreenParam;
       const savedScreens = readStoredWallNumber(WALL_SCREENS_KEY, 1, 4, 2);
       const wallIdentityRequested = screensParam !== null || screenParam !== null;
       const rawScreens = screensParam !== null
@@ -5701,6 +5700,25 @@
         screens: effectiveScreens,
         itemsPerWallPage
       };
+    }
+
+    function syncWallTickerAnimation(now = Date.now()) {
+      const ticker = $("tickerText");
+      if (!ticker) return;
+
+      if (!WALL_CONFIG.syncEnabled) {
+        ticker.style.animationDelay = "";
+        return;
+      }
+
+      const tickerDurationMs = 30000;
+      const elapsedMs = ((now % tickerDurationMs) + tickerDurationMs) % tickerDurationMs;
+
+      // Re-apply the animation so each TV starts at the same wall-clock phase.
+      ticker.style.animation = "none";
+      void ticker.offsetWidth;
+      ticker.style.animation = "ticker 30s linear infinite";
+      ticker.style.animationDelay = `-${elapsedMs}ms`;
     }
 
     function getWallSlice(count) {
@@ -6226,6 +6244,7 @@ function render() {
       const filterText = filterActive ? ` • กรอง ${productFilterQuery}` : "";
       $("pageCounter").textContent = pageText + motherText + subPageText + wallText + filterText;
       $("tickerText").textContent = data.tickerText || DEFAULT_DATA.tickerText;
+      syncWallTickerAnimation();
 
       const logoEl = $("headerLogo");
       const resolvedLogoUrl = resolveImg(data.logoUrl || DEFAULT_DATA.logoUrl, 240);
