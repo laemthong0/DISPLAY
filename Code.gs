@@ -81,7 +81,15 @@ function doPost(e) {
           }
           PropertiesService.getScriptProperties().setProperty(KEY_SHEET_ID, nextSheetId);
         }
-        PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(body.meta || null));
+        const incomingMeta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+        const currentMeta = safeParseJson_(PropertiesService.getScriptProperties().getProperty(KEY_META), {});
+        const currentScreens = currentMeta && currentMeta.screens && typeof currentMeta.screens === 'object'
+          ? currentMeta.screens
+          : {};
+        const screenNumber = Math.max(1, Number(incomingMeta.wall && incomingMeta.wall.screen || 1));
+        currentScreens[String(screenNumber)] = incomingMeta;
+        incomingMeta.screens = currentScreens;
+        PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(incomingMeta));
         return asJson({ ok: true });
       } finally {
         lock.releaseLock();
