@@ -5169,10 +5169,65 @@
       filter: none !important;
     }
 
-  </style>
+    .network-badge,
+    .kiosk-prompt {
+      position: fixed;
+      z-index: 100;
+      font-size: clamp(0.72rem, 1vw, 0.96rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      border: 1px solid rgba(255,255,255,0.28);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .network-badge {
+      left: 1vw;
+      bottom: 1.2vh;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(3, 61, 32, 0.82);
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    body.offline-mode .network-badge {
+      opacity: 1;
+      transform: translateY(0);
+      background: rgba(135, 36, 16, 0.92);
+    }
+    body.kiosk-mode .network-badge { bottom: 1.6vh; }
+    .kiosk-prompt {
+      display: none;
+      right: 1vw;
+      bottom: 1.2vh;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: #083c22;
+      background: rgba(255, 218, 112, 0.96);
+      animation: kioskPromptPulse 2.4s ease-in-out infinite;
+    }
+    body.kiosk-mode .kiosk-prompt { display: block; }
+    body.kiosk-fullscreen .kiosk-prompt,
+    body.kiosk-dismissed .kiosk-prompt { display: none; }
+    body.kiosk-mode .control-link,
+    body.kiosk-mode .live-badge,
+    body.kiosk-mode .status-line,
+    body.kiosk-mode .page-counter,
+    body.kiosk-mode .page-tabs,
+    body.kiosk-mode .sub-tabs { display: none !important; }
+    body.kiosk-mode .header { height: clamp(54px, 7vh, 78px); }
+    @keyframes kioskPromptPulse {
+      0%, 100% { opacity: 0.78; }
+      50% { opacity: 1; }
+    }  </style>
 </head>
 
 <body>
+  <div class="network-badge" id="networkBadge" role="status" aria-live="polite">ออฟไลน์ • ใช้ข้อมูลล่าสุดจากเครื่อง</div>
+  <div class="kiosk-prompt" id="kioskPrompt" role="status">แตะหน้าจอ 1 ครั้งเพื่อเต็มจอ</div>
   <div class="bg-shape shape-1"></div>
   <div class="bg-shape shape-2"></div>
   <div class="bg-shape shape-3"></div>
@@ -5362,6 +5417,7 @@
     const DISPLAY_STATE_KEY = "tv-display-current-state-v1";
     const SHEET_PRODUCTS_CACHE_KEY = "tv-display-sheet-products-cache-v1";
     const SHEET_FALLBACK_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    const LAYOUT_CONFIG_KEY = "tv-display-layout-config-v1";
     const HIDDEN_SHEET_NAMES = new Set(["price", "ปาล์มใหญ่"]);
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const WALL_MULTI_SCREEN_MIN_ITEMS = 4;
@@ -5369,11 +5425,58 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-  const APP_VERSION = "display-product-filter-control-20260812-latest-command-fast-sync-v2";
+    const APP_VERSION = "display-kiosk-offline-layout-health-v4";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
     const $ = (id) => document.getElementById(id);
+    const DISPLAY_QUERY = new URLSearchParams(window.location.search);
+    const KIOSK_MODE = ["1", "true", "yes", "on"].includes(clean(DISPLAY_QUERY.get("kiosk")).toLowerCase());
+    let kioskDismissed = false;
+
+    function updateConnectivityUI() {
+      const offline = !navigator.onLine;
+      document.body.classList.toggle("offline-mode", offline);
+      const badge = $("networkBadge");
+      if (badge) badge.textContent = offline
+        ? "ออฟไลน์ • ใช้ข้อมูลล่าสุดจากเครื่อง"
+        : "ออนไลน์ • กำลังตรวจสอบข้อมูลล่าสุด";
+      if (offline) {
+        const status = $("sheetStatus");
+        if (status && !status.classList.contains("error")) {
+          status.textContent = "ออฟไลน์: ใช้ข้อมูลสำรองล่าสุดจากเครื่อง";
+        }
+      }
+      if (typeof publishControlMeta === "function") {
+        publishControlMeta(lastPublishedViewCount, lastPublishedTotalSubPages);
+      }
+    }
+
+    function applyDisplayRuntimeMode() {
+      document.body.classList.toggle("kiosk-mode", KIOSK_MODE);
+      updateConnectivityUI();
+      if (!KIOSK_MODE) return;
+      const prompt = $("kioskPrompt");
+      const dismiss = () => {
+        kioskDismissed = true;
+        document.body.classList.add("kiosk-dismissed");
+        requestDisplayFullscreen();
+      };
+      document.addEventListener("click", dismiss, { passive: true, once: true });
+      document.addEventListener("touchend", dismiss, { passive: true, once: true });
+      document.addEventListener("keydown", dismiss, { once: true });
+      document.addEventListener("contextmenu", (event) => event.preventDefault(), { capture: true });
+      document.addEventListener("fullscreenchange", () => {
+        document.body.classList.toggle("kiosk-fullscreen", isDisplayFullscreen());
+      });
+      if (prompt) prompt.hidden = false;
+      setTimeout(() => {
+        if (!kioskDismissed && !isDisplayFullscreen()) document.body.classList.add("kiosk-dismissed");
+      }, 12000);
+    }
+
+    window.addEventListener("online", updateConnectivityUI);
+    window.addEventListener("offline", updateConnectivityUI);
     let WALL_CONFIG = getWallConfig();
 
     function isDisplayFullscreen() {
@@ -6070,6 +6173,13 @@
 
       const payload = {
         updatedAt: Date.now(),
+        sheetId: data.sheetId,
+        runtime: {
+          kiosk: KIOSK_MODE,
+          offline: !navigator.onLine,
+          displayId: "screen-" + WALL_CONFIG.screen,
+          displayLabel: WALL_CONFIG.enabled ? "จอ " + WALL_CONFIG.screen + "/" + WALL_CONFIG.screens : "จอหลัก"
+        },
         currentPageIndex,
         currentMotherSubIndex,
         currentSubPageIndex,
@@ -6093,7 +6203,10 @@
           itemsPerWallPage: WALL_CONFIG.itemsPerWallPage
         },
         health: {
-          online: true,
+          online: navigator.onLine,
+          offlineMode: !navigator.onLine,
+          kiosk: KIOSK_MODE,
+          displayId: "screen-" + WALL_CONFIG.screen,
           lastSeenAt: Date.now(),
           lastRenderAt,
           lastSheetLoadAt,
@@ -6564,6 +6677,21 @@ function render() {
         }
       }
 
+      if (!navigator.onLine) {
+        sheetLoadErrors[sheetName] = !hadProductsCache;
+        if (isCurrentPage) {
+          lastSheetLoadAt = Date.now();
+          lastSheetLoadOk = hadProductsCache;
+          lastSheetLoadMessage = hadProductsCache
+            ? "ออฟไลน์: ใช้ข้อมูลสำรอง " + sheetName
+            : "ออฟไลน์: ยังไม่มีข้อมูลสำรอง " + sheetName;
+          updateConnectivityUI();
+          if (hadProductsCache) render();
+        }
+        sheetLoadInFlight.delete(sheetName);
+        return;
+      }
+
       try {
         if (isCurrentPage) {
           if (hadProductsCache) setGridRefreshing(true);
@@ -6894,28 +7022,79 @@ function render() {
         .map((entry) => entry.item);
     }
 
+    function normalizeLayoutValue(value) {
+      return normalizeText(clean(value)).replace(/\s+/g, " ");
+    }
+
+    function getProductLayoutKey(item) {
+      return [item?.name, item?.detail, item?.price, item?.unit]
+        .map(normalizeLayoutValue).join("|");
+    }
+
+    function readLayoutOrders() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LAYOUT_CONFIG_KEY) || "{}");
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function writeLayoutOrder(sheetName, order) {
+      if (!sheetName || !Array.isArray(order)) return;
+      try {
+        const all = readLayoutOrders();
+        all[clean(sheetName)] = order.filter(Boolean);
+        localStorage.setItem(LAYOUT_CONFIG_KEY, JSON.stringify(all));
+      } catch {}
+    }
+
+    function applyLayoutOrder(sheetName, products) {
+      const all = readLayoutOrders();
+      const order = Array.isArray(all[clean(sheetName)]) ? all[clean(sheetName)] : [];
+      if (!order.length) return products;
+      const positions = new Map(order.map((key, index) => [key, index]));
+      return products
+        .map((item, index) => ({
+          item,
+          index,
+          position: positions.has(getProductLayoutKey(item))
+            ? positions.get(getProductLayoutKey(item))
+            : Number.MAX_SAFE_INTEGER
+        }))
+        .sort((a, b) => a.position !== b.position ? a.position - b.position : a.index - b.index)
+        .map((entry) => entry.item);
+    }
+
+    function setLayoutOrder(sheetName, order) {
+      writeLayoutOrder(sheetName, order);
+      render();
+      setGridRefreshing(false);
+      restartPageTimer();
+    }
+
     function getVisibleProducts(sheetName, products) {
       const visibleProducts = products.filter(isProductVisible);
       const categories = getSubCategoriesForSheet(sheetName);
-      if (!categories.length) return sortProductsByPriceAsc(visibleProducts);
+      if (!categories.length) return applyLayoutOrder(sheetName, sortProductsByPriceAsc(visibleProducts));
 
       const subName = getSubCategoryName(sheetName);
 
-      return sortProductsByPriceAsc(visibleProducts.filter((item) => {
+      return applyLayoutOrder(sheetName, sortProductsByPriceAsc(visibleProducts.filter((item) => {
         return detectSubCategoryForSheet(sheetName, item) === subName;
-      }));
+      })));
     }
 
     function getVisibleProductsForState(sheetName, products, motherSubIndex = currentMotherSubIndex) {
       const visibleProducts = products.filter(isProductVisible);
       const categories = getSubCategoriesForSheet(sheetName);
-      if (!categories.length) return sortProductsByPriceAsc(visibleProducts);
+      if (!categories.length) return applyLayoutOrder(sheetName, sortProductsByPriceAsc(visibleProducts));
 
       const subName = getSubCategoryName(sheetName, motherSubIndex);
 
-      return sortProductsByPriceAsc(visibleProducts.filter((item) => {
+      return applyLayoutOrder(sheetName, sortProductsByPriceAsc(visibleProducts.filter((item) => {
         return detectSubCategoryForSheet(sheetName, item) === subName;
-      }));
+      })));
     }
 
     function getProductsForSheetState(sheetName) {
@@ -7525,6 +7704,9 @@ function render() {
         case "setAutoPlay":
           setAutoPlay(command.enabled !== false && clean(command.enabled).toLowerCase() !== "false" && clean(command.enabled).toLowerCase() !== "0");
           return;
+        case "setLayout":
+          setLayoutOrder(command.sheetName || getSheetName(), Array.isArray(command.order) ? command.order : []);
+          return;
         case "refresh":
           refreshMainView();
           return;
@@ -7899,6 +8081,7 @@ function render() {
       if (touchEndX > touchStartX + 50) prev();
     }, { passive: true });
 
+    applyDisplayRuntimeMode();
     bindRemoteControlChannel();
     bindDisplayFullscreenTriggers();
     registerDisplayServiceWorker();

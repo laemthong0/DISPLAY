@@ -1188,7 +1188,71 @@
         animation: none;
       }
     }
-  </style>
+    .kiosk-links,
+    .layout-card { margin-top: 10px; }
+    .kiosk-link-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kiosk-link-grid .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      text-decoration: none;
+      text-align: center;
+    }
+    .layout-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .layout-list {
+      display: grid;
+      gap: 7px;
+      max-height: 360px;
+      overflow: auto;
+      padding: 2px;
+    }
+    .layout-item {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #d8e6dc;
+      border-radius: 12px;
+      background: #f8fcf9;
+      cursor: grab;
+      user-select: none;
+    }
+    .layout-item:active { cursor: grabbing; }
+    .layout-item.dragging { opacity: 0.45; }
+    .layout-grip { color: var(--brand-2); font-size: 1.35rem; text-align: center; }
+    .layout-index { color: var(--brand-2); font-weight: 900; font-size: 0.82rem; }
+    .layout-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+    .layout-price { color: var(--brand-2); font-weight: 900; white-space: nowrap; }
+    .health-screen-card {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid #d8e6dc;
+      border-radius: 12px;
+      background: #f8fcf9;
+    }
+    @media (max-width: 520px) {
+      .kiosk-link-grid { grid-template-columns: 1fr; }
+      .layout-toolbar { align-items: stretch; flex-direction: column; }
+    }  </style>
 </head>
 <body>
   <div class="wrap">
@@ -1260,6 +1324,31 @@
       </div>
     </div>
 
+    <section class="card kiosk-links" aria-label="เปิดจอแบบ Kiosk">
+      <div class="section-title">
+        <b>เปิดจอ Xiaomi A Pro แบบ Kiosk</b>
+        <span class="muted">แตะลิงก์บนทีวี แล้วแตะ 1 ครั้งเพื่อเต็มจอ</span>
+      </div>
+      <div class="kiosk-link-grid">
+        <a class="btn secondary" id="wallScreenOneLink" target="_blank" rel="noopener">จอ 1 • Kiosk</a>
+        <a class="btn primary" id="wallScreenTwoLink" target="_blank" rel="noopener">จอ 2 • Kiosk</a>
+      </div>
+    </section>
+
+    <section class="card layout-card" aria-label="จัดวางสินค้า">
+      <div class="section-title">
+        <b>จัดวางสินค้าแบบลากวาง</b>
+        <span class="muted" id="layoutSheetLabel">เลือกหมวดจากจอหลักก่อน</span>
+      </div>
+      <div class="layout-toolbar">
+        <span class="muted">ลากรายการขึ้น/ลง แล้วส่งคำสั่งไปยังจอทั้งคู่</span>
+        <button class="btn secondary" id="btnLoadLayout" type="button">โหลดรายการ</button>
+      </div>
+      <div class="layout-list" id="layoutList">
+        <div class="muted">กด “โหลดรายการ” เพื่อเริ่มจัดวาง</div>
+      </div>
+      <button class="btn primary" id="btnSaveLayout" type="button">บันทึกลำดับไปยังทุกจอ</button>
+    </section>
     <section class="card state-card">
       <div class="section-title">
         <b>กำลังแสดง</b>
@@ -1289,10 +1378,11 @@
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const AUTO_PLAY_KEY = "tv-display-auto-play-v1";
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
+    const LAYOUT_CONFIG_KEY = "tv-display-layout-config-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 1000;
     const AUTO_PLAY_PENDING_MS = 7000;
-  const APP_VERSION = "display-product-filter-control-20260812-latest-command-fast-sync-v2";
+    const APP_VERSION = "display-kiosk-offline-layout-health-v4";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1329,6 +1419,9 @@
 
     let meta = null;
     let remoteMetaTimer = null;
+    let layoutItems = [];
+    let layoutSheetName = "";
+    let layoutDragIndex = -1;
     let remoteMetaPollInFlight = false;
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
@@ -1361,6 +1454,7 @@
       url.searchParams.set("syncScope", "all");
       url.searchParams.set("screens", "2");
       url.searchParams.set("screen", String(screen));
+      url.searchParams.set("kiosk", "1");
       url.searchParams.set("_fresh", APP_VERSION);
       url.searchParams.set("_ts", String(Date.now()));
       return url.toString();
@@ -2545,35 +2639,50 @@
       return `${minutes} นาที ${remain} วินาทีที่แล้ว`;
     }
 
+    function getHealthScreens() {
+      const source = meta?.screens && typeof meta.screens === "object" ? meta.screens : {};
+      const entries = Object.entries(source)
+        .filter(([, value]) => value && typeof value === "object")
+        .sort(([a], [b]) => Number(a) - Number(b));
+      return entries.length ? entries : [["1", meta]];
+    }
+
     function renderHealth() {
       const el = $("healthLine");
       const summary = $("healthSummary");
-
-      if (!meta || !meta.health) {
+      const screens = getHealthScreens();
+      if (!meta || !screens.some(([, value]) => value?.health)) {
         summary.textContent = "รอข้อมูลจอ";
-        el.innerHTML = `<span class="muted">ยังไม่มี heartbeat จากทีวี</span>`;
+        el.innerHTML = '<span class="muted">ยังไม่มี heartbeat จากทีวี</span>';
         return;
       }
 
-      const health = meta.health || {};
-      const lastSeenAt = Number(health.lastSeenAt || meta.updatedAt || 0);
-      const ageMs = lastSeenAt ? Date.now() - lastSeenAt : Infinity;
-      const onlineState = ageMs <= 30000 ? "ok" : (ageMs <= 90000 ? "warn" : "bad");
-      const onlineText = onlineState === "ok" ? "ออนไลน์" : (onlineState === "warn" ? "สัญญาณช้า" : "ออฟไลน์");
-      const sheetState = health.lastSheetLoadOk ? "ok" : "bad";
-      const sheetText = health.lastSheetLoadOk ? "โหลดสำเร็จ" : "โหลดมีปัญหา";
-
-      summary.innerHTML = `<span class="health-dot ${onlineState}"></span>${escapeHtml(onlineText)}`;
-      el.innerHTML = `
-        <span class="health-item"><small>สถานะจอ</small><b><span class="health-dot ${onlineState}"></span>${escapeHtml(onlineText)}</b></span>
-        <span class="health-item"><small>เห็นล่าสุด</small><b>${escapeHtml(formatAge(lastSeenAt))}</b></span>
-        <span class="health-item"><small>โหลดชีตล่าสุด</small><b><span class="health-dot ${sheetState}"></span>${escapeHtml(sheetText)}</b></span>
-        <span class="health-item"><small>เวลาโหลดชีต</small><b>${escapeHtml(formatTime(health.lastSheetLoadAt))}</b></span>
-        <span class="health-item"><small>สินค้าบนจอ</small><b>${Number(health.displayedProductCount || 0)} รายการ</b></span>
-        <span class="health-item"><small>ป้ายโปรบนจอ</small><b>${Number(health.specialBadgeCount || 0)} ป้าย</b></span>
-        <span class="health-item"><small>ข้อมูลในเครื่อง</small><b>${health.cacheReady ? "พร้อม" : "ยังไม่พร้อม"}</b></span>
-        <span class="health-item"><small>ข้อความล่าสุด</small><b>${escapeHtml(health.lastSheetLoadMessage || "-")}</b></span>
-      `;
+      const cards = screens.map(([screenKey, screenMeta]) => {
+        const health = screenMeta?.health || {};
+        const wall = screenMeta?.wall || {};
+        const lastSeenAt = Number(health.lastSeenAt || screenMeta?.updatedAt || 0);
+        const ageMs = lastSeenAt ? Date.now() - lastSeenAt : Infinity;
+        const onlineState = health.online === false ? "bad" : (ageMs <= 30000 ? "ok" : (ageMs <= 90000 ? "warn" : "bad"));
+        const onlineText = onlineState === "ok" ? "ออนไลน์" : (onlineState === "warn" ? "สัญญาณช้า" : "ออฟไลน์");
+        const sheetState = health.lastSheetLoadOk ? "ok" : (health.cacheReady ? "warn" : "bad");
+        const sheetText = health.lastSheetLoadOk ? "สดล่าสุด" : (health.cacheReady ? "ใช้ข้อมูลสำรอง" : "โหลดมีปัญหา");
+        const label = wall.screen && wall.screens ? "จอ " + wall.screen + "/" + wall.screens : "จอ " + screenKey;
+        return '<div class="health-screen-card">' +
+          '<div class="health-item"><small>' + escapeHtml(label) + '</small><b><span class="health-dot ' + onlineState + '"></span>' + escapeHtml(onlineText) + '</b></div>' +
+          '<div class="health-item"><small>เห็นล่าสุด</small><b>' + escapeHtml(formatAge(lastSeenAt)) + '</b></div>' +
+          '<div class="health-item"><small>ข้อมูล</small><b><span class="health-dot ' + sheetState + '"></span>' + escapeHtml(sheetText) + '</b></div>' +
+          '<div class="health-item"><small>สินค้า</small><b>' + Number(health.displayedProductCount || 0) + ' รายการ</b></div>' +
+          '<div class="health-item"><small>โหมด</small><b>' + (health.kiosk ? "Kiosk" : "ปกติ") + (health.offlineMode ? " • Offline" : "") + '</b></div>' +
+          '<div class="health-item"><small>อัปเดตชีต</small><b>' + escapeHtml(formatTime(health.lastSheetLoadAt)) + '</b></div>' +
+        '</div>';
+      }).join("");
+      const badCount = screens.filter(([, screenMeta]) => {
+        const health = screenMeta?.health || {};
+        const seen = Number(health.lastSeenAt || screenMeta?.updatedAt || 0);
+        return health.online === false || !seen || Date.now() - seen > 90000;
+      }).length;
+      summary.innerHTML = '<span class="health-dot ' + (badCount ? "warn" : "ok") + '"></span>' + (badCount ? badCount + " จอต้องตรวจสอบ" : screens.length + " จอทำงานปกติ");
+      el.innerHTML = cards;
     }
 
     function getWallModeFromMeta() {
@@ -2737,6 +2846,135 @@
       }
     }
 
+    function normalizeLayoutValue(value) {
+      return clean(value).toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function getProductLayoutKey(item) {
+      return [item?.name, item?.detail, item?.price, item?.unit]
+        .map(normalizeLayoutValue).join("|");
+    }
+
+    function parseLayoutRows(rows) {
+      const source = Array.isArray(rows) ? rows.map((row) => Array.isArray(row) ? row : []) : [];
+      const trimmed = source.length && clean(source[0][0]).includes("ชื่อ") ? source.slice(1) : source;
+      return trimmed.map((row) => ({
+        name: clean(row[0]),
+        detail: clean(row[1]),
+        price: clean(row[2]),
+        unit: clean(row[3]) || "บ.",
+        image: clean(row[4])
+      })).filter((item) => item.name);
+    }
+
+    function getLayoutPage() {
+      const pages = Array.isArray(meta?.pages) ? meta.pages : [];
+      return pages.find((page) => Number(page.index) === Number(meta?.currentPageIndex || 0)) || pages[0] || null;
+    }
+
+    function readSavedLayout(sheetName) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LAYOUT_CONFIG_KEY) || "{}");
+        return Array.isArray(parsed?.[sheetName]) ? parsed[sheetName] : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function renderLayoutList() {
+      const list = $("layoutList");
+      const label = $("layoutSheetLabel");
+      if (label) label.textContent = layoutSheetName ? "หมวด: " + layoutSheetName : "เลือกหมวดจากจอหลักก่อน";
+      if (!layoutItems.length) {
+        list.innerHTML = '<div class="muted">ไม่พบรายการสินค้า หรือยังไม่ได้โหลดข้อมูล</div>';
+        return;
+      }
+
+      list.innerHTML = layoutItems.map((item, index) =>
+        '<div class="layout-item" draggable="true" data-layout-index="' + index + '">' +
+          '<span class="layout-grip" aria-hidden="true">☷</span>' +
+          '<span class="layout-name" title="' + escapeHtml(item.name) + '"><span class="layout-index">' + (index + 1) + '.</span> ' + escapeHtml(item.name) + '</span>' +
+          '<span class="layout-price">' + escapeHtml(item.price || "-") + ' ' + escapeHtml(item.unit || "") + '</span>' +
+        '</div>'
+      ).join("");
+    }
+
+    async function loadLayoutProducts() {
+      const page = getLayoutPage();
+      const endpoint = getWebAppUrl();
+      if (!page || !endpoint || !meta?.sheetId) {
+        setHint("ต้องเชื่อมต่อ GAS และต้องมี heartbeat จากจอก่อน");
+        return;
+      }
+
+      setHint("กำลังโหลดรายการเพื่อจัดวาง...");
+      try {
+        const response = await runJsonp(endpoint, {
+          mode: "pull_sheet_rows",
+          sheetId: meta.sheetId,
+          sheetName: page.name
+        }, 9000);
+        if (!response?.ok || !Array.isArray(response.rows)) throw new Error(response?.error || "โหลดรายการไม่สำเร็จ");
+
+        layoutSheetName = page.name;
+        const products = parseLayoutRows(response.rows);
+        const savedOrder = readSavedLayout(layoutSheetName);
+        const positions = new Map(savedOrder.map((key, index) => [key, index]));
+        layoutItems = products
+          .map((item, index) => ({ item, index, position: positions.has(getProductLayoutKey(item)) ? positions.get(getProductLayoutKey(item)) : Number.MAX_SAFE_INTEGER }))
+          .sort((a, b) => a.position !== b.position ? a.position - b.position : a.index - b.index)
+          .map((entry) => entry.item);
+        renderLayoutList();
+        setHint("ลากรายการได้แล้ว");
+      } catch (error) {
+        setHint("โหลดรายการจัดวางไม่ได้: " + (error?.message || "ตรวจ GAS/สิทธิ์"));
+      }
+    }
+
+    function saveLayoutProducts() {
+      if (!layoutSheetName || !layoutItems.length) {
+        setHint("ยังไม่มีรายการให้บันทึก");
+        return;
+      }
+      const order = layoutItems.map(getProductLayoutKey);
+      try {
+        const saved = JSON.parse(localStorage.getItem(LAYOUT_CONFIG_KEY) || "{}");
+        saved[layoutSheetName] = order;
+        localStorage.setItem(LAYOUT_CONFIG_KEY, JSON.stringify(saved));
+      } catch {}
+      sendCommand("setLayout", { sheetName: layoutSheetName, order });
+      setHint("ส่งลำดับสินค้าไปยังจอทั้งคู่แล้ว");
+    }
+
+    function bindLayoutDragAndDrop() {
+      const list = $("layoutList");
+      if (!list) return;
+      list.addEventListener("dragstart", (event) => {
+        const item = event.target.closest(".layout-item");
+        if (!item) return;
+        layoutDragIndex = Number(item.dataset.layoutIndex);
+        item.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(layoutDragIndex));
+      });
+      list.addEventListener("dragend", (event) => {
+        event.target.closest(".layout-item")?.classList.remove("dragging");
+        layoutDragIndex = -1;
+      });
+      list.addEventListener("dragover", (event) => {
+        if (layoutDragIndex >= 0) event.preventDefault();
+      });
+      list.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const target = event.target.closest(".layout-item");
+        const targetIndex = Number(target?.dataset.layoutIndex);
+        if (!Number.isInteger(targetIndex) || layoutDragIndex < 0 || layoutDragIndex === targetIndex) return;
+        const [moved] = layoutItems.splice(layoutDragIndex, 1);
+        layoutItems.splice(targetIndex, 0, moved);
+        layoutDragIndex = -1;
+        renderLayoutList();
+      });
+    }
     function render() {
       renderState();
       renderHealth();
@@ -2802,6 +3040,10 @@
       sendProductFilter(event.currentTarget.value);
     });
     $("btnReloadMeta").onclick = reloadMeta;
+    $("btnLoadLayout").onclick = loadLayoutProducts;
+    $("btnSaveLayout").onclick = saveLayoutProducts;
+    bindLayoutDragAndDrop();
+    refreshWallOpenLinks();
     $("btnToggleHealth").onclick = toggleHealthCollapsed;
     $("btnSaveGasUrl").onclick = () => {
       const url = clean($("gasUrlInput").value);
