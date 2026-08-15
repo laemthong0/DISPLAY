@@ -1190,6 +1190,7 @@
     }
     .kiosk-links,
     .layout-card { margin-top: 10px; }
+    .control-feature-hidden { display: none !important; }
     .kiosk-link-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1324,7 +1325,7 @@
       </div>
     </div>
 
-    <section class="card kiosk-links" aria-label="เปิดจอแบบ Kiosk">
+    <section class="card kiosk-links control-feature-hidden" aria-label="เปิดจอแบบ Kiosk" aria-hidden="true">
       <div class="section-title">
         <b>เปิดจอ Xiaomi A Pro แบบ Kiosk</b>
         <span class="muted">แตะลิงก์บนทีวี แล้วแตะ 1 ครั้งเพื่อเต็มจอ</span>
@@ -1335,7 +1336,7 @@
       </div>
     </section>
 
-    <section class="card layout-card" aria-label="จัดวางสินค้า">
+    <section class="card layout-card control-feature-hidden" aria-label="จัดวางสินค้า" aria-hidden="true">
       <div class="section-title">
         <b>จัดวางสินค้าแบบลากวาง</b>
         <span class="muted" id="layoutSheetLabel">เลือกหมวดจากจอหลักก่อน</span>
@@ -1382,7 +1383,8 @@
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 1000;
     const AUTO_PLAY_PENDING_MS = 7000;
-    const APP_VERSION = "display-kiosk-offline-layout-health-v4";
+    const NAVIGATION_PENDING_MS = 10000;
+    const APP_VERSION = "display-control-active-sync-v5";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1425,6 +1427,7 @@
     let remoteMetaPollInFlight = false;
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
+    let pendingNavigation = null;
     let autoPlayAckTimer = null;
     let lastIssuedCommandAt = 0;
     let voiceRecognition = null;
@@ -1659,6 +1662,42 @@
       scheduleAutoPlayAckCheck();
     }
 
+    function navigationMatches(metaPayload, expected) {
+      if (!metaPayload || !expected) return false;
+      return Number(metaPayload.currentPageIndex || 0) === Number(expected.currentPageIndex || 0) &&
+        Number(metaPayload.currentMotherSubIndex || 0) === Number(expected.currentMotherSubIndex || 0) &&
+        Number(metaPayload.currentSubPageIndex || 0) === Number(expected.currentSubPageIndex || 0);
+    }
+
+    function applyOptimisticNavigation(nextState) {
+      if (!meta || !nextState) return;
+      pendingNavigation = {
+        currentPageIndex: Math.max(0, Number(nextState.currentPageIndex || 0)),
+        currentMotherSubIndex: Math.max(0, Number(nextState.currentMotherSubIndex || 0)),
+        currentSubPageIndex: Math.max(0, Number(nextState.currentSubPageIndex || 0)),
+        expiresAt: Date.now() + NAVIGATION_PENDING_MS
+      };
+      meta = { ...meta, ...pendingNavigation, updatedAt: Number(meta.updatedAt || Date.now()) };
+      render();
+    }
+
+    function keepPendingNavigation(nextMeta) {
+      if (!pendingNavigation) return nextMeta;
+      if (navigationMatches(nextMeta, pendingNavigation)) {
+        pendingNavigation = null;
+        return nextMeta;
+      }
+      if (Date.now() >= Number(pendingNavigation.expiresAt || 0)) {
+        pendingNavigation = null;
+        return nextMeta;
+      }
+      return {
+        ...nextMeta,
+        currentPageIndex: pendingNavigation.currentPageIndex,
+        currentMotherSubIndex: pendingNavigation.currentMotherSubIndex,
+        currentSubPageIndex: pendingNavigation.currentSubPageIndex
+      };
+    }
     function applyMeta(nextMeta) {
       if (!nextMeta) return;
 
@@ -1696,6 +1735,7 @@
         }
       }
 
+      nextMeta = keepPendingNavigation(nextMeta);
       meta = nextMeta;
       render();
     }
@@ -2783,10 +2823,17 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (p.index === meta.currentPageIndex ? " active" : "");
         btn.textContent = `${p.index + 1}. ${p.name}`;
-        btn.onclick = () => sendCommand("goMain", {
-          pageIndex: p.index,
-          pageName: p.name
-        });
+        btn.onclick = () => {
+          applyOptimisticNavigation({
+            currentPageIndex: p.index,
+            currentMotherSubIndex: 0,
+            currentSubPageIndex: 0
+          });
+          sendCommand("goMain", {
+            pageIndex: p.index,
+            pageName: p.name
+          });
+        };
         grid.appendChild(btn);
       });
     }
@@ -2810,12 +2857,19 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (s.index === meta.currentMotherSubIndex ? " active" : "");
         btn.textContent = `${s.index + 1}. ${s.name}`;
-        btn.onclick = () => sendCommand("goSub", {
-          pageIndex: page.index,
-          pageName: page.name,
-          subIndex: s.index,
-          subName: s.name
-        });
+        btn.onclick = () => {
+          applyOptimisticNavigation({
+            currentPageIndex: page.index,
+            currentMotherSubIndex: s.index,
+            currentSubPageIndex: 0
+          });
+          sendCommand("goSub", {
+            pageIndex: page.index,
+            pageName: page.name,
+            subIndex: s.index,
+            subName: s.name
+          });
+        };
         grid.appendChild(btn);
       });
     }
@@ -2833,15 +2887,22 @@
         const btn = document.createElement("button");
         btn.className = "btn" + (i === Number(meta.currentSubPageIndex || 0) ? " active" : "");
         btn.textContent = `หน้า ${i + 1}`;
-        btn.onclick = () => sendCommand("goSubPage", {
-          pageIndex,
-          pageName: page ? page.name : "",
-          subIndex,
-          subName: page && Array.isArray(page.subCategories)
-            ? page.subCategories[subIndex]?.name || ""
-            : "",
-          subPageIndex: i
-        });
+        btn.onclick = () => {
+          applyOptimisticNavigation({
+            currentPageIndex: pageIndex,
+            currentMotherSubIndex: subIndex,
+            currentSubPageIndex: i
+          });
+          sendCommand("goSubPage", {
+            pageIndex,
+            pageName: page ? page.name : "",
+            subIndex,
+            subName: page && Array.isArray(page.subCategories)
+              ? page.subCategories[subIndex]?.name || ""
+              : "",
+            subPageIndex: i
+          });
+        };
         grid.appendChild(btn);
       }
     }
