@@ -1381,10 +1381,12 @@
     const HEALTH_COLLAPSED_KEY = "tv-display-health-collapsed-v1";
     const LAYOUT_CONFIG_KEY = "tv-display-layout-config-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
-    const REMOTE_META_POLL_MS = 1000;
+    const REMOTE_META_POLL_MS = 1500;
+    const REMOTE_META_TIMEOUT_MS = 6000;
+    const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-control-active-sync-v5";
+    const APP_VERSION = "display-remote-resilience-v6";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2617,7 +2619,7 @@
 
       return runJsonp(endpoint, {
         mode: "pull_meta"
-      }, 1800)
+      }, REMOTE_META_TIMEOUT_MS)
         .then((res) => {
           if (res && res.ok && res.meta) return res.meta;
           return null;
@@ -3045,6 +3047,30 @@
       renderSubPageButtons();
     }
 
+    function getLatestHeartbeatAt(metaPayload) {
+      if (!metaPayload || typeof metaPayload !== "object") return 0;
+      const screens = metaPayload.screens && typeof metaPayload.screens === "object"
+        ? Object.values(metaPayload.screens)
+        : [metaPayload];
+      return screens.reduce((latest, screenMeta) => {
+        const seen = Number(screenMeta?.health?.lastSeenAt || screenMeta?.updatedAt || 0);
+        return Math.max(latest, Number.isFinite(seen) ? seen : 0);
+      }, 0);
+    }
+
+    function setConnectionHintFromMeta(metaPayload) {
+      const lastSeenAt = getLatestHeartbeatAt(metaPayload);
+      if (!lastSeenAt) {
+        setHint("เชื่อมต่อ GAS แล้ว • รอ heartbeat จากทีวี");
+        return;
+      }
+      const ageMs = Date.now() - lastSeenAt;
+      if (ageMs > TV_HEARTBEAT_STALE_MS) {
+        setHint("GAS พร้อม • ทีวีออฟไลน์ (เห็นล่าสุด " + formatAge(lastSeenAt) + ")");
+        return;
+      }
+      setHint("ทีวีออนไลน์ • เชื่อมต่อ GAS แล้ว");
+    }
     function restartRemoteMetaPolling() {
       if (remoteMetaTimer) clearInterval(remoteMetaTimer);
       const endpoint = getWebAppUrl();
@@ -3057,7 +3083,7 @@
         readMetaRemote().then((remoteMeta) => {
           if (remoteMeta) {
             applyMeta(remoteMeta);
-            setHint("เชื่อมต่อ GAS แล้ว");
+            setConnectionHintFromMeta(remoteMeta);
           }
         }).finally(() => {
           remoteMetaPollInFlight = false;
@@ -3076,7 +3102,7 @@
       readMetaRemote().then((remoteMeta) => {
         if (remoteMeta) {
           applyMeta(remoteMeta);
-          setHint("เชื่อมต่อ GAS แล้ว");
+          setConnectionHintFromMeta(remoteMeta);
         } else {
           if (!getWebAppUrl()) {
             setHint("ยังไม่ตั้งค่า GAS URL");
