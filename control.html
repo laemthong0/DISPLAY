@@ -1386,7 +1386,7 @@
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-remote-resilience-v6-3s";
+    const APP_VERSION = "display-two-screen-sync-v7";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1805,13 +1805,14 @@
       const sourceId = getControlClientId();
       const commandId = `${createdAt}-${sourceId}-${Math.random().toString(16).slice(2, 8)}`;
       const navigationAction = ["next", "prev", "goMain", "goSub", "goSubPage"].includes(action);
+      const applyAt = navigationAction ? createdAt + 3000 : 0;
       lastIssuedCommandAt = createdAt;
       const cmd = {
         id: commandId,
         dedupeKey: commandId,
         createdAt,
-        // ระบบเหลือจอเดียวแล้ว จึงไม่ต้องหน่วงเวลาเพื่อรอซิงค์หลายจอ
-        applyAt: 0,
+        // ให้ทีวีทุกจอรับคำสั่งก่อน แล้วเปลี่ยนพร้อมกันตามเวลานัดหมายเดียวกัน
+        applyAt,
         sourceId,
         source: "control",
         action,
