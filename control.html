@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="icon" href="data:,">
   <title>Control Panel - Display</title>
   <style>
@@ -1518,6 +1518,40 @@
       .transport-icon { display: none; }
       .voice-widget { bottom: calc(var(--dock-height) + 24px + env(safe-area-inset-bottom)); }
     }
+  
+    /* fullscreen-landscape-lock-v1 */
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    html:fullscreen,
+    html:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      background: var(--pad-bg, #0d1210);
+      overflow: auto;
+    }
+
+    html:fullscreen body,
+    html:-webkit-full-screen body {
+      width: 100vw;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* On a landscape display, use the whole available screen width. */
+    @media (orientation: landscape) {
+      .wrap {
+        width: min(100%, 1800px);
+      }
+
+      body {
+        min-height: 100vh;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1705,6 +1739,93 @@
     let lastVoiceCommandText = "";
     let lastVoiceCommandAt = 0;
 
+
+    const DISPLAY_FULLSCREEN_KEY = "tv-display-force-landscape-fullscreen-v1";
+
+    function isDocumentFullscreen() {
+      return Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement
+      );
+    }
+
+    async function lockLandscapeOrientation() {
+      try {
+        if (screen.orientation && typeof screen.orientation.lock === "function") {
+          await screen.orientation.lock("landscape");
+        }
+      } catch {
+        // Some browsers only allow orientation lock while fullscreen.
+      }
+    }
+
+    async function enterLandscapeFullscreen() {
+      try {
+        const root = document.documentElement;
+
+        if (!isDocumentFullscreen()) {
+          if (typeof root.requestFullscreen === "function") {
+            await root.requestFullscreen({ navigationUI: "hide" });
+          } else if (typeof root.webkitRequestFullscreen === "function") {
+            root.webkitRequestFullscreen();
+          }
+        }
+
+        await lockLandscapeOrientation();
+
+        try {
+          localStorage.setItem(DISPLAY_FULLSCREEN_KEY, "1");
+        } catch {}
+      } catch {
+        // Autoplay-style browser security may require one user tap first.
+      }
+    }
+
+    function keepLandscapeFullscreenEnabled() {
+      let enabled = true;
+      try {
+        enabled = localStorage.getItem(DISPLAY_FULLSCREEN_KEY) !== "0";
+      } catch {}
+
+      if (!enabled) return;
+
+      const activate = () => {
+        enterLandscapeFullscreen();
+      };
+
+      // Try immediately. Kiosk/TV browsers may allow this.
+      activate();
+
+      // Normal Chrome/Android usually requires one user gesture.
+      document.addEventListener("pointerdown", activate, { passive: true });
+      document.addEventListener("touchstart", activate, { passive: true });
+      document.addEventListener("keydown", activate);
+
+      document.addEventListener("fullscreenchange", () => {
+        if (isDocumentFullscreen()) lockLandscapeOrientation();
+      });
+
+      document.addEventListener("webkitfullscreenchange", () => {
+        if (isDocumentFullscreen()) lockLandscapeOrientation();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          setTimeout(() => {
+            if (isDocumentFullscreen()) {
+              lockLandscapeOrientation();
+            }
+          }, 250);
+        }
+      });
+
+      window.addEventListener("orientationchange", () => {
+        if (isDocumentFullscreen()) {
+          setTimeout(lockLandscapeOrientation, 200);
+        }
+      });
+    }
+
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>\"']/g, (m) => ({
         "&": "&amp;",
@@ -1727,6 +1848,8 @@
       url.searchParams.set("screens", "2");
       url.searchParams.set("screen", String(screen));
       url.searchParams.set("kiosk", "1");
+      url.searchParams.set("fullscreen", "1");
+      url.searchParams.set("orientation", "landscape");
       url.searchParams.set("_fresh", APP_VERSION);
       url.searchParams.set("_ts", String(Date.now()));
       return url.toString();
@@ -3424,6 +3547,7 @@
     });
 
     (function init() {
+      keepLandscapeFullscreenEnabled();
       applyHealthCollapsed(readHealthCollapsedPreference());
       const saved = getWebAppUrl();
       const gasUrlInput = $("gasUrlInput");
