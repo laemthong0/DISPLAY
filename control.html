@@ -1518,37 +1518,454 @@
       .transport-icon { display: none; }
       .voice-widget { bottom: calc(var(--dock-height) + 24px + env(safe-area-inset-bottom)); }
     }
-  
-    /* fullscreen-landscape-lock-v1 */
+
+    /* portrait-control-lock-v1
+       Control panel is intentionally kept in a phone-friendly portrait layout.
+       This final override wins over the older desktop/landscape rules above. */
+    :root {
+      --portrait-max-width: 560px;
+      --dock-height: 104px;
+    }
+
     html,
     body {
       width: 100%;
       min-height: 100%;
+      overflow-x: hidden;
     }
 
-    html:fullscreen,
-    html:-webkit-full-screen {
-      width: 100vw;
-      height: 100vh;
-      background: var(--pad-bg, #0d1210);
-      overflow: auto;
+    body {
+      padding:
+        max(10px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        calc(var(--dock-height) + 24px + env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
     }
 
-    html:fullscreen body,
-    html:-webkit-full-screen body {
-      width: 100vw;
-      min-height: 100vh;
-      margin: 0;
+    .wrap {
+      width: min(100%, var(--portrait-max-width)) !important;
+      max-width: var(--portrait-max-width) !important;
+      margin: 0 auto !important;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      grid-template-rows: auto !important;
+      gap: 12px !important;
+      min-height: 0 !important;
     }
 
-    /* On a landscape display, use the whole available screen width. */
+    .control-header,
+    .control-board,
+    .settings-deck,
+    .state-card,
+    .health-card {
+      grid-column: 1 / -1 !important;
+    }
+
+    .control-header {
+      position: sticky !important;
+      top: max(6px, env(safe-area-inset-top)) !important;
+      z-index: 30 !important;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) 58px !important;
+      gap: 8px !important;
+      align-items: center !important;
+      padding: 10px !important;
+      border: 1px solid var(--pad-line) !important;
+      border-radius: 14px !important;
+      background: rgba(13, 18, 16, 0.96) !important;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    .header-brand {
+      gap: 9px !important;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 12px !important;
+    }
+
+    h1 {
+      font-size: clamp(1.02rem, 4.6vw, 1.24rem) !important;
+    }
+
+    .conn-pill {
+      max-width: 100% !important;
+      font-size: 0.76rem !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .control-header .btn.utility {
+      width: 58px !important;
+      min-width: 58px !important;
+      min-height: 58px !important;
+      padding: 0 !important;
+      font-size: 0 !important;
+      border-radius: 12px !important;
+    }
+
+    .control-header .btn.utility svg {
+      width: 28px !important;
+      height: 28px !important;
+    }
+
+    .control-board {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 12px !important;
+    }
+
+    .nav-stack,
+    .category-stack {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 12px !important;
+    }
+
+    .nav-stack { order: 2 !important; }
+    .category-stack { order: 1 !important; }
+
+    .card {
+      width: 100%;
+      padding: 14px !important;
+      border-radius: 14px !important;
+    }
+
+    .section-title {
+      margin-bottom: 10px !important;
+      font-size: 1.08rem !important;
+      align-items: center !important;
+    }
+
+    /* Main category/subcategory controls: one large button per row. */
+    .grid,
+    .control-board .main-card .grid,
+    .control-board .sub-card .grid,
+    #mainGrid,
+    #subGrid {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 10px !important;
+    }
+
+    .grid .btn,
+    .control-board #mainGrid .btn,
+    .control-board #subGrid .btn,
+    #mainGrid .btn,
+    #subGrid .btn {
+      width: 100% !important;
+      min-height: 66px !important;
+      padding: 13px 14px !important;
+      border-radius: 12px !important;
+      font-size: clamp(1.02rem, 4.2vw, 1.16rem) !important;
+      line-height: 1.2 !important;
+      justify-content: flex-start !important;
+      text-align: left !important;
+    }
+
+    #mainGrid .btn {
+      min-height: 72px !important;
+      font-weight: 900 !important;
+    }
+
+    /* Sub pages remain compact, but still easy to tap. */
+    #subPageGrid,
+    .control-board .subpage-card .grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+    }
+
+    #subPageGrid .btn,
+    .control-board #subPageGrid .btn {
+      min-height: 58px !important;
+      padding: 10px !important;
+      font-size: 1rem !important;
+      justify-content: center !important;
+      text-align: center !important;
+    }
+
+    .product-filter-form {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 10px !important;
+    }
+
+    .product-filter-input {
+      min-height: 58px !important;
+      font-size: 1.06rem !important;
+    }
+
+    .product-filter-form .btn {
+      min-height: 58px !important;
+      width: 100% !important;
+      font-size: 1.04rem !important;
+    }
+
+    .state,
+    .health-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 8px !important;
+    }
+
+    .state-item,
+    .health-item {
+      min-height: 58px;
+    }
+
+    /* Bottom navigation remains always reachable by thumb. */
+    .pad-dock {
+      position: fixed !important;
+      z-index: 100 !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: max(8px, env(safe-area-inset-bottom)) !important;
+      transform: translateX(-50%) !important;
+      width: min(calc(100% - 16px), var(--portrait-max-width)) !important;
+      min-height: var(--dock-height) !important;
+      padding: 8px !important;
+      border-radius: 14px !important;
+    }
+
+    .pad-dock-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+
+    .pad-dock .transport-btn,
+    .pad-dock #btnRefresh {
+      min-height: 82px !important;
+      padding: 8px 5px !important;
+      margin: 0 !important;
+      border-radius: 12px !important;
+      font-size: clamp(0.9rem, 3.5vw, 1.02rem) !important;
+      line-height: 1.05 !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+    }
+
+    .pad-dock svg {
+      width: 26px !important;
+      height: 26px !important;
+    }
+
+    .transport-icon {
+      display: none !important;
+    }
+
+    /* Even when the phone is physically rotated, keep the control UI portrait-sized. */
     @media (orientation: landscape) {
-      .wrap {
-        width: min(100%, 1800px);
+      body {
+        display: block !important;
       }
 
-      body {
-        min-height: 100vh;
+      .wrap {
+        width: min(100%, var(--portrait-max-width)) !important;
+        max-width: var(--portrait-max-width) !important;
+      }
+
+      .pad-dock {
+        width: min(calc(100% - 16px), var(--portrait-max-width)) !important;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .control-header {
+        grid-template-columns: minmax(0, 1fr) 52px !important;
+      }
+
+      .control-header .btn.utility {
+        width: 52px !important;
+        min-width: 52px !important;
+        min-height: 52px !important;
+      }
+
+      #subPageGrid,
+      .control-board .subpage-card .grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .pad-dock .transport-btn,
+      .pad-dock #btnRefresh {
+        min-height: 76px !important;
+        font-size: 0.84rem !important;
+      }
+    }
+
+
+    /* status-popup-icons-v1 */
+    .status-fab-group {
+      position: static;
+      z-index: auto;
+      width: 100%;
+      margin-top: 4px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status-fab {
+      position: relative;
+      width: 100%;
+      min-height: 64px;
+      border: 1px solid #536059;
+      border-radius: 16px;
+      color: var(--pad-text);
+      background: rgba(15, 21, 18, 0.96);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+      display: grid;
+      place-items: center;
+      gap: 1px;
+      padding: 6px 4px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .status-fab:active { transform: scale(0.96); }
+
+    .status-fab svg {
+      width: 25px;
+      height: 25px;
+      color: var(--pad-green);
+    }
+
+    .status-fab span {
+      font-size: 0.7rem;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--pad-muted);
+    }
+
+    .status-fab-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: 7px;
+      right: 7px;
+      border-radius: 50%;
+      background: #9aa7a0;
+      border: 2px solid #0f1512;
+    }
+
+    .status-fab-dot.ok { background: #10b981; }
+    .status-fab-dot.warn { background: #f59e0b; }
+    .status-fab-dot.bad { background: #ef4444; }
+
+    .status-popup-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 220;
+      display: grid;
+      align-items: end;
+      justify-items: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.66);
+      -webkit-backdrop-filter: blur(5px);
+      backdrop-filter: blur(5px);
+    }
+
+    .status-popup-backdrop[hidden] {
+      display: none !important;
+    }
+
+    .status-popup {
+      width: min(100%, 540px);
+      max-height: min(82dvh, 760px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      color: var(--pad-text);
+      background: #121815;
+      border: 1px solid #536059;
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    .status-popup-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--pad-line);
+      background: #151b18;
+    }
+
+    .status-popup-header h2 {
+      margin: 3px 0 0;
+      font-size: 1.28rem;
+      line-height: 1.15;
+    }
+
+    .status-popup-summary {
+      margin-top: 6px;
+      font-size: 0.88rem;
+    }
+
+    .status-popup-close {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border: 1px solid #536059;
+      border-radius: 14px;
+      color: var(--pad-text);
+      background: #202824;
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .status-popup-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      overscroll-behavior: contain;
+    }
+
+    .status-popup .state,
+    .status-popup .health-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 10px !important;
+    }
+
+    .status-popup .state-item,
+    .status-popup .health-item,
+    .status-popup .health-screen-card {
+      background: #0f1512;
+      border-color: #38423d;
+    }
+
+    .status-popup .health-card {
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+    }
+
+    body.status-popup-open {
+      overflow: hidden;
+    }
+
+    @media (min-width: 560px) {
+      .status-popup-backdrop {
+        align-items: center;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .status-fab-group {
+        grid-template-columns: 1fr;
+      }
+
+      .status-fab {
+        width: 100%;
+        min-height: 60px;
       }
     }
 
@@ -1651,23 +2068,56 @@
       </div>
       <button class="btn primary" id="btnSaveLayout" type="button">บันทึกลำดับไปยังทุกจอ</button>
     </section>
-    <section class="card state-card">
-      <div class="section-title">
-        <b>กำลังแสดง</b>
-      </div>
-      <div class="state" id="stateLine"></div>
-    </section>
+    <div class="status-popup-backdrop" id="statePopup" hidden>
+      <section class="status-popup" role="dialog" aria-modal="true" aria-labelledby="statePopupTitle">
+        <div class="status-popup-header">
+          <div>
+            <span class="section-badge">สถานะจอ</span>
+            <h2 id="statePopupTitle">กำลังแสดง</h2>
+          </div>
+          <button class="status-popup-close" data-close-popup="statePopup" type="button" aria-label="ปิด">×</button>
+        </div>
+        <div class="status-popup-body">
+          <div class="state" id="stateLine"></div>
+        </div>
+      </section>
+    </div>
 
-    <section class="card health-card" id="healthCard">
-      <div class="section-title">
-        <b>สุขภาพระบบทีวี</b>
-        <span class="section-actions">
-          <span class="muted" id="healthSummary">รอข้อมูลจอ</span>
-          <button class="mini-btn" id="btnToggleHealth" type="button">ซ่อน</button>
-        </span>
-      </div>
-      <div class="health-grid" id="healthLine"></div>
-    </section>
+    <div class="status-popup-backdrop" id="healthPopup" hidden>
+      <section class="status-popup" role="dialog" aria-modal="true" aria-labelledby="healthPopupTitle">
+        <div class="status-popup-header">
+          <div>
+            <span class="section-badge">สถานะระบบ</span>
+            <h2 id="healthPopupTitle">สุขภาพระบบทีวี</h2>
+            <div class="muted status-popup-summary" id="healthSummary">รอข้อมูลจอ</div>
+          </div>
+          <button class="status-popup-close" data-close-popup="healthPopup" type="button" aria-label="ปิด">×</button>
+        </div>
+        <div class="status-popup-body">
+          <section class="health-card" id="healthCard">
+            <div class="health-grid" id="healthLine"></div>
+          </section>
+          <button class="mini-btn control-feature-hidden" id="btnToggleHealth" type="button" aria-hidden="true">ซ่อน</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="status-fab-group" aria-label="ข้อมูลระบบ">
+      <button class="status-fab" id="btnOpenStatePopup" type="button" aria-label="ดูกำลังแสดง" title="กำลังแสดง">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>จอ</span>
+      </button>
+      <button class="status-fab" id="btnOpenHealthPopup" type="button" aria-label="ดูสุขภาพระบบทีวี" title="สุขภาพระบบทีวี">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 12h4l2-5 4 10 2-5h6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>ระบบ</span>
+        <i class="status-fab-dot" id="healthFabDot" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
   <script>
@@ -1687,7 +2137,7 @@
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-control-pad-dock-v7";
+    const APP_VERSION = "display-control-portrait-popup-bottom-v10";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1739,90 +2189,33 @@
     let lastVoiceCommandText = "";
     let lastVoiceCommandAt = 0;
 
+    const DISPLAY_PORTRAIT_KEY = "tv-display-force-portrait-v1";
 
-    const DISPLAY_FULLSCREEN_KEY = "tv-display-force-landscape-fullscreen-v1";
-
-    function isDocumentFullscreen() {
-      return Boolean(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement
-      );
-    }
-
-    async function lockLandscapeOrientation() {
+    async function lockPortraitOrientation() {
       try {
         if (screen.orientation && typeof screen.orientation.lock === "function") {
-          await screen.orientation.lock("landscape");
+          await screen.orientation.lock("portrait");
         }
       } catch {
-        // Some browsers only allow orientation lock while fullscreen.
+        // Most mobile browsers only allow orientation locking in special display modes.
+        // The CSS layout still remains portrait-sized even when physical rotation occurs.
       }
     }
 
-    async function enterLandscapeFullscreen() {
+    function keepPortraitLayoutEnabled() {
       try {
-        const root = document.documentElement;
-
-        if (!isDocumentFullscreen()) {
-          if (typeof root.requestFullscreen === "function") {
-            await root.requestFullscreen({ navigationUI: "hide" });
-          } else if (typeof root.webkitRequestFullscreen === "function") {
-            root.webkitRequestFullscreen();
-          }
-        }
-
-        await lockLandscapeOrientation();
-
-        try {
-          localStorage.setItem(DISPLAY_FULLSCREEN_KEY, "1");
-        } catch {}
-      } catch {
-        // Autoplay-style browser security may require one user tap first.
-      }
-    }
-
-    function keepLandscapeFullscreenEnabled() {
-      let enabled = true;
-      try {
-        enabled = localStorage.getItem(DISPLAY_FULLSCREEN_KEY) !== "0";
+        localStorage.setItem(DISPLAY_PORTRAIT_KEY, "1");
       } catch {}
 
-      if (!enabled) return;
+      lockPortraitOrientation();
 
-      const activate = () => {
-        enterLandscapeFullscreen();
-      };
-
-      // Try immediately. Kiosk/TV browsers may allow this.
-      activate();
-
-      // Normal Chrome/Android usually requires one user gesture.
-      document.addEventListener("pointerdown", activate, { passive: true });
-      document.addEventListener("touchstart", activate, { passive: true });
-      document.addEventListener("keydown", activate);
-
-      document.addEventListener("fullscreenchange", () => {
-        if (isDocumentFullscreen()) lockLandscapeOrientation();
-      });
-
-      document.addEventListener("webkitfullscreenchange", () => {
-        if (isDocumentFullscreen()) lockLandscapeOrientation();
-      });
-
+      document.addEventListener("pointerdown", lockPortraitOrientation, { passive: true });
+      document.addEventListener("touchstart", lockPortraitOrientation, { passive: true });
       document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          setTimeout(() => {
-            if (isDocumentFullscreen()) {
-              lockLandscapeOrientation();
-            }
-          }, 250);
-        }
+        if (!document.hidden) setTimeout(lockPortraitOrientation, 150);
       });
-
       window.addEventListener("orientationchange", () => {
-        if (isDocumentFullscreen()) {
-          setTimeout(lockLandscapeOrientation, 200);
-        }
+        setTimeout(lockPortraitOrientation, 150);
       });
     }
 
@@ -2994,6 +3387,55 @@
       }
     }
 
+
+    function setStatusPopupOpen(popupId, open) {
+      const popup = $(popupId);
+      if (!popup) return;
+      popup.hidden = !open;
+      document.body.classList.toggle("status-popup-open", open);
+
+      if (open) {
+        requestAnimationFrame(() => popup.querySelector(".status-popup-close")?.focus());
+      }
+    }
+
+    function closeAllStatusPopups() {
+      ["statePopup", "healthPopup"].forEach((id) => {
+        const popup = $(id);
+        if (popup) popup.hidden = true;
+      });
+      document.body.classList.remove("status-popup-open");
+    }
+
+    function initStatusPopups() {
+      $("btnOpenStatePopup")?.addEventListener("click", () => {
+        closeAllStatusPopups();
+        renderState();
+        setStatusPopupOpen("statePopup", true);
+      });
+
+      $("btnOpenHealthPopup")?.addEventListener("click", () => {
+        closeAllStatusPopups();
+        renderHealth();
+        setStatusPopupOpen("healthPopup", true);
+      });
+
+      document.querySelectorAll("[data-close-popup]").forEach((button) => {
+        button.addEventListener("click", () => setStatusPopupOpen(button.dataset.closePopup, false));
+      });
+
+      ["statePopup", "healthPopup"].forEach((id) => {
+        const popup = $(id);
+        popup?.addEventListener("click", (event) => {
+          if (event.target === popup) setStatusPopupOpen(id, false);
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeAllStatusPopups();
+      });
+    }
+
     function readMetaLocal() {
       try {
         const raw = localStorage.getItem(CONTROL_META_KEY);
@@ -3079,6 +3521,13 @@
       return entries.length ? entries : [["1", meta]];
     }
 
+    function setHealthFabState(state) {
+      const dot = $("healthFabDot");
+      if (!dot) return;
+      dot.classList.remove("ok", "warn", "bad");
+      if (state) dot.classList.add(state);
+    }
+
     function renderHealth() {
       const el = $("healthLine");
       const summary = $("healthSummary");
@@ -3086,6 +3535,7 @@
       if (!meta || !screens.some(([, value]) => value?.health)) {
         summary.textContent = "รอข้อมูลจอ";
         el.innerHTML = '<span class="muted">ยังไม่มี heartbeat จากทีวี</span>';
+        setHealthFabState("warn");
         return;
       }
 
@@ -3114,6 +3564,7 @@
         return health.online === false || !seen || Date.now() - seen > 90000;
       }).length;
       summary.innerHTML = '<span class="health-dot ' + (badCount ? "warn" : "ok") + '"></span>' + (badCount ? badCount + " จอต้องตรวจสอบ" : screens.length + " จอทำงานปกติ");
+      setHealthFabState(badCount ? "warn" : "ok");
       el.innerHTML = cards;
     }
 
@@ -3547,8 +3998,9 @@
     });
 
     (function init() {
-      keepLandscapeFullscreenEnabled();
-      applyHealthCollapsed(readHealthCollapsedPreference());
+      keepPortraitLayoutEnabled();
+      applyHealthCollapsed(false);
+      initStatusPopups();
       const saved = getWebAppUrl();
       const gasUrlInput = $("gasUrlInput");
       if (saved && gasUrlInput) gasUrlInput.value = saved;
