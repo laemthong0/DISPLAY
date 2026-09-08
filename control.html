@@ -1649,8 +1649,14 @@
     #mainGrid,
     #subGrid {
       display: grid !important;
-      grid-template-columns: minmax(0, 1fr) !important;
       gap: 10px !important;
+    }
+
+    #mainGrid,
+    #subGrid,
+    .control-board .main-card .grid,
+    .control-board .sub-card .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 
     .grid .btn,
@@ -1776,6 +1782,23 @@
     }
 
     @media (max-width: 360px) {
+      #mainGrid,
+      #subGrid,
+      .control-board .main-card .grid,
+      .control-board .sub-card .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      #mainGrid .btn,
+      #subGrid .btn,
+      .control-board #mainGrid .btn,
+      .control-board #subGrid .btn {
+        min-height: 62px !important;
+        padding: 10px 8px !important;
+        font-size: 0.92rem !important;
+      }
+
       .control-header {
         grid-template-columns: minmax(0, 1fr) 52px !important;
       }
@@ -2137,7 +2160,7 @@
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-control-portrait-popup-bottom-v10";
+    const APP_VERSION = "display-control-portrait-popup-bottom-v11";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
