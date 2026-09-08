@@ -15,7 +15,7 @@
       --line: #c8dbd0;
       --line-soft: #e3efe8;
       --text: #0f2418;
-      --muted: #5a7268;
+      --muted: #6a7268;
       --brand: #0a4d2e;
       --brand-2: #137a4a;
       --brand-3: #198754;
@@ -1253,19 +1253,286 @@
     @media (max-width: 520px) {
       .kiosk-link-grid { grid-template-columns: 1fr; }
       .layout-toolbar { align-items: stretch; flex-direction: column; }
-    }  </style>
+    }
+
+    /* control-pad-dock-v7 */
+    :root {
+      --pad-bg: #0d1210;
+      --pad-surface: #151b18;
+      --pad-surface-2: #1a211e;
+      --pad-line: #38423d;
+      --pad-text: #f4f7f5;
+      --pad-muted: #a7b0ab;
+      --pad-green: #65d35f;
+      --pad-green-deep: #164e2d;
+      --pad-amber: #f2b84b;
+      --dock-height: 126px;
+    }
+
+    html { background: var(--pad-bg); }
+
+    body {
+      color: var(--pad-text);
+      background: var(--pad-bg);
+      padding: max(16px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) calc(var(--dock-height) + 28px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    }
+
+    .wrap {
+      width: min(100%, 1500px);
+      gap: 16px;
+    }
+
+    .card,
+    .control-header,
+    .transport-card,
+    .product-filter-card,
+    .main-card,
+    .health-card {
+      color: var(--pad-text);
+      background: var(--pad-surface);
+      border-color: var(--pad-line);
+      box-shadow: none;
+    }
+
+    .control-header {
+      position: relative;
+      top: auto;
+      grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+      padding: 4px 0 16px;
+      border: 0;
+      border-bottom: 1px solid var(--pad-line);
+      border-radius: 0;
+    }
+
+    .brand-mark {
+      width: 56px;
+      height: 56px;
+      color: var(--pad-green);
+      background: var(--pad-green-deep);
+      border: 1px solid #27754a;
+      border-radius: 16px;
+      box-shadow: none;
+    }
+
+    .brand-mark svg { width: 30px; height: 30px; }
+    h1 { color: var(--pad-text); font-size: clamp(1.35rem, 2.7vw, 2rem); }
+
+    .conn-pill {
+      color: var(--pad-muted);
+      background: transparent;
+      border: 1px solid var(--pad-line);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    .conn-pill::before { background: var(--pad-amber); }
+    .muted, .section-title .muted { color: var(--pad-muted); }
+    .section-title { color: var(--pad-text); }
+    .section-badge { color: var(--pad-green); background: transparent; padding-inline: 0; }
+
+    .control-header .btn.utility {
+      width: 100%;
+      min-height: 58px;
+      color: var(--pad-text);
+      background: var(--pad-surface);
+      border: 1px solid var(--pad-green);
+      border-radius: 12px;
+      font-size: 1.1rem;
+    }
+
+    .control-board {
+      grid-template-columns: minmax(290px, 0.32fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .nav-stack,
+    .category-stack { gap: 16px; }
+
+    .card { padding: 18px; border-radius: 10px; }
+
+    .btn,
+    .grid .btn,
+    .control-board #mainGrid .btn,
+    .control-board #subGrid .btn,
+    .control-board #subPageGrid .btn {
+      color: var(--pad-text);
+      background: var(--pad-surface-2);
+      border-color: #4a554f;
+      border-radius: 10px;
+      box-shadow: none;
+    }
+
+    .btn:hover,
+    .grid .btn:hover {
+      color: var(--pad-text);
+      background: #222b27;
+      border-color: #68756e;
+      box-shadow: none;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:focus-visible, .mini-btn:focus-visible { outline-color: rgba(101, 211, 95, 0.6); }
+
+    .grid .btn.active,
+    .mode-actions .btn.active {
+      color: var(--pad-text);
+      background: #337c36;
+      border-color: var(--pad-green);
+      box-shadow: inset 0 0 0 1px var(--pad-green);
+    }
+
+    .grid .btn::before { display: none; }
+
+    .control-board .main-card .grid,
+    .control-board .sub-card .grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .control-board #mainGrid .btn,
+    .control-board #subGrid .btn {
+      min-height: 78px;
+      padding: 14px 16px;
+      font-size: clamp(1rem, 1.7vw, 1.28rem);
+    }
+
+    .product-filter-input {
+      color: var(--pad-text);
+      background: #0f1512;
+      border-color: #4a554f;
+      border-radius: 10px;
+    }
+
+    .product-filter-input::placeholder { color: #7f8984; }
+    .product-filter-input:focus { border-color: var(--pad-green); box-shadow: 0 0 0 3px rgba(101, 211, 95, 0.18); }
+
+    .product-filter-form { grid-template-columns: minmax(0, 1fr) minmax(120px, 0.55fr); }
+    .product-filter-form #btnClearProductFilter { grid-column: 1 / -1; }
+    .product-filter-form .btn.primary { background: #337c36; border-color: var(--pad-green); }
+
+    #subPageGrid,
+    .control-board .subpage-card .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .state-card { grid-column: span 8; }
+    .health-card { grid-column: span 4; }
+
+    .state-item,
+    .health-item,
+    .health-screen-card {
+      color: var(--pad-text);
+      background: #101613;
+      border-color: var(--pad-line);
+      border-radius: 8px;
+    }
+
+    .state-item small,
+    .health-item small { color: var(--pad-muted); }
+    .state-item b,
+    .health-item b { color: var(--pad-green); }
+
+    .mini-btn { color: var(--pad-text); background: transparent; border-color: var(--pad-line); }
+
+    .pad-dock {
+      position: fixed;
+      z-index: 100;
+      left: max(18px, env(safe-area-inset-left));
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(14px, env(safe-area-inset-bottom));
+      width: min(calc(100% - 36px), 1500px);
+      min-height: var(--dock-height);
+      margin-inline: auto;
+      padding: 12px;
+      background: #0f1512;
+      border: 1px solid #536059;
+      border-radius: 16px;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.46);
+    }
+
+    .pad-dock .section-title { display: none; }
+
+    .pad-dock-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.88fr 1fr;
+      gap: 12px;
+    }
+
+    .pad-dock .transport-btn,
+    .pad-dock #btnRefresh {
+      width: 100%;
+      min-height: 100px;
+      margin: 0;
+      justify-content: center;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-weight: 900;
+      border-radius: 12px;
+    }
+
+    .pad-dock #btnPrev,
+    .pad-dock #btnNext { background: #123b27; border-color: var(--pad-green); }
+    .pad-dock #btnRefresh { color: #081109; background: var(--pad-green); border-color: var(--pad-green); }
+    .pad-dock svg { width: 34px; height: 34px; flex: 0 0 auto; }
+
+    .voice-widget { bottom: calc(var(--dock-height) + 34px + env(safe-area-inset-bottom)); }
+
+    @media (min-width: 900px) {
+      .wrap { grid-template-rows: auto auto auto; }
+      .control-header, .control-board, .settings-deck { grid-column: 1 / -1; }
+      .state-card { grid-column: 1 / span 8; }
+      .health-card { grid-column: 9 / -1; }
+    }
+
+    @media (max-width: 900px) {
+      :root { --dock-height: 110px; }
+      .control-board { grid-template-columns: 1fr; }
+      .category-stack { order: 1; }
+      .nav-stack { order: 2; }
+      .control-board .main-card .grid,
+      .control-board .sub-card .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .product-filter-form { grid-template-columns: 1fr; }
+      .product-filter-form #btnClearProductFilter { grid-column: auto; }
+      .pad-dock .transport-btn,
+      .pad-dock #btnRefresh { min-height: 84px; font-size: clamp(1.05rem, 4vw, 1.45rem); }
+    }
+
+    @media (max-width: 520px) {
+      :root { --dock-height: 92px; }
+      body { padding-inline: 10px; padding-bottom: calc(var(--dock-height) + 24px + env(safe-area-inset-bottom)); }
+      .control-header { grid-template-columns: 1fr auto; padding-top: 0; }
+      .header-brand { gap: 9px; }
+      .brand-mark { width: 44px; height: 44px; border-radius: 12px; }
+      h1 { font-size: 1.08rem; }
+      .conn-pill { max-width: calc(100vw - 120px); font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .control-header .btn.utility { width: 54px; min-width: 54px; min-height: 54px; padding: 0; font-size: 0; }
+      .control-header .btn.utility svg { width: 26px; height: 26px; }
+      .card { padding: 14px; }
+      .control-board .main-card .grid,
+      .control-board .sub-card .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .control-board #mainGrid .btn,
+      .control-board #subGrid .btn { min-height: 68px; padding: 10px; font-size: 0.98rem; }
+      .state { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pad-dock { left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); width: calc(100% - 16px); padding: 8px; border-radius: 14px; }
+      .pad-dock-grid { gap: 8px; }
+      .pad-dock .transport-btn,
+      .pad-dock #btnRefresh { min-height: 74px; padding: 8px 5px; font-size: 0.9rem; flex-direction: column; gap: 3px; }
+      .pad-dock svg { width: 25px; height: 25px; }
+      .transport-icon { display: none; }
+      .voice-widget { bottom: calc(var(--dock-height) + 24px + env(safe-area-inset-bottom)); }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
     <header class="control-header">
       <div class="header-brand">
-        <div class="brand-mark" aria-hidden="true">📺</div>
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
         <div class="header-copy">
           <h1>ควบคุมจอแสดงสินค้า</h1>
           <p class="conn-pill muted" id="connHint">ใช้ควบคุมข้ามอุปกรณ์ผ่าน Google Apps Script Web App</p>
         </div>
       </div>
-      <button class="btn utility" id="btnReloadMeta" type="button">↻ รีโหลด</button>
+      <button class="btn utility" id="btnReloadMeta" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> รีโหลด</button>
       <div class="row gas-config">
         <input id="gasUrlInput" class="gas-url-input" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)">
         <button class="btn" id="btnSaveGasUrl" type="button">บันทึก URL</button>
@@ -1274,15 +1541,15 @@
 
     <div class="control-board">
       <div class="nav-stack">
-        <section class="card transport-card" aria-label="ควบคุมหน้าจอ">
+        <section class="card transport-card pad-dock" aria-label="ควบคุมหน้าจอ">
           <div class="section-title">
             <b>เลื่อนหน้าจอ</b>
           </div>
-          <div class="transport-grid">
-            <button class="btn transport-btn" id="btnPrev" type="button"><span class="transport-icon" aria-hidden="true">‹</span> ก่อนหน้า</button>
-            <button class="btn transport-btn" id="btnNext" type="button">ถัดไป <span class="transport-icon" aria-hidden="true">›</span></button>
+          <div class="pad-dock-grid">
+            <button class="btn transport-btn" id="btnPrev" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> ก่อนหน้า</button>
+            <button class="btn secondary" id="btnRefresh" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> รีเฟรช</button>
+            <button class="btn transport-btn" id="btnNext" type="button">ถัดไป <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           </div>
-          <button class="btn secondary" id="btnRefresh" type="button">↻ รีเฟรช</button>
         </section>
 
         <section class="card product-filter-card" aria-label="เรียกสินค้าเฉพาะสูตร">
@@ -1382,11 +1649,11 @@
     const LAYOUT_CONFIG_KEY = "tv-display-layout-config-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 1500;
-    const REMOTE_META_TIMEOUT_MS = 3000;
+    const REMOTE_META_TIMEOUT_MS = 6000;
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-two-screen-sync-v7";
+    const APP_VERSION = "display-control-pad-dock-v7";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -1805,14 +2072,13 @@
       const sourceId = getControlClientId();
       const commandId = `${createdAt}-${sourceId}-${Math.random().toString(16).slice(2, 8)}`;
       const navigationAction = ["next", "prev", "goMain", "goSub", "goSubPage"].includes(action);
-      const applyAt = navigationAction ? createdAt + 3000 : 0;
       lastIssuedCommandAt = createdAt;
       const cmd = {
         id: commandId,
         dedupeKey: commandId,
         createdAt,
-        // ให้ทีวีทุกจอรับคำสั่งก่อน แล้วเปลี่ยนพร้อมกันตามเวลานัดหมายเดียวกัน
-        applyAt,
+        // ระบบเหลือจอเดียวแล้ว จึงไม่ต้องหน่วงเวลาเพื่อรอซิงค์หลายจอ
+        applyAt: 0,
         sourceId,
         source: "control",
         action,
