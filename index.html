@@ -5422,11 +5422,11 @@
     const ENABLE_KEYPAD_SHORTCUTS = false;
     const WALL_MULTI_SCREEN_MIN_ITEMS = 4;
     const REMOTE_CONTROL_POLL_MS = 500;
-    const REMOTE_COMMAND_TIMEOUT_MS = 3000;
+    const REMOTE_COMMAND_TIMEOUT_MS = 20000;
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-two-screen-sync-v7";
+    const APP_VERSION = "display-performance-v12";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5524,6 +5524,10 @@
     let autoHoverTimer = null;
     let remoteControlPollTimer = null;
     let remoteControlPollInFlight = false;
+    let remoteControlNextPollAt = 0;
+    let remoteControlFailures = 0;
+    let remoteMetaInFlight = false;
+    let pendingRemoteMeta = null;
     let lastRemoteCommandId = null;
     let lastAcceptedRemoteCommandAt = 0;
     let seenRemoteCommandKeys = new Map();
@@ -6149,7 +6153,12 @@
 
     function pushRemoteMeta(metaPayload) {
       const endpoint = getControlWebAppUrl();
-      if (!endpoint) return;
+      if (!endpoint || !navigator.onLine) return;
+      pendingRemoteMeta = metaPayload;
+      if (remoteMetaInFlight) return;
+      const latestMeta = pendingRemoteMeta;
+      pendingRemoteMeta = null;
+      remoteMetaInFlight = true;
 
       try {
         fetch(endpoint, {
@@ -6160,11 +6169,14 @@
             mode: "push_meta",
             source: "display",
             sheetId: data.sheetId,
-            meta: metaPayload
+            meta: latestMeta
           })
-        }).catch(() => {});
+        }).catch(() => {}).finally(() => {
+          remoteMetaInFlight = false;
+          if (pendingRemoteMeta) pushRemoteMeta(pendingRemoteMeta);
+        });
       } catch (err) {
-        // ignore
+        remoteMetaInFlight = false;
       }
     }
 
@@ -6655,7 +6667,7 @@ function render() {
       if (!data.sheetId) return;
       if (!sheetName || sheetLoadInFlight.has(sheetName)) return;
       sheetLoadInFlight.set(sheetName, true);
-      let isCurrentPage = pageIdx === currentPageIndex;
+      let isCurrentPage = sheetName === getSheetName();
       let hadProductsCache = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
 
       if (!hadProductsCache) {
@@ -6702,9 +6714,9 @@ function render() {
           $("sheetStatus").classList.remove("error");
         }
 
-        isCurrentPage = pageIdx === currentPageIndex;
+        isCurrentPage = sheetName === getSheetName();
         const rows = await fetchSheetRows(data.sheetId, sheetName);
-        isCurrentPage = pageIdx === currentPageIndex;
+        isCurrentPage = sheetName === getSheetName();
         const nextProducts = parseRows(rows);
         const productsChanged = getProductsDataSignature(productsCache[sheetName]) !== getProductsDataSignature(nextProducts);
 
@@ -6733,7 +6745,7 @@ function render() {
         }
       } catch (err) {
         console.error(err);
-        isCurrentPage = pageIdx === currentPageIndex;
+        isCurrentPage = sheetName === getSheetName();
         sheetLoadErrors[sheetName] = true;
         lastSheetLoadAt = Date.now();
         lastSheetLoadOk = false;
@@ -6758,11 +6770,11 @@ function render() {
       if (!endpoint || !sheetId || !sheetName) return null;
 
       try {
-        const res = await withRetry(() => runJsonp(endpoint, {
+        const res = await runJsonp(endpoint, {
           mode: "pull_sheet_rows",
           sheetId,
           sheetName
-        }, 9000));
+        }, 12000);
 
         if (!res?.ok || !Array.isArray(res.rows)) {
           throw new Error(res?.error || "GAS returned no rows");
@@ -6779,15 +6791,20 @@ function render() {
         const script = document.createElement("script");
 
         const timer = setTimeout(() => {
-          cleanup();
+          cleanup(true);
           reject(new Error("Timeout"));
         }, 10000);
 
-        function cleanup() {
+        function cleanup(lateResponseSafe = false) {
           clearTimeout(timer);
           if (script.parentNode) script.parentNode.removeChild(script);
           try {
-            delete window[cb];
+            if (lateResponseSafe) {
+              window[cb] = () => {};
+              setTimeout(() => { delete window[cb]; }, 10000);
+            } else {
+              delete window[cb];
+            }
           } catch (e) {}
         }
 
@@ -6819,9 +6836,37 @@ function render() {
     }
 
     async function fetchSheetRows(sheetId, sheetName) {
-      const remoteRows = await fetchRowsFromRemote(sheetId, sheetName);
-      if (remoteRows) return remoteRows;
-      return withRetry(() => fetchJsonp(sheetId, sheetName), 2);
+      // Prefer GAS, but let the existing public-sheet fallback start if it is slow.
+      // First successful response wins; one failure must not discard the other.
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        let failures = 0;
+        let fallbackStarted = false;
+        let fallbackTimer;
+        const succeed = (rows) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(fallbackTimer);
+          resolve(rows);
+        };
+        const fail = (error) => {
+          failures++;
+          if (!settled && failures === 2) {
+            settled = true;
+            reject(error || new Error("Sheet sources unavailable"));
+          }
+        };
+        const startFallback = () => {
+          if (settled || fallbackStarted) return;
+          fallbackStarted = true;
+          fetchJsonp(sheetId, sheetName).then(succeed, fail);
+        };
+        fallbackTimer = setTimeout(startFallback, 1200);
+        fetchRowsFromRemote(sheetId, sheetName).then((rows) => {
+          if (Array.isArray(rows)) succeed(rows);
+          else { fail(new Error("GAS returned no rows")); startFallback(); }
+        }, (error) => { fail(error); startFallback(); });
+      });
     }
 
     function parseRows(rows) {
@@ -7787,8 +7832,8 @@ function render() {
 
     function pullRemoteCommand() {
       const endpoint = getControlWebAppUrl();
-      if (!endpoint) return;
-      if (remoteControlPollInFlight) return;
+      if (!endpoint || !navigator.onLine) return;
+      if (remoteControlPollInFlight || Date.now() < remoteControlNextPollAt) return;
 
       remoteControlPollInFlight = true;
       runJsonp(endpoint, {
@@ -7796,10 +7841,14 @@ function render() {
         screen: "display",
         lastId: lastRemoteCommandId || ""
       }, REMOTE_COMMAND_TIMEOUT_MS).then((res) => {
-        if (!res || !res.ok || !res.command) return;
+        if (!res?.ok) throw new Error(res?.error || "Command request failed");
+        remoteControlFailures = 0;
+        remoteControlNextPollAt = Date.now() + REMOTE_CONTROL_POLL_MS;
+        if (!res.command) return;
         acceptRemoteCommand(res.command);
       }).catch(() => {
-        // ignore transient network errors
+        remoteControlFailures = Math.min(remoteControlFailures + 1, 5);
+        remoteControlNextPollAt = Date.now() + Math.min(15000, 1000 * 2 ** remoteControlFailures);
       }).finally(() => {
         remoteControlPollInFlight = false;
       });
@@ -7813,12 +7862,14 @@ function render() {
       remoteControlPollTimer = setInterval(pullRemoteCommand, REMOTE_CONTROL_POLL_MS);
     }
 
-    async function loadRemainingSheetsSequentially(loopId, currentIdx) {
-      for (let i = 0; i < data.sheetPages.length; i++) {
-        if (loopId !== startLoopsRunId) return;
-        if (i === currentIdx) continue;
-        await loadSheetData(i);
-      }
+    async function loadRemainingSheets(loopId, currentIdx) {
+      const queue = data.sheetPages.map((_, index) => index).filter((index) => index !== currentIdx);
+      const worker = async () => {
+        while (queue.length && loopId === startLoopsRunId) {
+          await loadSheetData(queue.shift());
+        }
+      };
+      await Promise.all([worker(), worker()]);
     }
 
     async function startLoops() {
@@ -7830,12 +7881,16 @@ function render() {
       restartRemoteControlPolling();
       restartHealthHeartbeat();
 
+      // Show cached/current products without waiting for the sheet directory.
+      const currentLoad = loadSheetData(currentPageIndex);
       const changedPages = await syncSheetPagesFromRemote();
       if (loopId !== startLoopsRunId) return;
       if (changedPages) render();
 
-      loadSheetData(currentPageIndex).then(() => {
-        if (loopId === startLoopsRunId) loadRemainingSheetsSequentially(loopId, currentPageIndex);
+      currentLoad.then(async () => {
+        if (loopId !== startLoopsRunId) return;
+        if (changedPages) await loadSheetData(currentPageIndex);
+        if (loopId === startLoopsRunId) loadRemainingSheets(loopId, currentPageIndex);
       });
 
       sheetTimer = setInterval(() => {
@@ -8094,7 +8149,6 @@ function render() {
     function resumeDisplayChannels() {
       updateConnectivityUI();
       if (document.hidden) return;
-      remoteControlPollInFlight = false;
       restartRemoteControlPolling();
       restartHealthHeartbeat();
       checkAppVersion();

@@ -87,9 +87,12 @@ function doPost(e) {
           ? currentMeta.screens
           : {};
         const screenNumber = Math.max(1, Number(incomingMeta.wall && incomingMeta.wall.screen || 1));
-        currentScreens[String(screenNumber)] = incomingMeta;
-        incomingMeta.screens = currentScreens;
-        PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(incomingMeta));
+        // Store a standalone screen snapshot, never the aggregate itself.
+        const snapshot = Object.assign({}, incomingMeta);
+        delete snapshot.screens;
+        currentScreens[String(screenNumber)] = snapshot;
+        const aggregate = Object.assign({}, snapshot, { screens: currentScreens });
+        PropertiesService.getScriptProperties().setProperty(KEY_META, JSON.stringify(aggregate));
         return asJson({ ok: true });
       } finally {
         lock.releaseLock();

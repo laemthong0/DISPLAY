@@ -2156,11 +2156,11 @@
     const LAYOUT_CONFIG_KEY = "tv-display-layout-config-v1";
     const DEFAULT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxxcQZih3EeXbBoBVv9faUUFJ3b9CZaRG70enizHyo-2lNfTbSTDirCo0Txwq9fy_h83g/exec";
     const REMOTE_META_POLL_MS = 1500;
-    const REMOTE_META_TIMEOUT_MS = 6000;
+    const REMOTE_META_TIMEOUT_MS = 20000;
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-control-portrait-popup-bottom-v11";
+    const APP_VERSION = "display-performance-v12";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2201,6 +2201,8 @@
     let layoutSheetName = "";
     let layoutDragIndex = -1;
     let remoteMetaPollInFlight = false;
+    let remoteMetaNextPollAt = 0;
+    let remoteMetaFailures = 0;
     let controlBroadcastChannel = null;
     let pendingAutoPlay = null;
     let pendingNavigation = null;
@@ -2636,8 +2638,7 @@
         command: cmd
       });
 
-      // ส่งซ้ำช่วงสั้น ๆ เพื่อกันคำสั่งหลุดบน WebView/เครือข่ายทีวี
-      // ทุกครั้งใช้ command id เดิม จอจึง dedupe และไม่ข้ามหลายหน้า
+      // Queue one remote write per click; repeated writes contend for the GAS lock.
       const isCurrentCommand = () => createdAt >= lastIssuedCommandAt;
       const sendOnce = () => {
         if (!isCurrentCommand()) return;
@@ -2661,20 +2662,7 @@
         } catch {}
       };
 
-      [0, 300, 900].forEach((delay) => {
-        if (delay === 0) sendOnce();
-        else setTimeout(sendOnce, delay);
-      });
-
-      if (action === "refresh") {
-        [180, 520, 1100].forEach((delay) => {
-          setTimeout(() => {
-            if (isCurrentCommand()) {
-              postLocalCommand({ ...cmd, id: `${cmd.id}-local-${delay}` });
-            }
-          }, delay);
-        });
-      }
+      sendOnce();
     }
 
     function getSpeechRecognitionConstructor() {
@@ -3941,13 +3929,18 @@
       if (!endpoint) return;
 
       const tick = () => {
-        if (remoteMetaPollInFlight) return;
+        if (!navigator.onLine || remoteMetaPollInFlight || Date.now() < remoteMetaNextPollAt) return;
         remoteMetaPollInFlight = true;
 
         readMetaRemote().then((remoteMeta) => {
           if (remoteMeta) {
+            remoteMetaFailures = 0;
+            remoteMetaNextPollAt = Date.now() + REMOTE_META_POLL_MS;
             applyMeta(remoteMeta);
             setConnectionHintFromMeta(remoteMeta);
+          } else {
+            remoteMetaFailures = Math.min(remoteMetaFailures + 1, 5);
+            remoteMetaNextPollAt = Date.now() + Math.min(15000, 1000 * 2 ** remoteMetaFailures);
           }
         }).finally(() => {
           remoteMetaPollInFlight = false;

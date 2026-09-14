@@ -1,4 +1,4 @@
-const CACHE_NAME = "laemthong-display-shell-v4";
+const CACHE_NAME = "laemthong-display-shell-v5";
 const APP_SHELL = ["./", "./index.html", "./control.html", "./sw.js", "./version.json", "./site.webmanifest", "./favicon.svg", "./favicon.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
