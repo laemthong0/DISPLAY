@@ -171,3 +171,24 @@ test('startup starts product loading before the slow sheet directory responds', 
   finishDirectory(false);
   await startup;
 });
+
+test('product search finds a matching product in another brand tab and its subcategory', () => {
+  const context = vm.createContext({
+    data: { sheetPages: ['แบรนด์ A', 'ยารา'] }, currentPageIndex: 0,
+    currentMotherSubIndex: 0, currentSubPageIndex: 0,
+    productsCache: { 'แบรนด์ A': [{ name: 'สินค้า A' }], 'ยารา': [{ name: 'ยารา 16-16-16' }] },
+    clean: value => String(value || '').trim(),
+    getProductsForSheetState: sheet => context.productsCache[sheet] || null,
+    getSubCategoriesForSheet: sheet => sheet === 'ยารา' ? ['ปุ๋ยเกล็ด'] : ['ทั่วไป'],
+    getVisibleProductsForState: sheet => context.productsCache[sheet],
+    productMatchesFilter: (item, query) => item.name.includes(query), saveDisplayState: () => {}
+  });
+  vm.runInContext(extract(display, 'findProductSearchTarget'), context);
+  vm.runInContext(extract(display, 'focusProductSearchMatch'), context);
+  assert.equal(context.focusProductSearchMatch('ยารา'), true);
+  assert.equal(context.currentPageIndex, 1);
+});
+
+test('wall rotation accepts a brand tab containing one product', () => {
+  assert.match(display, /const WALL_MULTI_SCREEN_MIN_ITEMS = 1;/);
+});
