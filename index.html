@@ -5169,6 +5169,29 @@
       filter: none !important;
     }
 
+    /* Let product imagery sit directly on the display background. */
+    body .product-grid[data-density] .product-card,
+    body .product-grid[data-density] .product-card:hover,
+    body .product-grid[data-density] .product-card.auto-hover,
+    body.wall-mode .product-grid[data-density] .product-card,
+    body.wall-mode .product-grid[data-density] .product-card:hover,
+    body.wall-mode .product-grid[data-density] .product-card.auto-hover {
+      background: transparent !important;
+      background-image: none !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      filter: none !important;
+    }
+
+    body .product-grid[data-density] .product-card .image-box,
+    body .product-grid[data-density] .product-card .image-box::before,
+    body .product-grid[data-density] .product-card .image-box::after {
+      background: transparent !important;
+      background-image: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+    }
+
     .network-badge,
     .kiosk-prompt {
       position: fixed;
