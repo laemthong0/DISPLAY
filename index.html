@@ -5242,6 +5242,9 @@
     body.kiosk-mode .page-tabs,
     body.kiosk-mode .sub-tabs { display: none !important; }
     body.kiosk-mode .header { height: clamp(54px, 7vh, 78px); }
+    .product-card .price-wrap.has-discount .price-val {
+      color: #ffe279;
+    }
     @keyframes kioskPromptPulse {
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
@@ -6511,6 +6514,15 @@ function render() {
           ${idx + 1}. ${escapeHtml(name)}
         </button>
       `).join("");
+    }
+
+    function toPriceAmount(value) {
+      return parsePriceNumber(value) ?? Number.NaN;
+    }
+
+    function getValidDiscountPrice(item) {
+      const state = getProductPriceState(item);
+      return state.discounted ? state.current : "";
     }
 
     function renderGrid(products, shape = null, emptyText = "ไม่มีสินค้าในหมวดหมู่นี้", emptyState = {}) {

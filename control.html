@@ -1227,6 +1227,7 @@
       font-weight: 800;
     }
     .layout-price { color: var(--brand-2); font-weight: 900; white-space: nowrap; }
+    .layout-original-price { color: #7b8a81; font-size: 0.78em; margin-right: 4px; }
     .health-screen-card {
       display: grid;
       gap: 8px;
@@ -3786,6 +3787,26 @@
       }
     }
 
+    function getLayoutPriceMarkup(item) {
+      const amount = (value) => {
+        const normalized = clean(value)
+          .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)))
+          .replace(/[฿,\s]/g, "")
+          .replace(/บาท|บ\./g, "")
+          .replace(/\.$/, "");
+        return /^\d+(?:\.\d+)?$/.test(normalized) ? Number(normalized) : Number.NaN;
+      };
+      const regular = amount(item.price);
+      const sale = amount(item.discountPrice);
+      if (!Number.isFinite(regular) || !Number.isFinite(sale) || sale <= 0 || sale >= regular) {
+        return escapeHtml(item.price || "-") + " " + escapeHtml(item.unit || "");
+      }
+      const original = Number.isFinite(regular)
+        ? '<s class="layout-original-price">' + escapeHtml(item.price) + '</s> '
+        : "";
+      return original + escapeHtml(sale.toLocaleString("th-TH")) + " " + escapeHtml(item.unit || "");
+    }
+
     function renderLayoutList() {
       const list = $("layoutList");
       const label = $("layoutSheetLabel");
@@ -3799,7 +3820,7 @@
         '<div class="layout-item" draggable="true" data-layout-index="' + index + '">' +
           '<span class="layout-grip" aria-hidden="true">☷</span>' +
           '<span class="layout-name" title="' + escapeHtml(item.name) + '"><span class="layout-index">' + (index + 1) + '.</span> ' + escapeHtml(item.name) + '</span>' +
-          '<span class="layout-price">' + escapeHtml(item.price || "-") + ' ' + escapeHtml(item.unit || "") + '</span>' +
+          '<span class="layout-price">' + getLayoutPriceMarkup(item) + '</span>' +
         '</div>'
       ).join("");
     }
