@@ -340,7 +340,7 @@ test('service worker preserves other projects, bounds shell keys and bypasses ve
   const c = vm.createContext({ URL, Set,
     self: { location: { origin: 'https://example.com', href: 'https://example.com/DISPLAY/sw.js' },
       addEventListener: (name, fn) => { handlers[name] = fn; }, clients: { claim() {} } },
-    caches: { keys: async () => ['laemthong-display-shell-v5', 'laemthong-display-shell-v6', 'other-app'],
+    caches: { keys: async () => ['laemthong-display-shell-v5', 'laemthong-display-shell-v7', 'other-app'],
       delete: async key => removed.push(key), open: async () => cache },
     fetch: async () => { if (offline) throw new Error('offline'); return { ok: true, clone: () => ({}) }; } });
   vm.runInContext(fs.readFileSync(`${__dirname}/sw.js`, 'utf8'), c);
@@ -358,4 +358,31 @@ test('service worker preserves other projects, bounds shell keys and bypasses ve
   for (const url of ['https://example.com/DISPLAY/version.json?_=1', 'https://example.com/OTHER/index.html']) {
     handlers.fetch({ request: { method: 'GET', url }, respondWith: () => assert.fail('must not intercept') });
   }
+});
+
+test('display and controller use shared code configuration and ignore old browser settings', () => {
+  const configSource = fs.readFileSync(`${__dirname}/display-config.js`, 'utf8');
+  for (const source of [display, control]) {
+    const c = vm.createContext({ window: {}, URLSearchParams,
+      clean: value => String(value ?? '').trim(),
+      localStorage: { getItem: () => 'obsolete-browser-setting' } });
+    c.window.location = { search: '' };
+    vm.runInContext(configSource, c);
+    vm.runInContext(extract(source, 'getControlAuthToken'), c);
+    assert.equal(c.getControlAuthToken(), c.window.DISPLAY_CONFIG.controlAuthToken);
+    assert.ok(c.getControlAuthToken().length >= 32);
+    if (source === control) {
+      vm.runInContext(extract(source, 'validWebAppUrl'), c);
+      vm.runInContext(extract(source, 'getWebAppUrl'), c);
+      assert.equal(c.getWebAppUrl(), c.window.DISPLAY_CONFIG.controlWebAppUrl);
+    } else {
+      vm.runInContext(extract(source, 'getControlWebAppUrl'), c);
+      assert.equal(c.getControlWebAppUrl(), c.window.DISPLAY_CONFIG.controlWebAppUrl);
+      c.window.location.search = '?remote=0';
+      assert.equal(c.getControlWebAppUrl(), '');
+    }
+    assert.ok(source.indexOf('src="display-config.js?') < source.indexOf('const APP_VERSION'));
+  }
+  assert.doesNotMatch(control, /id="(?:gasUrlInput|gasTokenInput|btnSaveGasUrl)"/);
+  assert.doesNotMatch(display, /id="(?:editControlAuthToken|editControlWebAppUrl)"/);
 });

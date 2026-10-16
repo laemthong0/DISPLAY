@@ -5353,16 +5353,6 @@
         </div>
 
         <div class="form-group full">
-          <label>Google Apps Script Web App URL (ควบคุมข้ามอุปกรณ์)</label>
-          <input type="text" id="editControlWebAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
-        </div>
-
-        <div class="form-group full">
-          <label for="editControlAuthToken">รหัสควบคุมจอ</label>
-          <input type="password" id="editControlAuthToken" autocomplete="off" placeholder="รหัสเดียวกับที่ตั้งใน Apps Script">
-        </div>
-
-        <div class="form-group full">
           <label>รายชื่อชีต / หมวดสินค้า (บรรทัดละ 1 ชื่อ)</label>
           <textarea id="editSheetPages"></textarea>
         </div>
@@ -5385,6 +5375,7 @@
     </div>
   </div>
 
+  <script src="display-config.js?v=display-code-config-v15"></script>
   <script>
     const DEFAULT_SHEET_PAGES = [
       "แม่ปุ๋ย",
@@ -5436,8 +5427,6 @@
     const STORAGE_KEY = "tv-price-display-modern-premium-v9";
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
-    const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
-    const CONTROL_AUTH_KEY = "tv-display-control-auth-token-v1";
     const LAST_REMOTE_COMMAND_KEY = "tv-display-last-remote-command-v1";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
@@ -5458,7 +5447,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-bugfix-v14";
+    const APP_VERSION = "display-code-config-v15";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5588,7 +5577,7 @@
     }
 
     function getControlAuthToken() {
-      try { return clean(localStorage.getItem(CONTROL_AUTH_KEY)); } catch { return ""; }
+      return clean(window.DISPLAY_CONFIG?.controlAuthToken);
     }
 
     function getRemoteCommandStorageKey() {
@@ -6183,14 +6172,7 @@
 
       if (remoteParam === "0" || remoteParam === "false" || remoteParam === "off") return "";
 
-      let storedUrl = "";
-      try {
-        storedUrl = clean(localStorage.getItem(CONTROL_WEBAPP_KEY) || "");
-      } catch {
-        storedUrl = "";
-      }
-
-      const url = clean(storedUrl || data.controlWebAppUrl || "");
+      const url = clean(window.DISPLAY_CONFIG?.controlWebAppUrl);
       return /^https:\/\/script\.google\.com\//i.test(url) ? url : "";
     }
 
@@ -8076,8 +8058,6 @@ function render() {
       $("editSheetPages").value = data.sheetPages.join("\n");
       $("editLogoUrl").value = data.logoUrl || "";
       $("editTickerText").value = data.tickerText || "";
-      $("editControlWebAppUrl").value = data.controlWebAppUrl || "";
-      $("editControlAuthToken").value = getControlAuthToken();
 
       $("editorModalOverlay").classList.add("open");
     }
@@ -8093,21 +8073,6 @@ function render() {
 
       data.logoUrl = $("editLogoUrl").value.trim();
       data.tickerText = $("editTickerText").value.trim();
-      data.controlWebAppUrl = $("editControlWebAppUrl").value.trim();
-      try {
-        localStorage.setItem(CONTROL_AUTH_KEY, $("editControlAuthToken").value.trim());
-      } catch {}
-
-      try {
-        if (/^https:\/\/script\.google\.com\//i.test(data.controlWebAppUrl)) {
-          localStorage.setItem(CONTROL_WEBAPP_KEY, data.controlWebAppUrl);
-        } else {
-          localStorage.removeItem(CONTROL_WEBAPP_KEY);
-        }
-      } catch {
-        // The main display can still use the saved data object in this tab.
-      }
-
       saveData();
 
       $("editorModalOverlay").classList.remove("open");

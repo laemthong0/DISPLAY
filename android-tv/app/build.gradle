@@ -21,7 +21,7 @@ android {
         versionCode 2
         versionName "1.0.1"
         buildConfigField "String", "DISPLAY_BASE_URL", "\"https://laemthong0.github.io/DISPLAY/\""
-        buildConfigField "String", "DISPLAY_VERSION", "\"display-bugfix-v14\""
+        buildConfigField "String", "DISPLAY_VERSION", "\"display-code-config-v15\""
     }
 
     signingConfigs {

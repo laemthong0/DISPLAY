@@ -1,17 +1,16 @@
 # DISPLAY
 
-## ตั้งค่ารหัสควบคุมจอ
+## ตั้งค่าการเชื่อมต่อในโค้ด
 
-1. ใน Apps Script → Project Settings → Script Properties ตั้ง `TV_DISPLAY_AUTH_TOKEN`
-   เป็นรหัสสุ่มยาวอย่างน้อย 32 ตัวอักษร เก็บรหัสนี้เป็นส่วนตัว
-2. ใช้ `Code.gs` จาก repository นี้ แล้ว Deploy → Manage deployments → Edit → New version
-   เพื่อให้ URL `/exec` ใช้ backend รุ่นใหม่ (บันทึกโค้ดอย่างเดียวไม่เปลี่ยน deployment)
-3. หน้ารีโมตเปิด **ตั้งค่าการเชื่อมต่อ** ใส่ URL `/exec` และรหัส แล้วบันทึก
-4. หน้าแสดงผลเปิดตั้งค่าจอ ใส่ **รหัสควบคุมจอ** เดียวกัน แล้วบันทึก ทำซ้ำทุกเครื่อง/ทีวี
-   ที่ใช้คนละ browser profile เครื่องเดียวกันใช้ localStorage ร่วมกัน
+แก้ URL และรหัสที่ `display-config.js` ไฟล์เดียว ทั้งหน้ารีโมตและทีวีจะอ่านไฟล์นี้
+อัตโนมัติ ไม่ต้องกรอกรหัสบนหน้าเว็บ ค่าที่เคยบันทึกไว้ใน browser จะไม่ทับค่าในโค้ด
 
-Backend ปฏิเสธการควบคุมเมื่อยังไม่ตั้งรหัส ห้ามใส่รหัสจริงใน Git, HTML, ลิงก์เปิดจอ
-หรือ `version.json` รหัสที่บันทึกอยู่ใน browser profile ของแต่ละเครื่อง
+ตั้ง `TV_DISPLAY_AUTH_TOKEN` ใน Apps Script → Project Settings → Script Properties
+ให้ตรงกับ `controlAuthToken` ในไฟล์ตั้งค่า ใช้ `Code.gs` จาก repository นี้ แล้ว
+Deploy → Manage deployments → Edit → New version เพื่ออัปเดต backend
+
+เจ้าของระบบเลือกให้รหัสอยู่ในโค้ดเว็บสาธารณะ รหัสนี้จึงไม่ใช่ความลับและผู้ที่เปิดเว็บ
+สามารถอ่านและใช้รหัสควบคุมได้ Backend ยังปฏิเสธคำขอที่รหัสไม่ตรงหรือไม่ได้ตั้งค่า
 ข้อมูล Google Sheet ที่เผยแพร่สาธารณะยังอ่านได้ผ่าน Google Visualization โดยตรง
 รหัสควบคุมไม่ได้เปลี่ยนสิทธิ์การแชร์ของ Google Sheet
 
