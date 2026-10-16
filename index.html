@@ -5358,6 +5358,11 @@
         </div>
 
         <div class="form-group full">
+          <label for="editControlAuthToken">รหัสควบคุมจอ</label>
+          <input type="password" id="editControlAuthToken" autocomplete="off" placeholder="รหัสเดียวกับที่ตั้งใน Apps Script">
+        </div>
+
+        <div class="form-group full">
           <label>รายชื่อชีต / หมวดสินค้า (บรรทัดละ 1 ชื่อ)</label>
           <textarea id="editSheetPages"></textarea>
         </div>
@@ -5432,6 +5437,8 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
+    const CONTROL_AUTH_KEY = "tv-display-control-auth-token-v1";
+    const LAST_REMOTE_COMMAND_KEY = "tv-display-last-remote-command-v1";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
     const WALL_SCREEN_KEY = "tv-display-wall-screen-v1";
@@ -5451,7 +5458,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-product-search-v13";
+    const APP_VERSION = "display-bugfix-v14";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5553,11 +5560,11 @@
     let remoteControlFailures = 0;
     let remoteMetaInFlight = false;
     let pendingRemoteMeta = null;
-    let lastRemoteCommandId = null;
+    let lastRemoteCommandId = readLastRemoteCommandId();
     let lastAcceptedRemoteCommandAt = 0;
     let seenRemoteCommandKeys = new Map();
     let controlBroadcastChannel = null;
-    let autoPlayEnabled = false;
+    let autoPlayEnabled = readAutoPlayPreference();
     let fastRenderUntil = 0;
     let wallSyncHoldUntil = 0;
     let pendingNumericMainIndex = null;
@@ -5578,6 +5585,22 @@
 
     function clean(value) {
       return String(value ?? "").trim();
+    }
+
+    function getControlAuthToken() {
+      try { return clean(localStorage.getItem(CONTROL_AUTH_KEY)); } catch { return ""; }
+    }
+
+    function getRemoteCommandStorageKey() {
+      return LAST_REMOTE_COMMAND_KEY + ":" + getControlWebAppUrl() + ":" + WALL_CONFIG.screen;
+    }
+
+    function readLastRemoteCommandId() {
+      try { return clean(localStorage.getItem(getRemoteCommandStorageKey())) || null; } catch { return null; }
+    }
+
+    function rememberRemoteCommandId(id) {
+      try { localStorage.setItem(getRemoteCommandStorageKey(), id); } catch {}
     }
 
     function readSavedDisplayState(sheetPages) {
@@ -5806,7 +5829,7 @@
         // ignore storage failures on locked-down TV browsers
       }
 
-      return true;
+      return false;
     }
 
     function getWallConfig() {
@@ -5851,7 +5874,7 @@
         : 0;
 
       if (urlMode === "single" || urlMode === "wall" || wallIdentityRequested) {
-        rememberWallConfig(enabled ? "wall" : "single", screen, effectiveScreens);
+        rememberWallConfig(enabled ? "wall" : "single", enabled ? screen : NaN, enabled ? effectiveScreens : NaN);
       }
 
       return {
@@ -5963,7 +5986,11 @@
         // ignore storage failures on locked-down TV browsers
       }
 
+      const url = new URL(window.location.href);
+      url.searchParams.set("wallMode", normalized);
+      window.history.replaceState(null, "", url.toString());
       WALL_CONFIG = getWallConfig();
+      lastRemoteCommandId = readLastRemoteCommandId();
       wallSyncHoldUntil = 0;
       render();
       restartPageTimer();
@@ -5985,10 +6012,11 @@
       }
     }
 
-    function setAutoPlay() {
-      autoPlayEnabled = false;
+    function setAutoPlay(enabled) {
+      autoPlayEnabled = enabled === true;
       try {
-        localStorage.setItem(AUTO_PLAY_KEY, "paused");
+        const preference = autoPlayEnabled ? "playing" : "paused";
+        if (localStorage.getItem(AUTO_PLAY_KEY) !== preference) localStorage.setItem(AUTO_PLAY_KEY, preference);
       } catch {
         // ignore storage failures on locked-down TV browsers
       }
@@ -6189,6 +6217,8 @@
         };
 
         const u = new URL(url);
+        const token = getControlAuthToken();
+        if (token) u.searchParams.set("token", token);
         Object.entries(params).forEach(([k, v]) => {
           if (v !== undefined && v !== null) u.searchParams.set(k, String(v));
         });
@@ -6225,6 +6255,7 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             mode: "push_meta",
+            token: getControlAuthToken(),
             source: "display",
             sheetId: data.sheetId,
             meta: latestMeta
@@ -6723,8 +6754,10 @@ function render() {
     async function loadSheetData(pageIdx) {
       const sheetName = data.sheetPages[pageIdx];
       if (!data.sheetId) return;
-      if (!sheetName || sheetLoadInFlight.has(sheetName)) return;
-      sheetLoadInFlight.set(sheetName, true);
+      const requestedSheetId = data.sheetId;
+      const requestKey = `${requestedSheetId}::${sheetName}`;
+      if (!sheetName || sheetLoadInFlight.has(requestKey)) return;
+      sheetLoadInFlight.set(requestKey, true);
       let isCurrentPage = sheetName === getSheetName();
       let hadProductsCache = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
 
@@ -6759,7 +6792,7 @@ function render() {
           updateConnectivityUI();
           if (hadProductsCache) render();
         }
-        sheetLoadInFlight.delete(sheetName);
+        sheetLoadInFlight.delete(requestKey);
         return;
       }
 
@@ -6773,7 +6806,8 @@ function render() {
         }
 
         isCurrentPage = sheetName === getSheetName();
-        const rows = await fetchSheetRows(data.sheetId, sheetName);
+        const rows = await fetchSheetRows(requestedSheetId, sheetName);
+        if (data.sheetId !== requestedSheetId || !data.sheetPages.includes(sheetName)) return;
         isCurrentPage = sheetName === getSheetName();
         const nextProducts = parseRows(rows);
         const productsChanged = getProductsDataSignature(productsCache[sheetName]) !== getProductsDataSignature(nextProducts);
@@ -6787,14 +6821,20 @@ function render() {
         updateClock();
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
-        if (clean(productFilterQuery)) focusProductSearchMatch(productFilterQuery);
+        const searchStateBefore = `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
+        if (clean(productFilterQuery) && !applyProductFilter(getVisibleProducts(getSheetName(), productsCache[getSheetName()] || [])).length) {
+          focusProductSearchMatch(productFilterQuery);
+        }
+        const searchMoved = searchStateBefore !== `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
+        isCurrentPage = sheetName === getSheetName();
+        if (searchMoved && !isCurrentPage) render();
 
         if (isCurrentPage) {
           $("sheetStatus").textContent = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString("th-TH");
           $("sheetStatus").classList.remove("error");
           setGridRefreshing(false);
 
-          if (!hadProductsCache || productsChanged) {
+          if (!hadProductsCache || productsChanged || searchMoved) {
             if (WALL_CONFIG.syncEnabled && autoPlayEnabled) {
               if (!applyWallSyncedState()) render();
             } else if (!skipCurrentEmptyState(1)) {
@@ -6803,6 +6843,7 @@ function render() {
           }
         }
       } catch (err) {
+        if (data.sheetId !== requestedSheetId || !data.sheetPages.includes(sheetName)) return;
         console.error(err);
         isCurrentPage = sheetName === getSheetName();
         sheetLoadErrors[sheetName] = true;
@@ -6820,7 +6861,7 @@ function render() {
           if (!hadProductsCache) render();
         }
       } finally {
-        sheetLoadInFlight.delete(sheetName);
+        sheetLoadInFlight.delete(requestKey);
       }
     }
 
@@ -7852,11 +7893,12 @@ function render() {
 
       const now = Date.now();
       pruneRemoteCommandKeys(now);
-      if (seenRemoteCommandKeys.has(commandKey)) return false;
+      if (seenRemoteCommandKeys.has(commandKey) || clean(command.id) === lastRemoteCommandId) return false;
 
       seenRemoteCommandKeys.set(commandKey, now);
       lastAcceptedRemoteCommandAt = now;
       lastRemoteCommandId = clean(command.id) || commandKey;
+      rememberRemoteCommandId(lastRemoteCommandId);
       handleRemoteCommand(command);
       return true;
     }
@@ -7917,6 +7959,7 @@ function render() {
       if (remoteControlPollTimer) clearInterval(remoteControlPollTimer);
 
       if (!getControlWebAppUrl()) return;
+      lastRemoteCommandId = readLastRemoteCommandId();
       pullRemoteCommand();
       remoteControlPollTimer = setInterval(pullRemoteCommand, REMOTE_CONTROL_POLL_MS);
     }
@@ -8034,6 +8077,7 @@ function render() {
       $("editLogoUrl").value = data.logoUrl || "";
       $("editTickerText").value = data.tickerText || "";
       $("editControlWebAppUrl").value = data.controlWebAppUrl || "";
+      $("editControlAuthToken").value = getControlAuthToken();
 
       $("editorModalOverlay").classList.add("open");
     }
@@ -8050,6 +8094,9 @@ function render() {
       data.logoUrl = $("editLogoUrl").value.trim();
       data.tickerText = $("editTickerText").value.trim();
       data.controlWebAppUrl = $("editControlWebAppUrl").value.trim();
+      try {
+        localStorage.setItem(CONTROL_AUTH_KEY, $("editControlAuthToken").value.trim());
+      } catch {}
 
       try {
         if (/^https:\/\/script\.google\.com\//i.test(data.controlWebAppUrl)) {
