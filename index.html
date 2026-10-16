@@ -5242,6 +5242,25 @@
     body.kiosk-mode .page-tabs,
     body.kiosk-mode .sub-tabs { display: none !important; }
     body.kiosk-mode .header { height: clamp(54px, 7vh, 78px); }
+    /* Show the regular price clearly above the reduced price on TV. */
+    .product-card .price-wrap.price-discounted {
+      padding-top: max(1.7vh, 18px);
+    }
+    .product-card .price-original {
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      z-index: 3;
+      font-size: clamp(0.75rem, 1vw, 1.3rem);
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+    }
+    .product-card .price-wrap.price-discounted .price-val {
+      color: #ffe279;
+    }
     @keyframes kioskPromptPulse {
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
@@ -5319,7 +5338,7 @@
   <div class="modal-overlay" id="editorModalOverlay">
     <div class="editor-modal">
       <h3>ตั้งค่าจอแสดงสินค้า</h3>
-      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะแสดง/ซ่อน, G=หมวดย่อย, H=ป้ายพิเศษ)</p>
+      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะแสดง/ซ่อน, G=หมวดย่อย, H=ป้ายพิเศษ, I=ราคาหลังลด)</p>
 
       <div class="form-grid">
         <div class="form-group">
@@ -5657,6 +5676,7 @@
         item?.name,
         item?.detail,
         item?.price,
+        item?.discountPrice,
         item?.unit,
         item?.status,
         item?.subCategory,
@@ -6488,6 +6508,23 @@ function render() {
       `).join("");
     }
 
+    function toPriceAmount(value) {
+      const normalized = clean(value)
+        .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)))
+        .replace(/[฿,\s]/g, "")
+        .replace(/บาท|บ\./g, "")
+        .replace(/\.$/, "");
+      return /^\d+(?:\.\d+)?$/.test(normalized) ? Number(normalized) : Number.NaN;
+    }
+
+    function getValidDiscountPrice(item) {
+      const regularPrice = toPriceAmount(item?.price);
+      const discountedPrice = toPriceAmount(item?.discountPrice);
+      if (!Number.isFinite(discountedPrice) || discountedPrice <= 0) return "";
+      if (Number.isFinite(regularPrice) && discountedPrice >= regularPrice) return "";
+      return formatPrice(discountedPrice);
+    }
+
     function renderGrid(products, shape = null, emptyText = "ไม่มีสินค้าในหมวดหมู่นี้", emptyState = {}) {
       const grid = $("productGrid");
       const renderSignature = getGridRenderSignature(products, shape, emptyText, emptyState);
@@ -6522,6 +6559,9 @@ function render() {
           : `<div class="no-image">ไม่มีรูปภาพ</div>`;
 
         const price = clean(item.price);
+        const discountedPrice = getValidDiscountPrice(item);
+        const displayPrice = discountedPrice || price;
+        const showOriginalPrice = Boolean(discountedPrice) && Number.isFinite(toPriceAmount(price));
         const unit = clean(item.unit) || "บ.";
 
         let layoutStyle = "";
@@ -6544,9 +6584,10 @@ function render() {
                   ${item.detail ? `<div class="product-detail">${escapeHtml(item.detail)}</div>` : ""}
                 </div>
 
-                <div class="price-wrap">
-                  <div class="price-val">${escapeHtml(price || "-")}</div>
-                  ${price ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
+                <div class="price-wrap${discountedPrice ? " price-discounted" : ""}">
+                  ${showOriginalPrice ? `<div class="price-original">เดิม <s>${escapeHtml(price)}</s></div>` : ""}
+                  <div class="price-val">${escapeHtml(displayPrice || "-")}</div>
+                  ${displayPrice ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
                 </div>
               </div>
             </div>
@@ -6586,6 +6627,7 @@ function render() {
         clean(item.name),
         clean(item.detail),
         clean(item.price),
+        clean(item.discountPrice),
         clean(item.unit),
         clean(item.image),
         clean(item.status),
@@ -6608,6 +6650,7 @@ function render() {
         clean(item.name),
         clean(item.detail),
         clean(item.price),
+        clean(item.discountPrice),
         clean(item.unit),
         clean(item.image),
         clean(item.status),
@@ -6902,7 +6945,7 @@ function render() {
 
         const params = new URLSearchParams({
           sheet: sheetName,
-          range: "A:H",
+          range: "A:I",
           headers: "0",
           tqx: `out:json;responseHandler:${cb}`
         });
@@ -6971,6 +7014,7 @@ function render() {
             name,
             detail: "",
             price: formatPrice(price),
+            discountPrice: "",
             unit: "",
             image: "",
             status: "",
@@ -6982,6 +7026,7 @@ function render() {
           name: clean(r[0]),
           detail: clean(r[1]),
           price: formatPrice(r[2]),
+          discountPrice: formatPrice(r[8]),
           unit: clean(r[3]),
           image: clean(r[4]),
           status: clean(r[5]),
@@ -7130,7 +7175,7 @@ function render() {
     }
 
     function getSortablePriceValue(item) {
-      const text = clean(item?.price)
+      const text = clean(getValidDiscountPrice(item) || item?.price)
         .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)));
       const matches = text.match(/\d[\d,]*(?:\.\d+)?/g) || [];
       const values = matches
