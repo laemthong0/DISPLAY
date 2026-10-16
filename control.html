@@ -688,7 +688,8 @@
     }
 
     .gas-config {
-      display: none !important;
+      display: flex;
+      grid-column: 1 / -1;
       flex-wrap: wrap;
       margin-top: 8px;
       gap: 8px;
@@ -2007,10 +2008,14 @@
         </div>
       </div>
       <button class="btn utility" id="btnReloadMeta" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.34 5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> รีโหลด</button>
-      <div class="row gas-config">
-        <input id="gasUrlInput" class="gas-url-input" type="text" placeholder="Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec)">
-        <button class="btn" id="btnSaveGasUrl" type="button">บันทึก URL</button>
-      </div>
+      <details class="gas-config">
+        <summary>ตั้งค่าการเชื่อมต่อ</summary>
+        <label for="gasUrlInput">Google Apps Script URL</label>
+        <input id="gasUrlInput" class="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+        <label for="gasTokenInput">รหัสควบคุมจอ</label>
+        <input id="gasTokenInput" class="gas-url-input" type="password" autocomplete="off" placeholder="รหัสเดียวกับทีวีและ Apps Script">
+        <button class="btn" id="btnSaveGasUrl" type="button">บันทึกการเชื่อมต่อ</button>
+      </details>
     </header>
 
     <div class="control-board">
@@ -2035,6 +2040,19 @@
             <input id="productFilterInput" class="product-filter-input" type="text" inputmode="text" autocomplete="off" placeholder="เช่น 15-10-30 หรือชื่อสินค้า">
             <button class="btn primary" id="btnProductFilter" type="button">แสดงเฉพาะ</button>
             <button class="btn secondary" id="btnClearProductFilter" type="button">ล้าง</button>
+          </div>
+        </section>
+
+        <section class="card" aria-label="ตั้งค่าการแสดงผล">
+          <div class="section-title"><b>สลับหน้าอัตโนมัติ</b><span class="muted" id="autoPlayLabel"></span></div>
+          <div class="row">
+            <button class="btn primary" id="btnAutoPlayOn" type="button">เล่น</button>
+            <button class="btn secondary" id="btnAutoPlayOff" type="button">หยุด</button>
+          </div>
+          <div class="section-title"><b>โหมดจอ</b><span class="muted" id="wallModeLabel"></span></div>
+          <div class="row">
+            <button class="btn secondary" id="btnModeSingle" type="button">1 จอ</button>
+            <button class="btn secondary" id="btnModeWall" type="button">หลายจอ</button>
           </div>
         </section>
 
@@ -2148,6 +2166,8 @@
     const CONTROL_COMMAND_KEY = "tv-display-control-command-v1";
     const CONTROL_META_KEY = "tv-display-control-meta-v1";
     const CONTROL_WEBAPP_KEY = "tv-display-control-webapp-url";
+    const CONTROL_AUTH_KEY = "tv-display-control-auth-token-v1";
+    let remoteConnectionError = "";
     const CONTROL_CHANNEL_NAME = "tv-display-control-channel-v1";
     const CONTROL_CLIENT_ID_KEY = "tv-display-control-client-id-v1";
     const WALL_MODE_KEY = "tv-display-wall-mode-v1";
@@ -2160,7 +2180,7 @@
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-product-search-v13";
+    const APP_VERSION = "display-bugfix-v14";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -2256,6 +2276,10 @@
 
     function clean(val) {
       return String(val ?? "").trim();
+    }
+
+    function getControlAuthToken() {
+      try { return clean(localStorage.getItem(CONTROL_AUTH_KEY)); } catch { return ""; }
     }
 
     function buildDisplayWallUrl(screen) {
@@ -2425,7 +2449,7 @@
         if (["playing", "play", "on", "true", "1", "yes"].includes(mode)) return true;
       } catch {}
 
-      return true;
+      return false;
     }
 
     function getAutoPlayEnabledFromMeta(metaPayload = meta) {
@@ -2588,6 +2612,8 @@
         };
 
         const u = new URL(url);
+        const token = getControlAuthToken();
+        if (token) u.searchParams.set("token", token);
         Object.entries(params).forEach(([k, v]) => {
           if (v !== undefined && v !== null) u.searchParams.set(k, String(v));
         });
@@ -2634,6 +2660,7 @@
 
       const payload = JSON.stringify({
         mode: "push_command",
+        token: getControlAuthToken(),
         source: "control",
         command: cmd
       });
@@ -3073,7 +3100,6 @@
     }
 
     function sendVoiceAutoPlay(enabled) {
-      return false;
       const normalized = storeAutoPlayPreference(enabled);
       setPendingAutoPlay(normalized);
       renderAutoPlayButtons();
@@ -3464,6 +3490,9 @@
         mode: "pull_meta"
       }, REMOTE_META_TIMEOUT_MS)
         .then((res) => {
+          remoteConnectionError = res?.error === "unauthorized"
+            ? "รหัสควบคุมไม่ถูกต้องหรือยังไม่ได้ตั้งค่า เปิดตั้งค่าการเชื่อมต่อเพื่อตรวจสอบ"
+            : "";
           if (res && res.ok && res.meta) return res.meta;
           return null;
         })
@@ -3493,7 +3522,9 @@
       const currentSubCategory = getCurrentSubCategory(page);
       const subName = currentSubCategory ? currentSubCategory.name : "-";
       const subPageText = `${(meta.currentSubPageIndex || 0) + 1}/${Math.max(1, meta.totalSubPages || 1)}`;
-      const wallModeText = "1 จอ";
+      const wallModeText = meta.wall?.enabled || meta.wall?.mode === "wall"
+        ? `${Math.max(2, Number(meta.wall?.screens) || 2)} จอ`
+        : "1 จอ";
       el.innerHTML = `
         <span class="state-item"><small>หมวด</small><b>${escapeHtml(pageName)}</b></span>
         <span class="state-item"><small>หมวดย่อย</small><b>${escapeHtml(subName)}</b></span>
@@ -3640,7 +3671,7 @@
       if (mode === "wall") {
         const screen = Number(meta?.wall?.screen || 0);
         const screens = Number(meta?.wall?.screens || 0);
-        label.textContent = screen && screens ? `กำลังแสดง2จอ (${screen}/${screens})` : "เลือกแสดง2จอ";
+        label.textContent = screen && screens ? `กำลังแสดง ${screens} จอ (${screen}/${screens})` : "เลือกแสดงหลายจอ";
       } else if (mode === "single") {
         label.textContent = meta?.wall ? "กำลังแสดง1จอ" : "เลือกแสดง1จอ";
       } else {
@@ -3649,7 +3680,6 @@
     }
 
     function renderAutoPlayButtons() {
-      return;
       const enabled = getAutoPlayFromMeta();
       const onBtn = $("btnAutoPlayOn");
       const offBtn = $("btnAutoPlayOff");
@@ -3893,6 +3923,8 @@
     function render() {
       renderState();
       renderHealth();
+      renderModeButtons();
+      renderAutoPlayButtons();
       renderProductFilterControls();
       renderMainButtons();
       renderSubButtons();
@@ -3939,6 +3971,7 @@
             applyMeta(remoteMeta);
             setConnectionHintFromMeta(remoteMeta);
           } else {
+            if (remoteConnectionError) setHint(remoteConnectionError);
             remoteMetaFailures = Math.min(remoteMetaFailures + 1, 5);
             remoteMetaNextPollAt = Date.now() + Math.min(15000, 1000 * 2 ** remoteMetaFailures);
           }
@@ -3964,7 +3997,7 @@
           if (!getWebAppUrl()) {
             setHint("ยังไม่ตั้งค่า GAS URL");
           } else {
-            setHint("ยังดึงข้อมูลจาก GAS ไม่ได้ (ตรวจ URL/สิทธิ์ Deploy)");
+            setHint(remoteConnectionError || "ยังดึงข้อมูลจาก GAS ไม่ได้ (ตรวจ URL/สิทธิ์ Deploy)");
           }
         }
       });
@@ -3978,6 +4011,10 @@
     };
     $("btnProductFilter").onclick = () => sendProductFilter($("productFilterInput").value);
     $("btnClearProductFilter").onclick = clearProductFilterCommand;
+    $("btnAutoPlayOn").onclick = () => sendVoiceAutoPlay(true);
+    $("btnAutoPlayOff").onclick = () => sendVoiceAutoPlay(false);
+    $("btnModeSingle").onclick = () => sendVoiceWallMode("single");
+    $("btnModeWall").onclick = () => sendVoiceWallMode("wall");
     $("productFilterInput").addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
@@ -3997,6 +4034,7 @@
       }
       try {
         localStorage.setItem(CONTROL_WEBAPP_KEY, url);
+        localStorage.setItem(CONTROL_AUTH_KEY, $("gasTokenInput").value.trim());
       } catch {}
       try {
         const rawMain = localStorage.getItem(STORAGE_KEY);
@@ -4004,7 +4042,8 @@
         parsed.controlWebAppUrl = url;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
       } catch {}
-      setHint("บันทึก GAS URL แล้ว");
+      remoteMetaNextPollAt = 0;
+      setHint("บันทึกการเชื่อมต่อแล้ว");
       restartRemoteMetaPolling();
       reloadMeta();
     };
@@ -4020,6 +4059,7 @@
       const saved = getWebAppUrl();
       const gasUrlInput = $("gasUrlInput");
       if (saved && gasUrlInput) gasUrlInput.value = saved;
+      $("gasTokenInput").value = getControlAuthToken();
       restartRemoteMetaPolling();
       reloadMeta();
       startVersionCheck();

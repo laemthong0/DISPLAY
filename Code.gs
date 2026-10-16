@@ -7,6 +7,7 @@ const KEY_ALLOWED_SHEET_IDS = 'TV_DISPLAY_ALLOWED_SHEET_IDS';
 const DEFAULT_SPREADSHEET_ID = '166Ija7H3Dal4qA4ZokEJVEBXGY1BhW1DWb1pIXw_OgI';
 const HIDDEN_SHEET_NAMES = ['price'];
 const GAS_CACHE_TTL_SECONDS = 30;
+const COMMAND_MAX_AGE_MS = 60000;
 
 function doGet(e) {
   const mode = ((e && e.parameter && e.parameter.mode) || '').trim();
@@ -49,7 +50,9 @@ function doGet(e) {
     const current = safeParseJson_(properties.getProperty(KEY_CMD), null);
     // Multi-device controls must always receive the newest command.
     // Replaying history makes the display process stale commands one by one.
-    if (!current || !current.id || current.id === lastId) {
+    const receivedAt = Number(current && current.serverReceivedAt || 0);
+    if (!current || !current.id || current.id === lastId ||
+        !receivedAt || Date.now() - receivedAt > COMMAND_MAX_AGE_MS) {
       return asJsonp(callback, { ok: true, command: null });
     }
     return asJsonp(callback, { ok: true, command: current });
@@ -106,7 +109,10 @@ function doPost(e) {
       }
 
       try {
-        const nextCommand = body.command || null;
+        // Use server time so different device clocks cannot revive old clicks.
+        const nextCommand = body.command && typeof body.command === 'object'
+          ? Object.assign({}, body.command, { serverReceivedAt: Date.now() })
+          : null;
         const properties = PropertiesService.getScriptProperties();
         const currentCommand = safeParseJson_(properties.getProperty(KEY_CMD), null);
         const history = safeParseJson_(properties.getProperty(KEY_CMD_HISTORY), []);
@@ -286,7 +292,7 @@ function getConfiguredAuthToken_() {
 
 function isAuthorized_(token) {
   const expected = getConfiguredAuthToken_();
-  return !expected || String(token || '').trim() === expected;
+  return Boolean(expected) && String(token || '').trim() === expected;
 }
 
 function getAllowedSpreadsheetIds_() {
