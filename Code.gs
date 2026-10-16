@@ -235,7 +235,7 @@ function getSheetRows_(sheetId, sheetName) {
   if (!sheetName) return { ok: false, rows: [], error: 'missing sheet name' };
 
   const cache = CacheService.getScriptCache();
-  const cacheKey = 'rows:' + spreadsheetId + ':' + encodeURIComponent(sheetName);
+  const cacheKey = 'rows-v2:' + spreadsheetId + ':' + encodeURIComponent(sheetName);
   const cached = cache.get(cacheKey);
   if (cached) {
     const cachedRows = safeParseJson_(cached, null);
@@ -250,7 +250,7 @@ function getSheetRows_(sheetId, sheetName) {
     const lastRow = sheet.getLastRow();
     if (!lastRow) return { ok: true, rows: [], error: '' };
 
-    const maxCols = Math.min(Math.max(sheet.getLastColumn(), 1), 8);
+    const maxCols = Math.min(Math.max(sheet.getLastColumn(), 1), 9);
     const result = {
       ok: true,
       rows: sheet.getRange(1, 1, lastRow, maxCols).getDisplayValues(),

@@ -386,3 +386,74 @@ test('display and controller use shared code configuration and ignore old browse
   assert.doesNotMatch(control, /id="(?:gasUrlInput|gasTokenInput|btnSaveGasUrl)"/);
   assert.doesNotMatch(display, /id="(?:editControlAuthToken|editControlWebAppUrl)"/);
 });
+
+function pricingContext() {
+  const c = vm.createContext({ clean: x => String(x ?? '').trim(),
+    isProductVisible: item => !!item.name && item.status !== 'ซ่อน' });
+  for (const name of ['formatPrice', 'parsePriceNumber', 'getProductPriceState', 'parseRows',
+    'getSortablePriceValue', 'sortProductsByPriceAsc', 'getProductsDataSignature']) {
+    vm.runInContext(extract(display, name), c);
+  }
+  return c;
+}
+
+test('discount column I preserves original price, categories and badges without mutating source rows', () => {
+  const c = pricingContext();
+  const rows = [['ชื่อสินค้า','รายละเอียด','ราคา','หน่วย','รูป','สถานะ','หมวดย่อย','ป้ายพิเศษ','ราคาหลังลด'],
+    ['ปุ๋ย A','detail','฿1,200','บ.','image','แสดง','cat','โปรโมชั่น','฿1,050'],
+    ['ปุ๋ย B','','800','บ.','','ซ่อน','','','700']];
+  const products = c.parseRows(rows);
+  assert.equal(rows.length, 3); assert.equal(products.length, 1);
+  assert.equal(products[0].price, '1,200'); assert.equal(products[0].discountPrice, '฿1,050');
+  assert.equal(products[0].subCategory, 'cat'); assert.equal(products[0].specialBadge, 'โปรโมชั่น');
+  assert.equal(c.getProductPriceState(products[0]).current, '1,050');
+});
+
+test('blank, invalid, zero, negative and non-lower sale prices leave the original price visible', () => {
+  const c = pricingContext();
+  for (const discountPrice of ['', 'สอบถาม', '0', '-100', '600', '650', '10%', '500-550']) {
+    const state = c.getProductPriceState({ price: '600', discountPrice });
+    assert.equal(state.discounted, false); assert.equal(state.current, '600');
+  }
+  const state = c.getProductPriceState({ price: '฿๑,๒๐๐.๕๐', discountPrice: '๑,๐๕๐.๒๕ บาท' });
+  assert.equal(state.current, '1,050.25'); assert.equal(state.discounted, true);
+  assert.equal(c.getProductPriceState({ price: 'สอบถาม', discountPrice: '500' }).discounted, false);
+});
+
+test('existing compact and eight-column sheets still parse without discounted prices', () => {
+  const c = pricingContext();
+  assert.equal(c.parseRows([['ชื่อสินค้า','ราคา'],['ปุ๋ย A','600']])[0].price, '600');
+  assert.equal(c.parseRows([['ปุ๋ย A','','600','บ.','','แสดง','','']])[0].discountPrice, '');
+});
+
+test('sorting and change detection follow a changed discounted price', () => {
+  const c = pricingContext();
+  const a = { name: 'A', price: '1000', discountPrice: '500' }, b = { name: 'B', price: '600' };
+  assert.equal(c.sortProductsByPriceAsc([b,a])[0].name, 'A');
+  const old = c.getProductsDataSignature([a]);
+  a.discountPrice = '450'; assert.notEqual(c.getProductsDataSignature([a]), old);
+  c.getSpecialBadgeLabel = () => '';
+  vm.runInContext(extract(display, 'getGridRenderSignature'), c);
+  const rendered = c.getGridRenderSignature([a], {}, '', {});
+  a.discountPrice = '400'; assert.notEqual(c.getGridRenderSignature([a], {}, '', {}), rendered);
+});
+
+test('backend includes column I and uses a new cache namespace for nine-column rows', () => {
+  const h = backendHarness(); let requestedColumns = 0, key;
+  h.context.CacheService = { getScriptCache: () => ({ get: value => { key = value; return null; }, put() {} }) };
+  h.context.SpreadsheetApp = { openById: () => ({ getSheetByName: () => ({
+    getLastRow: () => 2, getLastColumn: () => 12,
+    getRange: (_, __, ___, columns) => { requestedColumns = columns; return { getDisplayValues: () => [['ชื่อสินค้า','','ราคา','','','','','','ราคาหลังลด'],['A','','600','','','','','','550']] }; }
+  }) }) };
+  const result = h.get({ mode: 'pull_sheet_rows', token: 'test-token', sheetName: 'แม่ปุ๋ย' });
+  assert.equal(result.rows[1][8], '550'); assert.equal(requestedColumns, 9); assert.ok(key.startsWith('rows-v2:'));
+});
+
+test('old backend data triggers public source rather than silently omitting discount column', async () => {
+  const c = vm.createContext({ getControlWebAppUrl: () => 'endpoint',
+    runJsonp: async () => ({ ok: true, rows: [['ชื่อสินค้า','','ราคา','','','','','ป้ายพิเศษ'],['A','','600']] }) });
+  vm.runInContext(extract(display, 'fetchRowsFromRemote'), c);
+  assert.equal(await c.fetchRowsFromRemote('id', 'แม่ปุ๋ย'), null);
+  c.runJsonp = async () => ({ ok: true, rows: [['ชื่อสินค้า','','ราคา','','','','','','ราคาหลังลด'],['A','','600','','','','','','550']] });
+  assert.equal((await c.fetchRowsFromRemote('id', 'แม่ปุ๋ย'))[1][8], '550');
+});

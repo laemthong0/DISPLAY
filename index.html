@@ -5245,7 +5245,31 @@
     @keyframes kioskPromptPulse {
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
-    }  </style>
+    }
+
+    .product-card .price-wrap.has-discount {
+      display: grid !important;
+      grid-template-columns: minmax(0, auto) auto;
+      justify-content: center;
+      align-items: end;
+      column-gap: 5px;
+      row-gap: 4px;
+    }
+    .price-original {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #fff1d6;
+      font-size: clamp(0.65rem, 0.95vw, 1.15rem);
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px #4f0700;
+      position: relative;
+      z-index: 1;
+    }
+    .price-original s { text-decoration-thickness: 2px; }
+    .has-discount .price-unit { align-self: end; }
+    </style>
 </head>
 
 <body>
@@ -5319,7 +5343,7 @@
   <div class="modal-overlay" id="editorModalOverlay">
     <div class="editor-modal">
       <h3>ตั้งค่าจอแสดงสินค้า</h3>
-      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคา, D=หน่วย, E=URLรูป, F=สถานะแสดง/ซ่อน, G=หมวดย่อย, H=ป้ายพิเศษ)</p>
+      <p>ใช้ Google Sheet ไฟล์เดียว แยกชีตตามหมวดสินค้า (A=ชื่อ, B=รายละเอียด, C=ราคาเดิม, D=หน่วย, E=URLรูป, F=สถานะแสดง/ซ่อน, G=หมวดย่อย, H=ป้ายพิเศษ, I=ราคาหลังลด)</p>
 
       <div class="form-grid">
         <div class="form-group">
@@ -5447,7 +5471,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-code-config-v15";
+    const APP_VERSION = "display-discount-prices-v16";
     const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -5657,6 +5681,7 @@
         item?.name,
         item?.detail,
         item?.price,
+        item?.discountPrice,
         item?.unit,
         item?.status,
         item?.subCategory,
@@ -6521,7 +6546,8 @@ function render() {
           ? `<img class="product-img" src="${escapeHtml(imgUrl)}" loading="eager" decoding="async" fetchpriority="${idx < 4 ? "high" : "auto"}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'no-image',textContent:'ไม่มีรูป'}))">`
           : `<div class="no-image">ไม่มีรูปภาพ</div>`;
 
-        const price = clean(item.price);
+        const priceState = getProductPriceState(item);
+        const price = priceState.current;
         const unit = clean(item.unit) || "บ.";
 
         let layoutStyle = "";
@@ -6544,7 +6570,8 @@ function render() {
                   ${item.detail ? `<div class="product-detail">${escapeHtml(item.detail)}</div>` : ""}
                 </div>
 
-                <div class="price-wrap">
+                <div class="price-wrap${priceState.discounted ? " has-discount" : ""}">
+                  ${priceState.discounted ? `<div class="price-original">ปกติ <s>${escapeHtml(priceState.original)}</s> ${escapeHtml(unit)}</div>` : ""}
                   <div class="price-val">${escapeHtml(price || "-")}</div>
                   ${price ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
                 </div>
@@ -6586,6 +6613,7 @@ function render() {
         clean(item.name),
         clean(item.detail),
         clean(item.price),
+        clean(item.discountPrice),
         clean(item.unit),
         clean(item.image),
         clean(item.status),
@@ -6608,6 +6636,7 @@ function render() {
         clean(item.name),
         clean(item.detail),
         clean(item.price),
+        clean(item.discountPrice),
         clean(item.unit),
         clean(item.image),
         clean(item.status),
@@ -6861,6 +6890,9 @@ function render() {
         if (!res?.ok || !Array.isArray(res.rows)) {
           throw new Error(res?.error || "GAS returned no rows");
         }
+        // Older deployments return A:H only. Use the public A:I source until
+        // Code.gs is redeployed, so the new price column is not silently lost.
+        if (String(res.rows[0]?.[0] || "").includes("ชื่อ") && res.rows[0].length < 9) return null;
         return res.rows;
       } catch (err) {
         return null;
@@ -6902,7 +6934,7 @@ function render() {
 
         const params = new URLSearchParams({
           sheet: sheetName,
-          range: "A:H",
+          range: "A:I",
           headers: "0",
           tqx: `out:json;responseHandler:${cb}`
         });
@@ -6953,7 +6985,7 @@ function render() {
 
     function parseRows(rows) {
       if (rows.length > 0 && String(rows[0][0]).includes("ชื่อ")) {
-        rows.shift();
+        rows = rows.slice(1);
       }
 
       const hasExtendedColumns = rows.some((r) => {
@@ -6971,6 +7003,7 @@ function render() {
             name,
             detail: "",
             price: formatPrice(price),
+            discountPrice: "",
             unit: "",
             image: "",
             status: "",
@@ -6982,6 +7015,7 @@ function render() {
           name: clean(r[0]),
           detail: clean(r[1]),
           price: formatPrice(r[2]),
+          discountPrice: clean(r[8]),
           unit: clean(r[3]),
           image: clean(r[4]),
           status: clean(r[5]),
@@ -7129,8 +7163,28 @@ function render() {
       return clean(item.subCategory);
     }
 
+    function parsePriceNumber(value) {
+      const text = clean(value)
+        .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)))
+        .replace(/[,\s]/g, "")
+        .replace(/^฿/, "")
+        .replace(/(?:บาท|บ\.?)$/, "");
+      if (!/^\d+(?:\.\d+)?$/.test(text)) return null;
+      const number = Number(text);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function getProductPriceState(item) {
+      const original = clean(item?.price);
+      const originalValue = parsePriceNumber(original);
+      const saleValue = parsePriceNumber(item?.discountPrice);
+      const discounted = originalValue !== null && saleValue !== null &&
+        saleValue > 0 && saleValue < originalValue;
+      return { original, current: discounted ? formatPrice(saleValue) : original, discounted };
+    }
+
     function getSortablePriceValue(item) {
-      const text = clean(item?.price)
+      const text = getProductPriceState(item).current
         .replace(/[๐-๙]/g, (digit) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(digit)));
       const matches = text.match(/\d[\d,]*(?:\.\d+)?/g) || [];
       const values = matches
