@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "laemthong-display-shell-";
-const CACHE_NAME = CACHE_PREFIX + "v7";
+const CACHE_NAME = CACHE_PREFIX + "v9";
 const APP_SHELL = ["./", "./index.html", "./control.html", "./display-config.js", "./site.webmanifest", "./favicon.svg", "./favicon.png", "./apple-touch-icon.png"];
 const SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
 
@@ -24,8 +24,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  // Cache only the shell, under a fixed key; _ts/version checks must not grow
-  // storage indefinitely or serve an old release manifest when offline.
+  // Network first. Cache only the fixed app shell keys to avoid versioned-URL cache growth.
   url.search = "";
   if (!SHELL_URLS.has(url.href)) return;
 
