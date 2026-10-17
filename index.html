@@ -5321,7 +5321,6 @@
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
     }  </style>
-  <link rel="stylesheet" href="display-effects.css?v=1" />
 </head>
 
 <body>
@@ -5392,12 +5391,6 @@
     >
   </main>
 
-  <aside class="shop-announcement" id="shopAnnouncement" role="note" aria-labelledby="announcementTitle" hidden>
-    <div class="announcement-kicker">ประกาศจากร้าน</div>
-    <h2 id="announcementTitle"></h2>
-    <p id="announcementText"></p>
-  </aside>
-
   <div class="modal-overlay" id="editorModalOverlay">
     <div class="editor-modal">
       <h3>ตั้งค่าจอแสดงสินค้า</h3>
@@ -5432,14 +5425,6 @@
         <div class="form-group">
           <label>ข้อความวิ่งด้านล่าง (Ticker)</label>
           <input type="text" id="editTickerText" placeholder="ข้อความที่ต้องการให้วิ่ง">
-        </div>
-
-        <div class="form-group full">
-          <label class="announcement-toggle"><input type="checkbox" id="editAnnouncementEnabled"> แสดงประกาศลอยมุมจอ</label>
-          <label for="editAnnouncementTitle">หัวข้อประกาศ</label>
-          <input type="text" id="editAnnouncementTitle" maxlength="60" placeholder="เช่น สอบถามสินค้า">
-          <label for="editAnnouncementText">ข้อความประกาศ (ไม่เกิน 180 ตัวอักษร)</label>
-          <textarea id="editAnnouncementText" maxlength="180" rows="3" placeholder="พิมพ์ข้อความที่ต้องการแจ้งลูกค้า"></textarea>
         </div>
 
         <div class="form-group full">
@@ -5502,9 +5487,6 @@
     let currentMotherSubIndex = 0;
 
     const DEFAULT_DATA = {
-      announcementEnabled: false,
-      announcementTitle: "แจ้งข่าวจากร้าน",
-      announcementText: "",
       shopName: "แหลมทองกิจเกษตร",
       shopSub: "จอแสดงราคาสินค้าประจำวัน",
       tickerText: "แหลมทองกิจเกษตร • ราคาสินค้าอัปเดตประจำวัน • สินค้าคุณภาพสำหรับเกษตรกร • สอบถาม/สั่งซื้อผ่านหน้าร้าน หรือสแกน QR ด้านขวา",
@@ -5540,7 +5522,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-original-layout-v19";
+    const APP_VERSION = "display-discount-v17";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -6454,17 +6436,7 @@
       }
     }
 
-    function renderAnnouncement() {
-      const message = clean(data.announcementText).slice(0, 180);
-      const enabled = data.announcementEnabled === true && Boolean(message);
-      $("shopAnnouncement").hidden = !enabled;
-      $("announcementTitle").textContent = clean(data.announcementTitle).slice(0, 60) || "แจ้งข่าวจากร้าน";
-      $("announcementText").textContent = message;
-      document.body.classList.toggle("has-announcement", enabled);
-    }
-
-    function render() {
-      renderAnnouncement();
+function render() {
       const sheetName = getSheetName();
       const hasLoadedSheet = Object.prototype.hasOwnProperty.call(productsCache, sheetName);
       const hasLoadError = Boolean(sheetLoadErrors[sheetName]) && !hasLoadedSheet;
@@ -7973,13 +7945,6 @@
         case "setLayout":
           setLayoutOrder(command.sheetName || getSheetName(), Array.isArray(command.order) ? command.order : []);
           return;
-        case "setAnnouncement":
-          data.announcementEnabled = command.enabled === true;
-          data.announcementTitle = clean(command.title).slice(0, 60);
-          data.announcementText = clean(command.text).slice(0, 180);
-          saveData();
-          render();
-          return;
         case "refresh":
           refreshMainView();
           return;
@@ -8194,9 +8159,6 @@
       $("editSheetPages").value = data.sheetPages.join("\n");
       $("editLogoUrl").value = data.logoUrl || "";
       $("editTickerText").value = data.tickerText || "";
-      $("editAnnouncementEnabled").checked = data.announcementEnabled === true;
-      $("editAnnouncementTitle").value = data.announcementTitle || "";
-      $("editAnnouncementText").value = data.announcementText || "";
 
       $("editorModalOverlay").classList.add("open");
     }
@@ -8212,9 +8174,6 @@
 
       data.logoUrl = $("editLogoUrl").value.trim();
       data.tickerText = $("editTickerText").value.trim();
-      data.announcementEnabled = $("editAnnouncementEnabled").checked;
-      data.announcementTitle = $("editAnnouncementTitle").value.trim().slice(0, 60);
-      data.announcementText = $("editAnnouncementText").value.trim().slice(0, 180);
       saveData();
 
       $("editorModalOverlay").classList.remove("open");
