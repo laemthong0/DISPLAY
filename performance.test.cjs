@@ -127,10 +127,14 @@ test('command polling ignores overlap and backs off after failures', async () =>
   context.pullRemoteCommand();
   assert.equal(calls, 1);
 });
-test('heartbeat coalesces pending snapshots while a write is in flight', async () => {
+test('heartbeat coalesces pending snapshots and leaves command traffic a quiet window', async () => {
   const writes = [], pending = [];
+  let now = 10000, timer;
   const context = vm.createContext({ getControlWebAppUrl: () => 'endpoint', navigator: { onLine: true },
     remoteMetaInFlight: false, pendingRemoteMeta: null, data: { sheetId: 'id' },
+    remoteMetaLastSentAt: 0, remoteMetaFlushTimer: null,
+    Date: { now: () => now },
+    setTimeout: (fn, ms) => { timer = { fn, ms }; return 1; }, clearTimeout: () => {},
     getControlAuthToken: () => 'test-token',
     fetch: (url, options) => { writes.push(JSON.parse(options.body)); return new Promise(resolve => pending.push(resolve)); }
   });
@@ -138,11 +142,24 @@ test('heartbeat coalesces pending snapshots while a write is in flight', async (
   context.pushRemoteMeta({ n: 1 }); context.pushRemoteMeta({ n: 2 }); context.pushRemoteMeta({ n: 3 });
   assert.equal(writes.length, 1);
   pending.shift()(); await delay(0);
+  assert.equal(writes.length, 1);
+  assert.equal(timer.ms, 2000);
+  now += timer.ms; timer.fn();
   assert.equal(writes.length, 2);
   assert.equal(writes[1].meta.n, 3);
   assert.equal(writes[0].token, 'test-token');
   pending.shift()(); await delay(0);
   assert.equal(context.remoteMetaInFlight, false);
+});
+test('successful command polling can resume without the old extra 500ms wait', async () => {
+  const context = vm.createContext({ getControlWebAppUrl: () => 'endpoint', navigator: { onLine: true },
+    remoteControlPollInFlight: false, remoteControlNextPollAt: 0, remoteControlFailures: 0,
+    lastRemoteCommandId: null, REMOTE_COMMAND_TIMEOUT_MS: 20000, REMOTE_CONTROL_POLL_MS: 250,
+    runJsonp: async () => ({ ok: true, command: null }), acceptRemoteCommand: () => {} });
+  vm.runInContext(extract(display, 'pullRemoteCommand'), context);
+  context.pullRemoteCommand(); await delay(0);
+  assert.ok(context.remoteControlNextPollAt <= Date.now());
+  assert.equal(context.remoteControlPollInFlight, false);
 });
 test('refresh sends exactly one local command and one remote write', () => {
   const local = [], remote = [];
@@ -157,6 +174,17 @@ test('refresh sends exactly one local command and one remote write', () => {
   assert.equal(remote.length, 1);
   assert.equal(local[0].id, remote[0].command.id);
   assert.equal(remote[0].token, 'test-token');
+});
+test('remote clicks use immediate high-priority fetch before beacon fallback', () => {
+  const requests = [];
+  const context = vm.createContext({ getControlClientId: () => 'client', lastIssuedCommandAt: 0,
+    getControlAuthToken: () => 'test-token', postLocalCommand() {}, getWebAppUrl: () => 'endpoint',
+    navigator: { sendBeacon() { assert.fail('Beacon should only be used after network failure'); } },
+    fetch: (url, options) => { requests.push(options); return Promise.resolve(); } });
+  vm.runInContext(extract(control, 'sendCommand'), context);
+  context.sendCommand('next');
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].priority, 'high');
 });
 test('startup starts product loading before the slow sheet directory responds', async () => {
   let finishDirectory;
@@ -456,4 +484,20 @@ test('old backend data triggers public source rather than silently omitting disc
   assert.equal(await c.fetchRowsFromRemote('id', 'แม่ปุ๋ย'), null);
   c.runJsonp = async () => ({ ok: true, rows: [['ชื่อสินค้า','','ราคา','','','','','','ราคาหลังลด'],['A','','600','','','','','','550']] });
   assert.equal((await c.fetchRowsFromRemote('id', 'แม่ปุ๋ย'))[1][8], '550');
+});
+
+test('display effects preserve the original product and image geometry', () => {
+  const css = fs.readFileSync(`${__dirname}/display-effects.css`, 'utf8');
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter(([, selectors]) => selectors.includes('#productGrid'));
+  assert.ok(rules.length > 0);
+  const appearanceOnly = new Set(['color', 'background', 'border-color', 'box-shadow', 'text-shadow', '-webkit-text-stroke']);
+  for (const [, selectors, declarations] of rules) {
+    assert.doesNotMatch(selectors, /\.product-img\b|\.image-box\b/);
+    for (const [, property] of declarations.matchAll(/(?:^|;)\s*([-\w]+)\s*:/g)) {
+      assert.ok(appearanceOnly.has(property), `Product geometry must remain in original CSS: ${property}`);
+    }
+  }
+  assert.ok(display.includes('href="display-effects.css'));
+  assert.ok(!display.includes('href="display-modern.css'));
 });
