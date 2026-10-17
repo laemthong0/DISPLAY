@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "laemthong-display-shell-";
-const CACHE_NAME = CACHE_PREFIX + "v9";
-const APP_SHELL = ["./", "./index.html", "./control.html", "./display-config.js", "./site.webmanifest", "./favicon.svg", "./favicon.png", "./apple-touch-icon.png"];
+const CACHE_NAME = CACHE_PREFIX + "v17";
+const APP_SHELL = ["./", "./index.html", "./control.html", "./display-config.js", "./display-effects.css", "./site.webmanifest", "./favicon.svg", "./favicon.png", "./apple-touch-icon.png"];
 const SHELL_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
 
 self.addEventListener("install", (event) => {

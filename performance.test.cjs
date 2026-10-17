@@ -457,3 +457,19 @@ test('old backend data triggers public source rather than silently omitting disc
   c.runJsonp = async () => ({ ok: true, rows: [['ชื่อสินค้า','','ราคา','','','','','','ราคาหลังลด'],['A','','600','','','','','','550']] });
   assert.equal((await c.fetchRowsFromRemote('id', 'แม่ปุ๋ย'))[1][8], '550');
 });
+
+test('display effects preserve the original product and image geometry', () => {
+  const css = fs.readFileSync(`${__dirname}/display-effects.css`, 'utf8');
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter(([, selectors]) => selectors.includes('#productGrid'));
+  assert.ok(rules.length > 0);
+  const appearanceOnly = new Set(['color', 'background', 'border-color', 'box-shadow', 'text-shadow', '-webkit-text-stroke']);
+  for (const [, selectors, declarations] of rules) {
+    assert.doesNotMatch(selectors, /\.product-img\b|\.image-box\b/);
+    for (const [, property] of declarations.matchAll(/(?:^|;)\s*([-\w]+)\s*:/g)) {
+      assert.ok(appearanceOnly.has(property), `Product geometry must remain in original CSS: ${property}`);
+    }
+  }
+  assert.ok(display.includes('href="display-effects.css'));
+  assert.ok(!display.includes('href="display-modern.css'));
+});
