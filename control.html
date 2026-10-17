@@ -1979,17 +1979,6 @@
     }
 
   </style>
-  <style>
-    .announcement-card { display: grid; gap: 10px; }
-    .announcement-card .section-title { margin-bottom: 0; }
-    .announcement-card label { font-size: 14px; font-weight: 600; color: inherit; }
-    #btnSaveAnnouncement { scroll-margin-block: 150px; }
-    .announcement-control-toggle { display: flex; gap: 10px; align-items: center; padding-block: 4px; }
-    #controlAnnouncementEnabled { width: 20px; height: 20px; accent-color: #174d35; }
-    #controlAnnouncementText { width: 100%; height: auto; min-height: 105px; padding: 12px; resize: vertical; line-height: 1.5; font: inherit; }
-    .announcement-card p { margin: 0; line-height: 1.5; }
-    #announcementSaveStatus { min-height: 1.5em; font-size: 13px; }
-  </style>
 </head>
 <body>
   <div class="wrap">
@@ -2042,20 +2031,6 @@
             <button class="btn secondary" id="btnModeSingle" type="button">1 จอ</button>
             <button class="btn secondary" id="btnModeWall" type="button">หลายจอ</button>
           </div>
-        </section>
-
-        <section class="card announcement-card" aria-label="ประกาศของร้าน">
-          <div class="section-title"><b>ประกาศของร้าน</b></div>
-          <label class="announcement-control-toggle" for="controlAnnouncementEnabled">
-            <input type="checkbox" id="controlAnnouncementEnabled"> แสดงประกาศบนจอ
-          </label>
-          <label for="controlAnnouncementTitle">หัวข้อประกาศ</label>
-          <input class="product-filter-input" type="text" id="controlAnnouncementTitle" maxlength="60" placeholder="เช่น แจ้งข่าวจากร้าน">
-          <label for="controlAnnouncementText">ข้อความประกาศ</label>
-          <textarea class="product-filter-input" id="controlAnnouncementText" rows="4" maxlength="180" placeholder="พิมพ์ข้อความที่ต้องการแจ้งลูกค้า"></textarea>
-          <p class="muted">จำข้อความในเบราว์เซอร์นี้ เปิด–ปิดหรือแก้ข้อความแล้วกดบันทึกเพื่อส่งไปยังจอ</p>
-          <button class="btn primary" id="btnSaveAnnouncement" type="button">บันทึกและส่งไปยังจอ</button>
-          <p class="muted" id="announcementSaveStatus" role="status" aria-live="polite"></p>
         </section>
 
         <section class="card subpage-card category-panel">
@@ -2180,7 +2155,7 @@
     const TV_HEARTBEAT_STALE_MS = 90000;
     const AUTO_PLAY_PENDING_MS = 7000;
     const NAVIGATION_PENDING_MS = 10000;
-    const APP_VERSION = "display-3d-announcement-v18";
+    const APP_VERSION = "display-discount-v17";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const VOICE_TRIGGER_PREFIXES = [
       "เปิด", "โปรด", "พบ", "เปด", "เผิด", "เพิ่ม",
@@ -4026,63 +4001,6 @@
       event.preventDefault();
       sendProductFilter(event.currentTarget.value);
     });
-    function announcementCacheKey() {
-      return "tv-display-announcement-control-v1:" + (getWebAppUrl() || location.origin);
-    }
-
-    function readAnnouncementForm() {
-      return {
-        enabled: $("controlAnnouncementEnabled").checked,
-        title: $("controlAnnouncementTitle").value.trim().slice(0, 60),
-        text: $("controlAnnouncementText").value.trim().slice(0, 180)
-      };
-    }
-
-    function cacheAnnouncementDraft() {
-      try {
-        localStorage.setItem(announcementCacheKey(), JSON.stringify(readAnnouncementForm()));
-        return true;
-      } catch { return false; }
-    }
-
-    function restoreAnnouncementDraft() {
-      let value = {};
-      try {
-        const draft = localStorage.getItem(announcementCacheKey());
-        if (draft) value = JSON.parse(draft) || {};
-        else {
-          const display = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-          value = { enabled: display.announcementEnabled, title: display.announcementTitle, text: display.announcementText };
-        }
-      } catch {}
-      $("controlAnnouncementEnabled").checked = value.enabled === true;
-      $("controlAnnouncementTitle").value = clean(value.title).slice(0, 60);
-      $("controlAnnouncementText").value = clean(value.text).slice(0, 180);
-    }
-
-    $("btnSaveAnnouncement").onclick = () => {
-      const announcement = readAnnouncementForm();
-      if (announcement.enabled && !announcement.text) {
-        $("announcementSaveStatus").textContent = "กรอกข้อความก่อนเปิดประกาศ";
-        $("controlAnnouncementText").focus();
-        return;
-      }
-      const cached = cacheAnnouncementDraft();
-      sendCommand("setAnnouncement", announcement);
-      $("announcementSaveStatus").textContent = cached
-        ? "บันทึกข้อความในเบราว์เซอร์แล้ว • ส่งคำสั่งไปยังจอแล้ว"
-        : "ส่งคำสั่งแล้ว แต่เบราว์เซอร์ไม่อนุญาตให้จำข้อความ";
-    };
-    for (const id of ["controlAnnouncementEnabled", "controlAnnouncementTitle", "controlAnnouncementText"]) {
-      $(id).addEventListener("input", () => {
-        const cached = cacheAnnouncementDraft();
-        $("announcementSaveStatus").textContent = cached
-          ? "จำข้อความร่างแล้ว • กดบันทึกเพื่อส่งไปยังจอ"
-          : "ยังจำข้อความไม่ได้ • กดบันทึกเพื่อส่งไปยังจอ";
-      });
-    }
-    restoreAnnouncementDraft();
-
     $("btnReloadMeta").onclick = reloadMeta;
     $("btnLoadLayout").onclick = loadLayoutProducts;
     $("btnSaveLayout").onclick = saveLayoutProducts;
