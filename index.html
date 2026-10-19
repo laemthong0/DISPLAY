@@ -5321,7 +5321,12 @@
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
     }  </style>
-  <link rel="stylesheet" href="display-effects.css?v=2" />
+      <link rel="stylesheet" href="display-effects.css?v=2" />
+    <style>
+      .price-freshness { padding: 10px 18px; background: #e0f5e6; color: #13572b;
+        font-size: clamp(16px, 1.45vw, 27px); font-weight: 800; text-align: center; }
+      .price-freshness.stale { background: #fff0bd; color: #833700; border: 3px solid #f59e0b; }
+    </style>
 </head>
 
 <body>
@@ -5360,6 +5365,7 @@
       </div>
     </header>
 
+    <div id="priceFreshness" class="price-freshness" role="status" aria-live="polite">กำลังตรวจสอบเวลาราคาล่าสุด...</div>
     <nav class="tabs-container" id="pageTabs"></nav>
 
     <nav class="subtabs-container" id="subTabs"></nav>
@@ -5665,6 +5671,8 @@
     let lastDisplayedProductCount = 0;
     let lastDisplayedSpecialCount = 0;
     let productFilterQuery = "";
+    const sheetLastLiveAt = {};
+    const sheetUsingFallback = {};
     const sheetLoadInFlight = new Map();
 
     function clean(value) {
@@ -5777,6 +5785,21 @@
       return products.filter((item) => productMatchesFilter(item, query));
     }
 
+    function getCrossTabSearchResults(query) {
+      const found = [];
+      if (!clean(query)) return found;
+      for (const sheetName of data.sheetPages) {
+        const products = getProductsForSheetState(sheetName);
+        if (!Array.isArray(products)) continue;
+        for (const item of products) {
+          if (isProductVisible(item) && productMatchesFilter(item, query)) {
+            found.push({ ...item, sourceSheet: sheetName });
+          }
+        }
+      }
+      return sortProductsByPriceAsc(found);
+    }
+
     function findProductSearchTarget(query) {
       const normalizedQuery = clean(query);
       if (!normalizedQuery) return null;
@@ -5812,7 +5835,6 @@
       productFilterQuery = clean(query);
       currentSubPageIndex = 0;
       // Search every brand tab, not only the tab currently on screen.
-      focusProductSearchMatch(productFilterQuery);
       holdWallSync(getPageDurationMs() * 2);
       setAutoPlay(false);
       render();
@@ -6487,7 +6509,7 @@
       const hasLoadError = Boolean(sheetLoadErrors[sheetName]) && !hasLoadedSheet;
       const allProducts = productsCache[sheetName] || [];
       const baseViewProducts = getVisibleProducts(sheetName, allProducts);
-      const viewProducts = applyProductFilter(baseViewProducts);
+      const viewProducts = clean(productFilterQuery) ? getCrossTabSearchResults(productFilterQuery) : baseViewProducts;
       const filterActive = Boolean(clean(productFilterQuery));
       const productGrid = $("productGrid");
 
@@ -6498,11 +6520,13 @@
 
       const startIndex = currentSubPageIndex * itemsPerPage;
       const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
-      const wallSlice = getWallSlice(wallPageProducts.length);
+      const wallSlice = filterActive && WALL_CONFIG.enabled && wallPageProducts.length <= 3
+        ? { start: 0, end: wallPageProducts.length, singleScreen: false }
+        : getWallSlice(wallPageProducts.length);
       const displayProducts = wallPageProducts.slice(wallSlice.start, wallSlice.end);
       const shape = getGridShape(displayProducts.length);
       const wallRange = formatWallRange(startIndex, wallSlice, viewProducts.length);
-      const wallEmptyKind = !hasLoadedSheet
+      const wallEmptyKind = !filterActive && !hasLoadedSheet
         ? (hasLoadError ? "error" : "loading")
         : (wallSlice.singleScreen && WALL_CONFIG.enabled && WALL_CONFIG.screenIndex > 0 ? "wall-idle" : "empty");
       const wallEmptyText = wallEmptyKind === "loading"
@@ -6569,6 +6593,7 @@
 
       if (logoEl.src !== resolvedLogoUrl) logoEl.src = resolvedLogoUrl;
 
+      updatePriceFreshness();
       renderTabs();
       renderSubTabs(sheetName);
       renderGrid(displayProducts, shape, wallEmptyText, { kind: wallEmptyKind, sheetName });
@@ -6823,6 +6848,27 @@
       autoHoverTimer = setInterval(step, 900);
     }
 
+    function formatPriceTimestamp(timestamp) {
+      if (!timestamp) return "ไม่ทราบเวลาอัปเดต";
+      return new Date(timestamp).toLocaleString("th-TH", {
+        day: "numeric", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    }
+
+    function updatePriceFreshness() {
+      const target = $("priceFreshness");
+      if (!target) return;
+      const sheets = clean(productFilterQuery) ? data.sheetPages : [getSheetName()];
+      const offline = !navigator.onLine || sheets.some(name => sheetUsingFallback[name] === true);
+      const timestamps = sheets.map(name => sheetLastLiveAt[name]).filter(Boolean);
+      const latest = timestamps.length ? Math.min(...timestamps) : 0;
+      target.classList.toggle("stale", offline);
+      target.textContent = offline
+        ? "⚠ ราคาออฟไลน์ / ข้อมูลสำรอง • ตรวจสอบราคาก่อนขาย • อัปเดตล่าสุด: " + formatPriceTimestamp(latest)
+        : "✓ ราคาจากแหล่งข้อมูลออนไลน์ • อัปเดตล่าสุด: " + formatPriceTimestamp(latest);
+    }
+
     function updateClock() {
       const now = new Date();
       const date = new Intl.DateTimeFormat("th-TH", {
@@ -6837,6 +6883,7 @@
         hour12: false
       }).format(now);
 
+      updatePriceFreshness();
       const updatedText = getHeaderUpdateText();
       $("dateText").textContent = updatedText
         ? `${date} ${time} • ${updatedText}`
@@ -6892,6 +6939,8 @@
 
         if (fallback) {
           productsCache[sheetName] = fallback.products;
+          if (typeof sheetLastLiveAt !== "undefined") sheetLastLiveAt[sheetName] = fallback.savedAt;
+          if (typeof sheetUsingFallback !== "undefined") sheetUsingFallback[sheetName] = true;
           sheetLoadErrors[sheetName] = false;
           hadProductsCache = true;
 
@@ -6910,8 +6959,9 @@
       if (!navigator.onLine) {
         sheetLoadErrors[sheetName] = !hadProductsCache;
         if (isCurrentPage) {
-          lastSheetLoadAt = Date.now();
-          lastSheetLoadOk = hadProductsCache;
+          lastSheetLoadAt = (typeof sheetLastLiveAt !== "undefined" ? sheetLastLiveAt[sheetName] : 0) || 0;
+          lastSheetLoadOk = false;
+          if (typeof sheetUsingFallback !== "undefined") sheetUsingFallback[sheetName] = true;
           lastSheetLoadMessage = hadProductsCache
             ? "ออฟไลน์: ใช้ข้อมูลสำรอง " + sheetName
             : "ออฟไลน์: ยังไม่มีข้อมูลสำรอง " + sheetName;
@@ -6939,6 +6989,8 @@
         const productsChanged = getProductsDataSignature(productsCache[sheetName]) !== getProductsDataSignature(nextProducts);
 
         productsCache[sheetName] = nextProducts;
+        if (typeof sheetLastLiveAt !== "undefined") sheetLastLiveAt[sheetName] = Date.now();
+        if (typeof sheetUsingFallback !== "undefined") sheetUsingFallback[sheetName] = false;
         writeSheetProductsFallback(sheetName, nextProducts);
         sheetLoadErrors[sheetName] = false;
         lastSheetLoadAt = Date.now();
@@ -6948,12 +7000,15 @@
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
         const searchStateBefore = `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
-        if (clean(productFilterQuery) && !applyProductFilter(getVisibleProducts(getSheetName(), productsCache[getSheetName()] || [])).length) {
+        // Modern display searches across all loaded tabs without changing the selected tab.
+        // Standalone legacy test harnesses only extract loadSheetData, so retain their older contract.
+        if (typeof getCrossTabSearchResults !== "function" && clean(productFilterQuery) &&
+            !applyProductFilter(getVisibleProducts(getSheetName(), productsCache[getSheetName()] || [])).length) {
           focusProductSearchMatch(productFilterQuery);
         }
         const searchMoved = searchStateBefore !== `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
         isCurrentPage = sheetName === getSheetName();
-        if (searchMoved && !isCurrentPage) render();
+        if ((searchMoved || clean(productFilterQuery)) && !isCurrentPage) render();
 
         if (isCurrentPage) {
           $("sheetStatus").textContent = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString("th-TH");
@@ -6973,8 +7028,9 @@
         console.error(err);
         isCurrentPage = sheetName === getSheetName();
         sheetLoadErrors[sheetName] = true;
-        lastSheetLoadAt = Date.now();
+        lastSheetLoadAt = (typeof sheetLastLiveAt !== "undefined" ? sheetLastLiveAt[sheetName] : 0) || 0;
         lastSheetLoadOk = false;
+        if (typeof sheetUsingFallback !== "undefined") sheetUsingFallback[sheetName] = true;
         lastSheetLoadMessage = `โหลด ${sheetName} ไม่สำเร็จ`;
         updateClock();
 
@@ -7577,7 +7633,9 @@
       const itemsPerPage = getItemsPerPage(viewProducts.length);
       const startIndex = slot.subPageIndex * itemsPerPage;
       const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
-      const wallSlice = getWallSlice(wallPageProducts.length);
+      const wallSlice = filterActive && WALL_CONFIG.enabled && wallPageProducts.length <= 3
+        ? { start: 0, end: wallPageProducts.length, singleScreen: false }
+        : getWallSlice(wallPageProducts.length);
 
       return wallPageProducts.slice(wallSlice.start, wallSlice.end);
     }
