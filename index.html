@@ -7633,9 +7633,7 @@
       const itemsPerPage = getItemsPerPage(viewProducts.length);
       const startIndex = slot.subPageIndex * itemsPerPage;
       const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
-      const wallSlice = filterActive && WALL_CONFIG.enabled && wallPageProducts.length <= 3
-        ? { start: 0, end: wallPageProducts.length, singleScreen: false }
-        : getWallSlice(wallPageProducts.length);
+      const wallSlice = getWallSlice(wallPageProducts.length);
 
       return wallPageProducts.slice(wallSlice.start, wallSlice.end);
     }
