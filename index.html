@@ -5777,6 +5777,21 @@
       return products.filter((item) => productMatchesFilter(item, query));
     }
 
+    function getAllTabSearchProducts(query) {
+      if (!clean(query)) return [];
+      const results = [];
+      for (const sheetName of data.sheetPages) {
+        const products = getProductsForSheetState(sheetName);
+        if (!Array.isArray(products)) continue;
+        for (const item of products) {
+          if (isProductVisible(item) && productMatchesFilter(item, query)) {
+            results.push({ ...item, sourceSheet: sheetName });
+          }
+        }
+      }
+      return sortProductsByPriceAsc(results);
+    }
+
     function findProductSearchTarget(query) {
       const normalizedQuery = clean(query);
       if (!normalizedQuery) return null;
@@ -5812,8 +5827,14 @@
       productFilterQuery = clean(query);
       currentSubPageIndex = 0;
       // Search every brand tab, not only the tab currently on screen.
-      focusProductSearchMatch(productFilterQuery);
+      // Render aggregated results; keep both TV screens on the same search.
       holdWallSync(getPageDurationMs() * 2);
+      // Load missing tabs in background to complete cross-tab search results.
+      data.sheetPages.forEach((_, idx) => {
+        if (!Object.prototype.hasOwnProperty.call(productsCache, data.sheetPages[idx])) {
+          loadSheetData(idx);
+        }
+      });
       setAutoPlay(false);
       render();
       restartPageTimer();
@@ -6487,8 +6508,8 @@
       const hasLoadError = Boolean(sheetLoadErrors[sheetName]) && !hasLoadedSheet;
       const allProducts = productsCache[sheetName] || [];
       const baseViewProducts = getVisibleProducts(sheetName, allProducts);
-      const viewProducts = applyProductFilter(baseViewProducts);
       const filterActive = Boolean(clean(productFilterQuery));
+      const viewProducts = filterActive ? getAllTabSearchProducts(productFilterQuery) : baseViewProducts;
       const productGrid = $("productGrid");
 
       const itemsPerPage = getItemsPerPage(viewProducts.length);
@@ -6498,11 +6519,13 @@
 
       const startIndex = currentSubPageIndex * itemsPerPage;
       const wallPageProducts = viewProducts.slice(startIndex, startIndex + itemsPerPage);
-      const wallSlice = getWallSlice(wallPageProducts.length);
+      const wallSlice = filterActive && WALL_CONFIG.enabled && wallPageProducts.length <= 3
+        ? { start: 0, end: wallPageProducts.length, singleScreen: false }
+        : getWallSlice(wallPageProducts.length);
       const displayProducts = wallPageProducts.slice(wallSlice.start, wallSlice.end);
       const shape = getGridShape(displayProducts.length);
       const wallRange = formatWallRange(startIndex, wallSlice, viewProducts.length);
-      const wallEmptyKind = !hasLoadedSheet
+      const wallEmptyKind = !filterActive && !hasLoadedSheet
         ? (hasLoadError ? "error" : "loading")
         : (wallSlice.singleScreen && WALL_CONFIG.enabled && WALL_CONFIG.screenIndex > 0 ? "wall-idle" : "empty");
       const wallEmptyText = wallEmptyKind === "loading"
@@ -6546,7 +6569,7 @@
           ? `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens} • พร้อมประชาสัมพันธ์`
           : `จอ ${WALL_CONFIG.screen}/${WALL_CONFIG.screens}${wallRange ? ` • ${wallRange}` : ""}`)
         : filterActive
-          ? `${viewProducts.length}/${baseViewProducts.length} รายการ`
+          ? `${viewProducts.length} รายการจากทุกแท็บ`
           : `${viewProducts.length} รายการ`;
 
       const pageText = `หมวด ${currentPageIndex + 1}/${data.sheetPages.length}`;
@@ -6948,12 +6971,15 @@
 
         if (WALL_CONFIG.syncEnabled) preloadWallSyncImages();
         const searchStateBefore = `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
-        if (clean(productFilterQuery) && !applyProductFilter(getVisibleProducts(getSheetName(), productsCache[getSheetName()] || [])).length) {
+        // Keep the standalone legacy loader harness compatible, without navigating
+        // away from an aggregate cross-tab search in the actual application.
+        if (typeof getAllTabSearchProducts !== "function" && clean(productFilterQuery) &&
+            !applyProductFilter(getVisibleProducts(getSheetName(), productsCache[getSheetName()] || [])).length) {
           focusProductSearchMatch(productFilterQuery);
         }
         const searchMoved = searchStateBefore !== `${currentPageIndex}:${currentMotherSubIndex}:${currentSubPageIndex}`;
         isCurrentPage = sheetName === getSheetName();
-        if (searchMoved && !isCurrentPage) render();
+        if ((searchMoved || clean(productFilterQuery)) && !isCurrentPage) render();
 
         if (isCurrentPage) {
           $("sheetStatus").textContent = "อัปเดตล่าสุด: " + new Date().toLocaleTimeString("th-TH");
