@@ -5322,6 +5322,7 @@
       50% { opacity: 1; }
     }  </style>
   <link rel="stylesheet" href="display-effects.css?v=2" />
+  <link rel="stylesheet" href="showroom.css?v=21" />
 </head>
 
 <body>
@@ -5331,41 +5332,42 @@
   <div class="bg-shape shape-2"></div>
   <div class="bg-shape shape-3"></div>
 
-  <main class="screen" id="mainScreen">
-    <header class="header">
-      <div class="header-left">
+  <main class="screen lt-showroom" id="mainScreen">
+    <header class="lt-foot">
+      <div class="lt-group">
         <img
-          class="logo"
+          class="lt-logo"
           id="headerLogo"
           src="https://drive.google.com/thumbnail?id=1dbUjoftKIiS3oINGK3pSEgICMnMwAh9h&sz=w400"
           alt="โลโก้ร้าน"
         >
 
-        <div class="shop-info">
-          <div class="shop-name" id="shopName">แหลมทองกิจเกษตร</div>
-          <div class="shop-sub" id="shopSub">จอแสดงราคาสินค้าประจำวัน</div>
+        <div class="lt-group">
+          <div id="shopName">แหลมทองกิจเกษตร</div>
+          <div hidden id="shopSub">จอแสดงราคาสินค้าประจำวัน</div>
         </div>
       </div>
 
-      <div class="header-center">
-        <div class="cat-title" id="heroTitle">สินค้าเกษตรราคาพิเศษ</div>
-        <div class="cat-count" id="heroDesc">กำลังโหลด...</div>
+      <div class="lt-group">
+        <span id="heroTitle">สินค้าเกษตรราคาพิเศษ</span>
+        <small id="heroDesc">กำลังโหลด...</small>
       </div>
 
-      <div class="header-right">
+      <div class="header-right" hidden style="display:none!important">
         <div class="live-badge">LIVE</div>
         <a class="control-link" href="control.html" target="_blank" rel="noopener">Control</a>
         <div class="clock" id="dateText">--:--</div>
         <div class="clock" id="pageCounter" style="font-size: 1rem; opacity: 0.8; font-weight: 500;">1 / 7</div>
       </div>
+      <img class="lt-qr" src="https://drive.google.com/thumbnail?id=1rJZ_3yhz9DUa81WDILLzppChKgAWTx8V&sz=w300" alt="QR Code" decoding="async">
     </header>
 
     <nav class="tabs-container" id="pageTabs"></nav>
 
     <nav class="subtabs-container" id="subTabs"></nav>
 
-    <section class="board">
-      <div class="product-grid" id="productGrid" data-density="few">
+    <section class="lt-floor">
+      <div class="lt-rows" id="productGrid" data-density="few">
         <div class="image-empty">กำลังเชื่อมต่อข้อมูล...</div>
       </div>
 
@@ -5385,7 +5387,7 @@
     </div>
 
     <img
-      class="watermark-logo top-qr-logo"
+      hidden style="display:none!important"
       src="https://drive.google.com/thumbnail?id=1rJZ_3yhz9DUa81WDILLzppChKgAWTx8V&sz=w300"
       alt="QR Code"
       decoding="async"
@@ -5540,7 +5542,7 @@
     const REMOTE_COMMAND_DEDUPE_TTL_MS = 15000;
     const REMOTE_COMMAND_STALE_GRACE_MS = 250;
     const WALL_SYNC_TICK_GRACE_MS = 90;
-    const APP_VERSION = "display-clear-controls-v20";
+    const APP_VERSION = "display-showroom-v21";
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000;
     const GAS_RETRY_ATTEMPTS = 3;
     const GAS_RETRY_DELAY_MS = 650;
@@ -6670,17 +6672,20 @@
         return;
       }
 
-      const isZigzag = shape && shape.density === "zigzag";
+      const cols = (shape || getGridShape(products.length)).cols;
+      const rows = Math.ceil(products.length / cols);
+      const mobileCols = Math.ceil(Math.sqrt(products.length));
+      for (const [key, val] of Object.entries({cols, rows, 'mobile-cols':mobileCols, 'mobile-rows':Math.ceil(products.length/mobileCols)})) grid.style.setProperty('--lt-'+key, val);
       const imageSize = getProductImageSize(products.length);
 
-      grid.innerHTML = products.map((item, idx) => {
+      const cards = products.map((item, idx) => {
         const imgUrl = resolveImg(item.image, imageSize);
         const badge = getSpecialBadgeLabel(item);
-        const badgeClass = getSpecialBadgeClass(badge);
+        const nameParts = clean(item.name).match(/^(\d+(?:\.\d+)?-\d+(?:\.\d+)?-\d+(?:\.\d+)?)\s+(.+)$/);
 
         const imgHtml = imgUrl
-          ? `<img class="product-img" src="${escapeHtml(imgUrl)}" loading="eager" decoding="async" fetchpriority="${idx < 4 ? "high" : "auto"}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'no-image',textContent:'ไม่มีรูป'}))">`
-          : `<div class="no-image">ไม่มีรูปภาพ</div>`;
+          ? `<img class="lt-pack" alt="${escapeHtml(item.name)}" src="${escapeHtml(imgUrl)}" loading="eager" decoding="async" fetchpriority="${idx < 4 ? "high" : "auto"}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'lt-missing',textContent:'ไม่มีรูป'}))">`
+          : `<div class="lt-missing">ไม่มีรูปภาพ</div>`;
 
         const price = clean(item.price);
         const discountedPrice = getValidDiscountPrice(item);
@@ -6688,38 +6693,27 @@
         const showOriginalPrice = Boolean(discountedPrice) && Number.isFinite(toPriceAmount(price));
         const unit = clean(item.unit) || "บ.";
 
-        let layoutStyle = "";
-        if (isZigzag) {
-          const cols = Math.max(1, Number(shape?.cols || 1));
-          const row = Math.floor(idx / cols) + 1;
-          const colInRow = idx % cols;
-          const startCol = (row % 2 === 1) ? (1 + (colInRow * 2)) : (2 + (colInRow * 2));
-          layoutStyle = ` style="grid-column:${startCol} / span 2; grid-row:${row};"`;
-        }
+
 
         return `
-          <article class="product-card${badge ? " has-special" : ""}"${layoutStyle}>
-            <div class="image-box">
-              ${badge ? `<div class="special-badge ${badgeClass}">${escapeHtml(badge)}</div>` : ""}
+          <article class="lt-item"><div class="lt-bay">
+              ${badge ? `<div class="lt-badge">${escapeHtml(badge)}</div>` : ""}
               ${imgHtml}
-              <div class="info-box">
-                <div class="name-wrap">
-                  <div class="product-name">${escapeHtml(item.name)}</div>
-                  ${item.detail ? `<div class="product-detail">${escapeHtml(item.detail)}</div>` : ""}
-                </div>
+            </div><div class="lt-caption">
+                ${nameParts ? `<span class="lt-formula">${escapeHtml(nameParts[1])}</span>` : ''}
+                <strong class="lt-name">${escapeHtml(nameParts ? nameParts[2] : item.name)}</strong>
+                ${item.detail ? `<span class="lt-detail">${escapeHtml(item.detail)}</span>` : ''}
 
-                <div class="price-wrap${discountedPrice ? " price-discounted" : ""}">
-                  ${showOriginalPrice ? `<div class="price-original">เดิม <s>${escapeHtml(price)}</s></div>` : ""}
-                  <div class="price-val">${escapeHtml(displayPrice || "-")}</div>
-                  ${displayPrice ? `<div class="price-unit">${escapeHtml(unit)}</div>` : ""}
+                <div class="lt-money">
+                  ${showOriginalPrice ? `<span class="lt-old">เดิม <s>${escapeHtml(price)}</s></span>` : ''}
+                  <strong class="lt-price">${escapeHtml(displayPrice || '-')}</strong>
+                  ${displayPrice ? `<span class="lt-unit">${escapeHtml(unit === 'บ.' ? 'บาท' : unit)}</span>` : ''}
                 </div>
-              </div>
             </div>
           </article>
         `;
-      }).join("");
-
-      startAutoHoverPreview();
+      });
+      grid.innerHTML = Array.from({length:rows}, (_, row) => `<div class="lt-row">${cards.slice(row*cols,(row+1)*cols).join('')}</div>`).join('');
     }
 
     function getSpecialBadgeLabel(item) {
